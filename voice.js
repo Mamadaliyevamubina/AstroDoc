@@ -566,7 +566,8 @@ const ctx = {
   misses: 0,           // how often I didn't understand in a row
   note: null,          // a symptom mentioned, added to the next report
   flow: null,          // daily check-in in progress { queue, id }
-  lastReminder: null   // for "remind me again"
+  lastReminder: null,  // for "remind me again"
+  cases: null          // real astronaut cases being told { list, i }, for "another real case"
 };
 
 const YES = /^(yes|yeah|yep|yup|sure|ok|okay|alright|do it|please do|please|go ahead|confirm|declare|send it|affirmative|correct|right|start|let us do it)\b/;
@@ -1106,6 +1107,37 @@ function suggestFor(t) {
 // =========================================================================
 // 6. CONVERSATION — understand one message and pick the reply
 // =========================================================================
+// --- Real cases: what happened to real astronauts and what their doctors did (data/space-medicine-cases.json) ---
+let CASES = [];
+fetch("data/space-medicine-cases.json").then(r => r.json()).then(d => { CASES = d.cases || []; }).catch(() => { });
+const CASE_WORDS = [
+  [/\b(clot|d-?dimer|blood test|thrombosis)\b/, "clot"], [/\b(heart|pulse|bpm|rhythm|palpitation)/, "hr"],
+  [/\b(tired|exhausted|fatigue|sleepy)\b/, "tired"], [/\b(sleep|slept|insomnia|awake)\b/, "sleep"],
+  [/\b(lonely|homesick|sad|down|depressed|mood)\b/, "mood"], [/\b(stress|stressed|anxious|nervous)\b/, "stress"],
+  [/\b(headache|head hurts|migraine)\b/, "headache"], [/\b(nausea|nauseous|sick|vomit|throw up|space sickness)\b/, "nausea"],
+  [/\b(fever|temperature|hot|chills)\b/, "temp"], [/\b(cold|flu|cough|sneez)/, "cold"], [/\b(stuffy|blocked nose|congest)/, "congestion"],
+  [/\b(back|spine)\b/, "back"], [/\b(eye|eyes|vision|blurry|see)\b/, "vision"], [/\b(pain|hurts|sore|ache)\b/, "pain"],
+  [/\b(skin|rash|itch)/, "skin"], [/\b(stomach|diarrh|bowel)/, "stomach"], [/\b(infection|urin)/, "infection"]
+];
+// Cases about what was said, or else about the current topic and the person's problems
+function casesFor(text, id = ctx.crew) {
+  const tags = new Set(CASE_WORDS.filter(([re]) => re.test(text)).map(([, tag]) => tag));
+  if (!tags.size && ctx.topic) tags.add(ctx.topic);
+  if (!tags.size && id && MOCK.crew[id]) check(id).warnings.forEach(w => tags.add(w.key));
+  return CASES.filter(c => c.tags.some(t => tags.has(t)));
+}
+function tellCase(list, i = 0) {
+  if (!CASES.length) return { say: "My library of real astronaut cases is still loading. Please ask me again in a moment.", chips: defaultChips() };
+  if (!list.length) return { say: "I don't have a real case about that yet. You could ask about sleep, headaches, space sickness, loneliness or blood clots.",
+    chips: ["Real case about sleep", "Real case about blood clots", "Real case about loneliness"] };
+  const c = list[i % list.length];
+  ctx.cases = { list, i: i + 1 };
+  const say = `Here's a real case from ${c.mission}, ${c.year}. ${c.felt} ${c.response} ${c.outcome}`;
+  return { say, face: "caring",
+    html: `${escapeHtml(say)}<br><small>Source: <a href="${escapeHtml(c.source.url)}" target="_blank" rel="noopener">${escapeHtml(c.source.title)}</a></small>`,
+    chips: [...(list.length > 1 ? ["Another real case"] : []), "What should I do?", "How is everyone?"] };
+}
+
 const EMERGENCY = /\b(emergency|help me|cannot breathe|can not breathe|not breathing|chest pain|passed out|fainted|unconscious|not responding|seizure|bleeding badly|stroke|heart attack)\b/;
 function understand(raw) {
   const t = normalize(raw);
@@ -1197,6 +1229,11 @@ function understand(raw) {
         chips: ["Next step", "Done", "Stop"] };
     }
   }
+
+  // --- 5a. Real astronaut cases ("has this happened before?") ---
+  if (/^(another|next|one more)( real)? (case|story|example)\b/.test(t) && ctx.cases) return tellCase(ctx.cases.list, ctx.cases.i);
+  if (/\b(real (astronaut|case|story|example)s?|happened (before|in space|to (an|other|real) astronauts?)|other astronauts|has (this|it|that) happened|in (space )?history|what did (the )?(nasa )?doctors do)\b/.test(t))
+    return tellCase(casesFor(t.replace(/\b(real|astronauts?|case|story|example|happened|before|space|history|nasa|doctors?)\b/g, " "), mine));
 
   // --- 5b. Several things at once ("I slept 6 hours and drank 2 glasses of water") ---
   if (!q || /\b(log|record)\b/.test(t)) {
@@ -1389,20 +1426,22 @@ function defaultChips() {
 // Emergencies and yes/no or step-by-step flows stay on the built-in rules: instant and predictable.
 const aiHistory = [];
 const useAI = text => !!ASTRODOC_SERVER && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
-function crewSnapshot() {
+function crewSnapshot(text) {
   const crew = {};
   Object.keys(MOCK.crew).forEach(id => {
     const c = MOCK.crew[id], S = check(id);
     crew[ROLE[id]] = { status: LABEL[S.overall] || LABEL.normal, vitals: c.vitals, lastNightSleepHours: S.lastNight,
       problems: S.warnings.map(w => ({ level: LABEL[w.status], what: w.title, whatToDo: w.todo })) };
   });
-  return { mission: MOCK.mission, talkingAbout: ROLE[ctx.crew], userIs: me ? ROLE[me] : null, userName: userName() || null, crew };
+  const pastCases = casesFor(normalize(text || "")).slice(0, 3)       // real NASA cases Claude can mention, with sources
+    .map(c => ({ mission: c.mission, year: c.year, felt: c.felt, doctorsDid: c.response, outcome: c.outcome, source: c.source.title }));
+  return { mission: MOCK.mission, talkingAbout: ROLE[ctx.crew], userIs: me ? ROLE[me] : null, userName: userName() || null, crew, pastCases };
 }
 async function askAI(text) {
   try {
     const res = await fetch(ASTRODOC_SERVER + "/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot() }), signal: AbortSignal.timeout(20000)
+      body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot(text) }), signal: AbortSignal.timeout(20000)
     });
     if (!res.ok) throw new Error("chat " + res.status);
     const { reply, command, focus } = await res.json();
