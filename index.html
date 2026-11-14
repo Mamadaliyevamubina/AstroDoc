@@ -8,7 +8,19 @@
   <link rel="icon" href="assets/astrodoc-favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="choosing">
+
+  <!-- ===================== WELCOME: choose who to check on ===================== -->
+  <section class="welcome" id="welcome" aria-labelledby="welcomeTitle">
+    <span class="brand">
+      <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
+      <span class="brand-name">Astrodoc</span>
+    </span>
+    <h1 id="welcomeTitle">Who are you checking on?</h1>
+    <p class="muted">Choose a crew member to see their health and what to do now.</p>
+    <!-- Choices are built in app.js -->
+    <div class="choices" id="crewSelector"></div>
+  </section>
 
   <!-- ===================== HEADER ===================== -->
   <header class="top">
@@ -16,8 +28,8 @@
       <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
       <span class="brand-name">Astrodoc</span>
     </a>
-    <!-- Crew buttons are built in app.js -->
-    <div class="crew" id="crewSelector" role="group" aria-label="Select crew member"></div>
+    <!-- The chosen crew member. Click to choose again. -->
+    <button class="who-btn" id="switchCrew"></button>
     <!-- Mission line is built in app.js -->
     <div class="mission" id="missionStrip"></div>
     <button class="emergency-btn" id="emergencyBtn">Emergency</button>

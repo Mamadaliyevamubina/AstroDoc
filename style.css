@@ -98,19 +98,44 @@ button { font: inherit; color: inherit; }
 .brand-mark img { width: 24px; display: block; }
 .brand-name { font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
 
-.crew { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-md); background: #ebebe7; }
-.crew-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px var(--s3); border: none; border-radius: 9px;
-  background: transparent; color: var(--ink-soft);
-  font-size: 14px; font-weight: 600; cursor: pointer;
+/* Chosen crew member in the header: click to choose again */
+.who-btn {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: 6px 6px 6px var(--s3); border: none; border-radius: var(--r-pill);
+  background: var(--card); box-shadow: var(--shadow);
+  font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer;
 }
-.crew-btn:hover { color: var(--ink); }
-.crew-btn.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(38, 44, 79, .1); }
+.who-btn .change { font-size: 13px; color: var(--mint-ink); background: var(--mint-wash); padding: 2px 10px; border-radius: var(--r-pill); }
+.who-btn:hover .change { background: #d8f2eb; }
 .crew-dot svg { width: 14px; height: 14px; display: block; }
-.crew-btn.normal .crew-dot { color: var(--normal); }
-.crew-btn.watch  .crew-dot { color: var(--watch); }
-.crew-btn.act    .crew-dot { color: var(--act); }
+.crew-dot.normal { color: var(--normal); }
+.crew-dot.watch  { color: var(--watch); }
+.crew-dot.act    { color: var(--act); }
+
+/* =========================================================
+   WELCOME — choose who to check on
+   ========================================================= */
+.welcome { display: none; }
+body.choosing .top, body.choosing .page, body.choosing .foot { display: none; }
+body.choosing .welcome {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s3); padding: var(--s6) var(--s5); text-align: center;
+  background: radial-gradient(ellipse 60% 50% at 50% 35%, #eefaf6 0%, var(--page) 70%);
+}
+.welcome .brand { margin-bottom: var(--s5); }
+.welcome h1 { font-size: 30px; font-weight: 650; letter-spacing: -.02em; }
+.welcome p { font-size: 16px; }
+.choices { display: grid; grid-template-columns: repeat(3, 220px); gap: var(--s4); margin-top: var(--s5); }
+.choice {
+  display: flex; flex-direction: column; align-items: center; gap: var(--s1);
+  padding: var(--s5) var(--s4); border: none; border-radius: var(--r-xl);
+  background: var(--card); box-shadow: var(--shadow); cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.choice:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(38, 44, 79, .05), 0 14px 32px rgba(38, 44, 79, .1); }
+.choice:focus-visible { border-radius: var(--r-xl); }
+.choice-name { font-size: 18px; font-weight: 650; color: var(--ink); }
+.choice-note { font-size: 14px; color: var(--muted); margin-bottom: var(--s3); }
 
 .mission { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 0 var(--s4); font-size: 13px; color: var(--muted); }
 .mission span { white-space: nowrap; }
@@ -331,8 +356,10 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--mint-ink); 
 }
 @media (max-width: 640px) {
   .top, .page, .foot { padding-left: var(--s4); padding-right: var(--s4); }
-  .crew { order: 4; flex-basis: 100%; }
-  .crew-btn { flex: 1; justify-content: center; }
+  .choices { grid-template-columns: 1fr; width: 100%; max-width: 340px; }
+  .choice { flex-direction: row; flex-wrap: wrap; justify-content: space-between; text-align: left; padding: var(--s4) var(--s5); }
+  .choice-note { order: 3; flex-basis: 100%; margin: 0; }
+  .welcome h1 { font-size: 24px; }
   .vitals { grid-template-columns: 1fr 1fr; gap: var(--s2); }
   .vital { padding: var(--s3) var(--s4); }
   .v-value { font-size: 24px; }
@@ -344,6 +371,7 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--mint-ink); 
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .choice:hover { transform: none; }
   .face { animation: none; }
   .face .pupil { transition: none; }
 }

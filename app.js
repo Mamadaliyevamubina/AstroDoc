@@ -274,18 +274,37 @@ const badge = (status, text) => `<span class="status ${status}">${ICON[status]}$
 const time = (d = new Date()) => d.toTimeString().slice(0, 5);
 const addMin = (d, m) => new Date(d.getTime() + m * 60000);
 
-// Crew buttons, each with its status sign
+// Welcome screen: choose who to check on (each choice shows their status).
+// Header shows the chosen person; "Change" goes back to the choice.
+const ROLE_NOTE = { CDR: "Leads the mission", PLT: "Flies the spacecraft", MS1: "Runs the science" };
 function showCrew() {
   $("crewSelector").innerHTML = Object.keys(MOCK.crew).map(id => {
     const S = check(id);
-    return `<button class="crew-btn ${id === currentCrew ? "active" : ""} ${S.overall}" data-crew="${id}"
-      aria-pressed="${id === currentCrew}" title="${MOCK.crew[id].role}: ${LABEL[S.overall]}">
-      <span class="crew-dot">${ICON[S.overall]}</span>${id}<span class="sr-only">, ${LABEL[S.overall]}</span></button>`;
+    return `<button class="choice ${S.overall}" data-crew="${id}">
+      <span class="choice-name">${MOCK.crew[id].role}</span>
+      <span class="choice-note">${ROLE_NOTE[id] || id}</span>
+      ${badge(S.overall)}</button>`;
   }).join("");
-  document.querySelectorAll("[data-crew]").forEach(b => b.onclick = () => {
-    currentCrew = b.dataset.crew; emergency.active = false; emergency.signs = {}; emergencyAsk = false; showAll();
-  });
+  document.querySelectorAll("[data-crew]").forEach(b => b.onclick = () => chooseCrew(b.dataset.crew));
+  const S = check(currentCrew);
+  $("switchCrew").innerHTML = `<span class="crew-dot ${S.overall}">${ICON[S.overall]}</span>${MOCK.crew[currentCrew].role}
+    <span class="sr-only">, ${LABEL[S.overall]}.</span><span class="change">Change</span>`;
 }
+function chooseCrew(id) {
+  if (id !== currentCrew) { emergency.active = false; emergency.signs = {}; emergencyAsk = false; }
+  currentCrew = id;
+  document.body.classList.remove("choosing");
+  showAll();
+  window.scrollTo(0, 0);
+  $("switchCrew").focus({ preventScroll: true });
+}
+$("switchCrew").onclick = () => {
+  document.body.classList.add("choosing");
+  showCrew();
+  window.scrollTo(0, 0);
+  const current = document.querySelector(`[data-crew="${currentCrew}"]`);
+  if (current) current.focus();
+};
 
 function showMission() {
   const m = MOCK.mission, last = MOCK.earthLog[MOCK.earthLog.length - 1];
