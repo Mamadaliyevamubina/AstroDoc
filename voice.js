@@ -1235,7 +1235,7 @@ function understand(raw) {
 
   // --- 5a. Real astronaut cases ("has this happened before?") ---
   if (/^(another|next|one more)( real)? (case|story|example)\b/.test(t) && ctx.cases) return tellCase(ctx.cases.list, ctx.cases.i);
-  if (/\b(real (astronaut|case|story|example)s?|happened (before|in space|to (an|other|real) astronauts?)|other astronauts|has (this|it|that) happened|in (space )?history|what did (the )?(nasa )?doctors do)\b/.test(t))
+  if (/\b(real (astronaut|case|story|example)s?|happened (before|in space|to (an|other|real) astronauts?)|other astronauts|(did|have|do) (any |other |real )?astronauts|has (this|it|that|anyone) (ever )?happened|in (space )?history|what did (the )?(nasa )?doctors do)\b/.test(t))
     return tellCase(casesFor(t.replace(/\b(real|astronauts?|case|story|example|happened|before|space|history|nasa|doctors?)\b/g, " "), mine));
 
   // --- 5b. Several things at once ("I slept 6 hours and drank 2 glasses of water") ---
