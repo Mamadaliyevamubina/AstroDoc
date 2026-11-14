@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PROJECT NAME – Crew Health Monitor</title>
-  <link rel="icon" href="assets/dombit-mark.svg">
+  <title>AstroDoc – Crew Health Monitor</title>
+  <link rel="icon" href="assets/astrodoc-mark.jpg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,10 +12,10 @@
   <!-- ===================== TOP NAV (Dombit-style floating pill) ===================== -->
   <header class="nav">
     <div class="brand">
-      <span class="brand-mark"><img src="assets/dombit-mark-white.svg" alt=""></span>
+      <span class="brand-mark"><img src="assets/astrodoc-mark.jpg" alt="AstroDoc logo"></span>
       <span class="brand-text">
-        <strong>PROJECT NAME</strong>
-        <small>Dombit Education · NASA Space Apps 2026</small>
+        <strong>AstroDoc</strong>
+        <small>by Dombit Education</small>
       </span>
     </div>
 
@@ -56,7 +56,7 @@
 
         <!-- LEFT: body figure -->
         <div class="card body-card">
-          <h2>Body systems</h2>
+          <h2 data-icon="body">Body systems</h2>
           <!-- Each <g class="region"> is clickable. data-region matches REGIONS in app.js -->
           <svg class="body-figure" viewBox="0 0 200 400" role="group" aria-label="Body map">
             <g class="region" data-region="muscles" tabindex="0" role="button">
@@ -106,7 +106,7 @@
           <div class="vitals-grid" id="vitalsGrid"></div>
           <div class="card">
             <div class="card-title-row">
-              <h2>What to do now</h2>
+              <h2 data-icon="bell">What to do now</h2>
               <span class="muted small">Every alert has an action the crew can take without waiting for Earth.</span>
             </div>
             <ul class="alert-list" id="alertList"></ul>
@@ -115,7 +115,7 @@
 
         <!-- RIGHT: crew cross-check summary -->
         <div class="card crosscheck-card">
-          <h2>Crew cross-check</h2>
+          <h2 data-icon="users">Crew cross-check</h2>
           <p class="muted small">Self-rating vs crewmate rating (1–5). People with sleep debt rarely notice how impaired they are.</p>
           <div id="crossCheckList"></div>
           <button class="ghost-btn full" data-goto="mind">Open daily check-in</button>
@@ -130,9 +130,10 @@
 
     <!-- ===================== TAB: SLEEP & MIND ===================== -->
     <section class="tab-page" id="tab-mind">
+      <div class="page-head"><span class="eyebrow">Sleep &amp; mind</span><h1>Sleep, mood and focus</h1><p>People with sleep debt rarely notice how impaired they are. These tools give the crew objective numbers, not only feelings.</p></div>
       <div class="grid-3">
         <div class="card">
-          <h2>Sleep log (last 7 nights)</h2>
+          <h2 data-icon="moon">Sleep log (last 7 nights)</h2>
           <p class="muted small">Hours slept. Oldest on the left, last night on the right.</p>
           <div class="sleep-inputs" id="sleepInputs"></div>
           <label class="field">Hours awake right now
@@ -142,24 +143,24 @@
         </div>
 
         <div class="card">
-          <h2>Light and nap coach</h2>
+          <h2 data-icon="sun">Light and nap coach</h2>
           <div id="coach"></div>
         </div>
 
         <div class="card">
-          <h2>Mission phase</h2>
+          <h2 data-icon="flag">Mission phase</h2>
           <div id="phaseCard"></div>
         </div>
 
         <div class="card">
-          <h2>Daily check-in</h2>
+          <h2 data-icon="clipboard">Daily check-in</h2>
           <p class="muted small">Rate 1 (low) to 5 (high). The crewmate rates you too.</p>
           <div id="checkinForm"></div>
           <button class="primary-btn" id="checkinSave">Save check-in (+10 points)</button>
         </div>
 
         <div class="card">
-          <h2>Reaction test</h2>
+          <h2 data-icon="zap">Reaction test</h2>
           <p class="muted small">1 minute. Press the box or Space as soon as it turns purple. Modeled on NASA's vigilance self-test. Gives an objective fatigue number.</p>
           <div class="reaction-box" id="reactionBox" tabindex="0">Press Start</div>
           <div class="row">
@@ -170,7 +171,7 @@
         </div>
 
         <div class="card">
-          <h2>Care tasks and points</h2>
+          <h2 data-icon="sprout">Care tasks and points</h2>
           <p class="muted small">Meaningful activities help morale on long missions.</p>
           <ul class="task-list" id="taskList"></ul>
         </div>
@@ -179,25 +180,26 @@
 
     <!-- ===================== TAB: RADIATION ===================== -->
     <section class="tab-page" id="tab-radiation">
+      <div class="page-head"><span class="eyebrow">Radiation</span><h1>Career dose and solar storms</h1><p>Radiation builds up over a whole career, so the app tracks a running total against NASA's 600 mSv limit.</p></div>
       <div class="grid-3">
         <div class="card span-2">
-          <h2>Career dose</h2>
+          <h2 data-icon="gauge">Career dose</h2>
           <div id="doseCard"></div>
         </div>
         <div class="card">
-          <h2>Location</h2>
+          <h2 data-icon="pin">Location</h2>
           <p class="muted small">Changes the simulated dose rate.</p>
           <div class="pill-group" id="locationButtons"></div>
           <div id="locationInfo"></div>
         </div>
         <div class="card">
-          <h2>Solar particle event</h2>
+          <h2 data-icon="sun">Solar particle event</h2>
           <p class="muted small">Stand-in for the Arduino knob. Turn it up to play a solar storm.</p>
           <input type="range" id="solarSlider" min="0" max="100" class="slider">
           <div id="solarStatus"></div>
         </div>
         <div class="card span-2">
-          <h2>What the team found</h2>
+          <h2 data-icon="book">What the team found</h2>
           <ul class="fact-list">
             <li>Radiation builds up over a whole career, so the app tracks a running total, not a daily reading.</li>
             <li>Heavy ions damage DNA densely along their path. NASA lists four risks: cancer, central nervous system effects, heart and degenerative tissue disease, and acute radiation syndrome.</li>
@@ -211,9 +213,10 @@
 
     <!-- ===================== TAB: BONES & MUSCLES ===================== -->
     <section class="tab-page" id="tab-bones">
+      <div class="page-head"><span class="eyebrow">Bones &amp; muscles</span><h1>Protecting bone and muscle</h1><p>Bone can't be scanned in space, so the app judges bone health from exercise records, estimates and lab markers.</p></div>
       <div class="grid-3">
         <div class="card">
-          <h2>Exercise this week</h2>
+          <h2 data-icon="dumbbell">Exercise this week</h2>
           <p class="muted small">Resistance exercise (ARED). Target 6–7 sessions a week.</p>
           <div id="exerciseCard"></div>
           <div class="row">
@@ -222,7 +225,7 @@
           </div>
         </div>
         <div class="card span-2">
-          <h2>Bone density estimate</h2>
+          <h2 data-icon="chart">Bone density estimate</h2>
           <p class="muted small">Bone can't be scanned in space (DXA is Earth-only), so we estimate. Without exercise: 1–1.5% loss per month.</p>
           <label class="field"><span>Mission day: <strong id="boneDayLabel"></strong></span>
             <input type="range" id="boneDay" min="0" max="1000" class="slider">
@@ -233,13 +236,13 @@
           <div id="boneEstimate"></div>
         </div>
         <div class="card">
-          <h2>Kidney stone guard</h2>
+          <h2 data-icon="drop">Kidney stone guard</h2>
           <p class="muted small">Calcium from bone plus dehydration raises kidney stone risk.</p>
           <div id="waterCard"></div>
           <button class="primary-btn" id="waterAdd">+1 glass of water (+2 points)</button>
         </div>
         <div class="card span-2">
-          <h2>Lab markers (typed in)</h2>
+          <h2 data-icon="flask">Lab markers (typed in)</h2>
           <p class="muted small">Blood and urine markers measured on board, entered by keyboard.</p>
           <div class="row">
             <label class="field">Vitamin D (ng/mL)<input type="number" id="vitD" step="0.1"></label>
@@ -253,28 +256,29 @@
 
     <!-- ===================== TAB: BLOOD & CLOTS ===================== -->
     <section class="tab-page" id="tab-blood">
+      <div class="page-head"><span class="eyebrow">Blood &amp; clots</span><h1>Clotting watch</h1><p>Single results can mislead. The app looks for dangerous patterns and trends across several tests.</p></div>
       <div class="grid-3">
         <div class="card span-2">
-          <h2>Clotting labs</h2>
+          <h2 data-icon="flask">Clotting labs</h2>
           <div id="labTable"></div>
         </div>
         <div class="card">
-          <h2>Add new results</h2>
+          <h2 data-icon="plus">Add new results</h2>
           <p class="muted small">Mission day <span id="labDayLabel"></span>. Leave a box empty to skip a test.</p>
           <div id="labForm"></div>
           <button class="primary-btn" id="labSave">Save results</button>
         </div>
         <div class="card">
-          <h2>Pattern alarm</h2>
+          <h2 data-icon="alert">Pattern alarm</h2>
           <div id="patternCard"></div>
         </div>
         <div class="card span-2">
-          <h2>Clot checklist</h2>
+          <h2 data-icon="check">Clot checklist</h2>
           <p class="muted small">Draft steps for the crew to follow without waiting for Earth. Medical team to confirm.</p>
           <ul class="checklist" id="clotChecklist"></ul>
         </div>
         <div class="card span-3">
-          <h2>Why this matters</h2>
+          <h2 data-icon="info">Why this matters</h2>
           <p>In 11 ISS crew members, 6 had stagnant or reversed blood flow in the neck vein around flight day 50. One had a blocking clot, found with an ultrasound guided live by doctors on Earth. High D-dimer alone does not prove a clot; the dangerous pattern is <strong>high D-dimer + low platelets + low fibrinogen</strong>.</p>
           <p class="muted small">Marshall-Goebel K, et al. JAMA Network Open, 2019. doi:10.1001/jamanetworkopen.2019.15011</p>
         </div>
@@ -283,18 +287,19 @@
 
     <!-- ===================== TAB: SCIENCE & SOURCES ===================== -->
     <section class="tab-page" id="tab-science">
+      <div class="page-head"><span class="eyebrow">Science</span><h1>The science behind every color</h1><p>Every green, amber and red in the app comes from this table and these sources.</p></div>
       <div class="card">
-        <h2>Thresholds (the app's brain)</h2>
+        <h2 data-icon="table">Thresholds (the app's brain)</h2>
         <p class="muted small">Every reading turns green, amber or red using this table. Rows marked <span class="tag">proposal</span> must be confirmed by the medical team.</p>
         <div class="table-wrap" id="thresholdTable"></div>
       </div>
       <div class="grid-2">
         <div class="card">
-          <h2>Combined rules</h2>
+          <h2 data-icon="layers">Combined rules</h2>
           <ul class="fact-list" id="combinedRules"></ul>
         </div>
         <div class="card">
-          <h2>Keeping it honest</h2>
+          <h2 data-icon="shield">Keeping it honest</h2>
           <ul class="fact-list">
             <li>All crew data is simulated. CDR, PLT and MS1 are roles, not real people.</li>
             <li>A rested person's real heart rate is normal. In the demo, either raise it with 30 seconds of exercise before measuring, or show the value as simulated.</li>
@@ -304,7 +309,7 @@
         </div>
       </div>
       <div class="card">
-        <h2>Sources</h2>
+        <h2 data-icon="book">Sources</h2>
         <ul class="fact-list" id="sourceList"></ul>
       </div>
     </section>
@@ -317,7 +322,10 @@
     <div id="sidePanelBody"></div>
   </aside>
 
-  <footer class="footer">Prototype. Not a medical device. Simulated data.</footer>
+  <footer class="footer">
+    <span class="foot-brand"><img src="assets/dombit-mark-white.svg" alt="">Dombit Education · NASA Space Apps Challenge 2026</span>
+    <span>Prototype. Not a medical device. Simulated data.</span>
+  </footer>
 
   <!-- ===================== REPORT MODAL ===================== -->
   <dialog class="modal" id="reportModal">

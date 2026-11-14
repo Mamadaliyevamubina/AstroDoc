@@ -1,5 +1,5 @@
 // =========================================================================
-// PROJECT NAME — Crew Health Monitor (NASA Space Apps 2026)
+// AstroDoc — Crew Health Monitor (NASA Space Apps 2026)
 // File layout:
 //   1. MOCK          all fake data (replace with real data later)
 //   2. THRESHOLDS    the app's brain: turns numbers into normal / watch / act
@@ -1228,8 +1228,48 @@ function setSolarActivity(value) {
 
 
 // =========================================================================
+// HEADING ICONS — small line icons in a purple square (Dombit style).
+// In index.html, <h2 data-icon="moon"> gets the "moon" icon.
+// =========================================================================
+const ICONS = {
+  body:      '<circle cx="12" cy="5" r="2.5"/><path d="M12 8v7M8 10h8M12 15l-3 6M12 15l3 6"/>',
+  bell:      '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  users:     '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 5 5"/>',
+  moon:      '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  sun:       '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  flag:      '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  clipboard: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/>',
+  zap:       '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  sprout:    '<path d="M12 21v-8M12 13C12 8 8 6 4 6c0 4 3 7 8 7zM12 11c0-4 3-6 8-6 0 4-3 6-8 6z"/>',
+  gauge:     '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>',
+  pin:       '<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+  book:      '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>',
+  dumbbell:  '<path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12"/>',
+  chart:     '<path d="M4 20V4M4 20h16M8 16l4-5 3 3 5-6"/>',
+  drop:      '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+  flask:     '<path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3"/><path d="M7.5 14h9"/>',
+  plus:      '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+  alert:     '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/>',
+  check:     '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/>',
+  info:      '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  table:     '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/>',
+  layers:    '<path d="M12 3 2 8l10 5 10-5z"/><path d="M2 13l10 5 10-5"/>',
+  shield:    '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'
+};
+function decorateHeadings() {
+  document.querySelectorAll("h2[data-icon]").forEach(h => {
+    const icon = ICONS[h.dataset.icon];
+    if (!icon) return;
+    h.insertAdjacentHTML("afterbegin",
+      `<span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg></span>`);
+  });
+}
+
+
+// =========================================================================
 // START
 // =========================================================================
+decorateHeadings();
 renderScience();
 renderForms();
 renderAll();
