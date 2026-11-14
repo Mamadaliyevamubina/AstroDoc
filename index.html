@@ -3,128 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Astrodoc – Health monitoring for astronauts</title>
-  <meta name="description" content="Astrodoc turns astronaut health readings into a simple green, amber or red signal and tells the crew what to do now, without waiting for Earth.">
+  <title>Astrodoc</title>
+  <meta name="description" content="Astrodoc: simple health monitoring for astronauts far from Earth.">
   <link rel="icon" href="assets/astrodoc-favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="landing">
+<body>
 
-  <!-- ===================== TOP BAR ===================== -->
-  <header class="nav">
+  <!-- ===================== HEADER ===================== -->
+  <header class="top">
     <a class="brand" href="index.html">
-      <span class="brand-logo">
-        <img class="logo-mark-img" src="assets/astrodoc-logo-mark.png" alt="">
-        <img class="logo-name-img" src="assets/astrodoc-logo-name.png" alt="Astrodoc">
-      </span>
+      <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
+      <span class="brand-name">Astrodoc</span>
     </a>
-    <nav class="land-links">
-      <a href="#how">How it works</a>
-      <a href="#watch">What it watches</a>
-      <a href="#science">Science</a>
-    </nav>
-    <a class="primary-btn" href="dashboard.html">Open dashboard →</a>
+    <!-- Crew buttons are built in app.js -->
+    <div class="crew" id="crewSelector" role="group" aria-label="Select crew member"></div>
+    <!-- Mission line is built in app.js -->
+    <div class="mission" id="missionStrip"></div>
+    <button class="emergency-btn" id="emergencyBtn">Emergency</button>
   </header>
 
-  <main>
-    <!-- ===================== HERO ===================== -->
-    <section class="hero">
-      <div class="hero-text">
-        <span class="eyebrow">NASA Space Apps Challenge 2026</span>
-        <h1>Health monitoring for astronauts far from Earth</h1>
-        <p class="lead">On the way to Mars, a message to Earth takes up to 20 minutes, and a reply takes 40. Astrodoc turns every health reading into a simple <span class="g">green</span>, <span class="a">amber</span> or <span class="r">red</span> signal and tells the crew what to do <strong>right now</strong>.</p>
-        <div class="hero-buttons">
-          <a class="primary-btn big" href="dashboard.html">Open crew dashboard →</a>
-          <a class="ghost-btn big" href="#how">How it works</a>
+  <main class="page">
+    <div class="main-col">
+      <!-- Emergency: confirm / active banner, built in app.js -->
+      <section class="emergency-box" id="emergencyBox" hidden></section>
+
+      <!-- ===================== 1. STATUS ===================== -->
+      <section class="card status-card">
+        <div id="statusCard"></div>
+        <div class="status-foot">
+          <button class="text-btn" id="reportBtn">Send report to Earth</button>
+          <span class="muted small" id="reportNote"></span>
         </div>
-      </div>
+      </section>
 
-      <!-- Static preview of the dashboard -->
-      <div class="preview" aria-hidden="true">
-        <div class="preview-head">
-          <span class="pv-icon act">!</span>
-          <div><div class="pv-who">CDR · Commander</div><div class="pv-headline">Act now</div></div>
+      <!-- ===================== 2. FOUR READINGS ===================== -->
+      <section class="vitals" id="vitals" aria-label="Readings"></section>
+
+      <!-- ===================== 3. TODAY (input) ===================== -->
+      <section class="card today" id="today" aria-labelledby="todayTitle">
+        <h2 id="todayTitle">Today</h2>
+        <div class="today-grid">
+          <label class="field">
+            <span>Sleep last night</span>
+            <span class="input-unit"><input type="number" id="ciSleep" min="0" max="14" step="0.1" inputmode="decimal"><em>h</em></span>
+          </label>
+          <div class="field">
+            <span id="moodSelfLabel">Mood, you</span>
+            <div class="scale" id="moodSelf" role="group" aria-labelledby="moodSelfLabel"></div>
+          </div>
+          <div class="field">
+            <span id="moodMateLabel">Mood, as a crewmate sees you</span>
+            <div class="scale" id="moodMate" role="group" aria-labelledby="moodMateLabel"></div>
+          </div>
+          <div class="field">
+            <span>Water today</span>
+            <div class="counter"><button id="waterMinus" aria-label="One glass less">−</button><b id="waterCount"></b><button id="waterPlus" aria-label="One glass more">+</button></div>
+          </div>
+          <div class="field">
+            <span>Exercise this week</span>
+            <div class="counter"><button id="exMinus" aria-label="One session less">−</button><b id="exCount"></b><button id="exPlus" aria-label="One session more">+</button></div>
+          </div>
         </div>
-        <div class="pv-warning act"><strong>Tired: short sleep, slow reactions, high heart rate</strong><span>Do now: nap, lighter workload today.</span></div>
-        <div class="pv-warning watch"><strong>Crewmate sees you differently</strong><span>Do now: talk together.</span></div>
-        <div class="pv-tiles">
-          <div><span>Heart rate</span><b>112</b><i class="watch">Watch</i></div>
-          <div><span>Sleep</span><b>5.4 h</b><i class="act">Act now</i></div>
-          <div><span>Radiation</span><b>310</b><i class="watch">Watch</i></div>
+      </section>
+
+      <!-- Demo controls (for the presentation; Arduino stand-ins) -->
+      <details class="demo">
+        <summary>Demo controls</summary>
+        <div class="demo-grid">
+          <label>Solar activity (70+ = storm)<input type="range" id="solarSlider" min="0" max="100"></label>
+          <label>Location<select id="locationSelect"></select></label>
+          <label>Heart rate (bpm)<input type="number" id="simHr" value="96"></label>
+          <label>Temperature (°C)<input type="number" id="simTemp" value="36.8" step="0.1"></label>
+          <button class="soft-btn" id="simApply">Send reading</button>
         </div>
+      </details>
+    </div>
+
+    <!-- ===================== 4. COMPANION CHAT ===================== -->
+    <aside class="card chat" id="voicePanel" aria-label="Astrodoc companion">
+      <div class="face-wrap">
+        <!-- Companion face: floating features on a soft mint glow.
+             voice.js uses .eye, .pupil, .smile, .mouth-open, .brow and the classes on #face. -->
+        <svg class="face" id="face" viewBox="0 0 200 170" aria-hidden="true">
+          <defs>
+            <radialGradient id="faceGlow">
+              <stop offset="0" stop-color="#5be1c8" stop-opacity=".34"/>
+              <stop offset=".6" stop-color="#5be1c8" stop-opacity=".1"/>
+              <stop offset="1" stop-color="#5be1c8" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle class="glow" cx="100" cy="86" r="92" fill="url(#faceGlow)"/>
+          <g class="features">
+            <path class="brow brow-l" d="M50 42 Q63 34 77 39" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+            <path class="brow brow-r" d="M123 39 Q137 34 150 42" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+            <g class="eye eye-l">
+              <ellipse cx="64" cy="76" rx="17" ry="21" fill="#2a3160"/>
+              <g class="pupil">
+                <ellipse cx="64" cy="85" rx="9.5" ry="6.5" fill="#5be1c8" opacity=".6"/>
+                <circle cx="70" cy="67" r="6" fill="#fff"/>
+                <circle cx="58.5" cy="86" r="2.6" fill="#fff" opacity=".9"/>
+              </g>
+            </g>
+            <g class="eye eye-r">
+              <ellipse cx="136" cy="76" rx="17" ry="21" fill="#2a3160"/>
+              <g class="pupil">
+                <ellipse cx="136" cy="85" rx="9.5" ry="6.5" fill="#5be1c8" opacity=".6"/>
+                <circle cx="142" cy="67" r="6" fill="#fff"/>
+                <circle cx="130.5" cy="86" r="2.6" fill="#fff" opacity=".9"/>
+              </g>
+            </g>
+            <path class="happy" d="M48 80 Q64 64 80 80" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+            <path class="happy" d="M120 80 Q136 64 152 80" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+            <ellipse class="cheek" cx="40" cy="106" rx="12" ry="6.5"/>
+            <ellipse class="cheek" cx="160" cy="106" rx="12" ry="6.5"/>
+            <path class="smile" d="M90 110 Q100 119 110 110" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+            <ellipse class="mouth-open" cx="100" cy="114" rx="8" ry="7" fill="#2a3160"/>
+          </g>
+        </svg>
+        <div class="voice-crew" id="voiceCrew"></div>
+        <div class="calm-text" id="calmText"></div>
+        <button class="soft-btn calm-exit" id="calmExit">I feel better</button>
       </div>
-    </section>
 
-    <!-- ===================== THE PROBLEM ===================== -->
-    <section class="facts">
-      <div><b>20 min</b><span>one-way signal delay at Mars. The crew must act alone.</span></div>
-      <div><b>600 mSv</b><span>NASA's career radiation limit. A Mars mission uses much of it.</span></div>
-      <div><b>6 of 11</b><span>ISS crew had slowed blood flow in the neck vein. One had a clot.</span></div>
-      <div><b>6–6.5 h</b><span>average real sleep for astronauts, who rarely notice the impairment.</span></div>
-    </section>
+      <div class="voice-log" id="voiceLog" aria-live="polite"></div>
 
-    <!-- ===================== HOW IT WORKS ===================== -->
-    <section class="section" id="how">
-      <span class="eyebrow">How it works</span>
-      <h2 class="section-title">Three simple steps</h2>
-      <div class="steps">
-        <div class="step"><span class="step-n">1</span><h3>Measure</h3><p>A small sensor reads heart rate and temperature. The crew adds a daily check-in, a 1-minute reaction test and blood test results.</p></div>
-        <div class="step"><span class="step-n">2</span><h3>Check</h3><p>Every reading is compared with limits from NASA research. Astrodoc also spots dangerous <em>combinations</em>, not just single numbers.</p></div>
-        <div class="step"><span class="step-n">3</span><h3>Act</h3><p>If something is wrong, a warning appears with one clear action. A report goes to Earth, and the crew doesn't wait for the reply. Or just ask the voice assistant: <em>"How is the commander?"</em></p></div>
+      <div class="voice-chips">
+        <button data-ask="All crew status">Everyone</button>
+        <button data-ask="What should I do?">What to do?</button>
+        <button data-ask="Calm me down" class="calm-chip">Calm me down</button>
       </div>
-    </section>
 
-    <!-- ===================== COLORS ===================== -->
-    <section class="section">
-      <span class="eyebrow">One look is enough</span>
-      <h2 class="section-title">Three colors, always with a label</h2>
-      <div class="colors">
-        <div class="color-card normal"><span class="status normal">✓ Normal</span><p>Everything is fine. Keep the routine.</p></div>
-        <div class="color-card watch"><span class="status watch">▲ Watch</span><p>Something is drifting. Take the suggested step and check again.</p></div>
-        <div class="color-card act"><span class="status act">✕ Act now</span><p>Follow the action now. A report is sent to Earth.</p></div>
-      </div>
-    </section>
-
-    <!-- ===================== WHAT IT WATCHES ===================== -->
-    <section class="section" id="watch">
-      <span class="eyebrow">What it watches</span>
-      <h2 class="section-title">The biggest health risks in deep space</h2>
-      <div class="watch-grid">
-        <div class="watch-card wide"><h3>Voice assistant</h3><p>Ask out loud and hear the answer, hands-free. A friendly face can guide a calming breathing exercise.</p></div>
-        <div class="watch-card"><h3>Heart and vitals</h3><p>Heart rate, temperature and blood pressure, live from the sensor.</p></div>
-        <div class="watch-card"><h3>Sleep and mood</h3><p>Sleep debt over a week, mood, and a reaction test that measures tiredness honestly.</p></div>
-        <div class="watch-card"><h3>Crew cross-check</h3><p>You rate yourself and a crewmate rates you. A big difference is flagged.</p></div>
-        <div class="watch-card"><h3>Radiation</h3><p>A running career dose against NASA's 600 mSv limit, plus a solar storm alarm.</p></div>
-        <div class="watch-card"><h3>Bones and muscles</h3><p>Bone can't be scanned in space, so Astrodoc tracks exercise, water and vitamin D.</p></div>
-        <div class="watch-card"><h3>Blood clots</h3><p>Watches blood tests for the dangerous pattern found on the ISS, and for worsening trends.</p></div>
-      </div>
-    </section>
-
-    <!-- ===================== SCIENCE ===================== -->
-    <section class="section" id="science">
-      <span class="eyebrow">Science</span>
-      <h2 class="section-title">Built on NASA research</h2>
-      <ul class="sources">
-        <li>NASA Human Research Program: radiation, sleep, isolation and confinement</li>
-        <li>NASA OCHMO technical briefs: bone loss and radiation protection (NASA-STD-3001, 600 mSv career limit)</li>
-        <li>NASA Human Research Roadmap: risk of bone fracture</li>
-        <li>Marshall-Goebel K, et al. Jugular venous blood flow stasis and thrombosis during spaceflight. JAMA Network Open, 2019</li>
-        <li>Clinical lab reference ranges for clotting tests</li>
-      </ul>
-      <p class="muted small">Some limits are team proposals that a medical team must confirm. The full table is in the dashboard under "How colors are decided".</p>
-    </section>
-
-    <!-- ===================== CALL TO ACTION ===================== -->
-    <section class="cta">
-      <h2>See it in action</h2>
-      <p>Three simulated crew members, each with a different story.</p>
-      <a class="primary-btn big" href="dashboard.html">Open crew dashboard →</a>
-    </section>
+      <form class="voice-form" id="voiceForm">
+        <button type="button" class="mic-btn" id="micBtn" aria-label="Speak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        </button>
+        <input id="voiceInput" type="text" placeholder="Ask: how is the pilot?" autocomplete="off" aria-label="Ask Astrodoc">
+        <button class="send-btn" type="submit" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+      <div class="voice-state muted small" id="voiceState">Type, tap, or press the mic</div>
+    </aside>
   </main>
 
-  <footer class="footer">
+  <footer class="foot">
     <span>Astrodoc · Dombit Education · NASA Space Apps Challenge 2026</span>
     <span>Prototype. Not a medical device. Simulated data.</span>
   </footer>
+
+  <script src="app.js"></script>
+  <script src="voice.js"></script>
 </body>
 </html>

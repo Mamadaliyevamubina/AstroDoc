@@ -10,6 +10,8 @@
 // If the mic doesn't work, the crew can type or tap a quick button instead.
 // =========================================================================
 
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 // How we talk about each crew member in a sentence
 const VOICE_NAMES = { CDR: "Commander", PLT: "Pilot", MS1: "Mission Specialist" };
 const who = id => ({ CDR: "the commander", PLT: "the pilot", MS1: "the mission specialist" })[id];
@@ -306,7 +308,7 @@ function handleCommand(raw, fromVoice = false) {
   // Emergency first, so "help me" is never mistaken for "help"
   if (/emergency|help me|can't breathe|cannot breathe|chest pain/.test(t)) {
     $("emergencyBtn").click();
-    return reply("This is an emergency. Put the oxygen mask on and keep still. I've opened the emergency screen. Tick the signs you see, and press declare.");
+    return reply("This is an emergency. Put the oxygen mask on and keep still. Press declare on screen, and I'll send the report to Earth.");
   }
   if (/calm|anxious|scared|afraid|panic|breath|nervous|worried|relax/.test(t)) { calmMode(); return; }
   if (/^(stop|quiet|be quiet|cancel|that's all|that is all|nothing|no thanks|bye)/.test(t)) {
@@ -325,8 +327,11 @@ function handleCommand(raw, fromVoice = false) {
     const last = MOCK.earthLog[MOCK.earthLog.length - 1];
     return reply(`Done. I've sent ${who(p)}'s report to Earth. It will arrive around ${time(last.arrive)}, so the earliest reply is about ${time(last.reply)}. Keep going with the actions in the meantime.`);
   }
-  if (/check.?in/.test(t)) { openModal("checkinModal"); return reply("Sure, here's the daily check-in."); }
-  if (/reaction/.test(t)) { openModal("reactionModal"); return reply("Okay, here's the reaction test. Press start when you're ready."); }
+  if (/check.?in|log|enter|input/.test(t)) {
+    $("today").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+    $("ciSleep").focus({ preventScroll: true });
+    return reply("Sure. Fill in today's sleep and mood here. It saves as you go.");
+  }
   if (/all crew|everyone|everybody|whole crew|crew status|team/.test(t)) return reply(allCrew());
   if (/\bwhat\b.*\bdo\b|what now|next step|action/.test(t)) return reply(whatToDo(p));   // "what should the pilot do?"
 
@@ -410,23 +415,10 @@ function showVoiceCrew() {
   $("face").classList.toggle("caring", S.overall === "act");
 }
 
-// Open / close the full-screen assistant
-let greeted = false;
-function openVoice() {
-  $("voicePanel").hidden = false;
-  showVoiceCrew();
-  if (!greeted) {
-    greeted = true;
-    lastWasVoice = false;
-    reply("Hi, I'm Astrodoc. Ask me how anyone on the crew is doing. Just press the mic, or tap a button.");
-  }
-}
-function closeVoice() { stopCalm(); stopListening(); $("voicePanel").hidden = true; }
-
-$("voiceFab").onclick = openVoice;
-$("voiceClose").onclick = closeVoice;
+// The companion is always on the page. Calm mode opens it full screen.
+function openVoice() { showVoiceCrew(); }
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && !$("voicePanel").hidden && !document.querySelector("dialog[open]")) closeVoice();
+  if (e.key === "Escape" && $("voicePanel").classList.contains("calm")) { stopCalm(); lastWasVoice = false; }
 });
 $("calmExit").onclick = () => { stopCalm(); lastWasVoice = false; reply("Good. I'm glad. I'm here if you need me."); };
 $("micBtn").onclick = () => startListening();
@@ -437,7 +429,6 @@ document.querySelectorAll("[data-ask]").forEach(b => b.onclick = () => handleCom
 // =========================================================================
 // 7. FACE LIFE — natural blinks and eyes that follow the cursor
 // =========================================================================
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Blink at random moments (sometimes twice), like a real face
 function blinkLoop() {
@@ -457,8 +448,12 @@ if (!reduceMotion) {
     const dx = e.clientX - (box.left + box.width / 2);
     const dy = e.clientY - (box.top + box.height / 2);
     const dist = Math.hypot(dx, dy) || 1;
-    const move = Math.min(1, dist / 400) * 5;                  // at most 5 units inside the eye
+    const move = Math.min(1, dist / 400) * 3.5;                // at most 3.5 units inside the eye
     const x = dx / dist * move, y = dy / dist * move;
     document.querySelectorAll("#face .pupil").forEach(p => p.style.transform = `translate(${x}px, ${y}px)`);
   });
 }
+
+// Greet in the conversation (no sound until the user interacts)
+addLog("assistant", "Hi, I'm Astrodoc. Ask me how anyone on the crew is doing.");
+showVoiceCrew();

@@ -4,8 +4,8 @@
 //   1. MOCK          all fake data (replace with real data later)
 //   2. THRESHOLDS    turns numbers into normal / watch / act
 //   3. CHECK         looks at one crew member and builds the warning list
-//   4. SHOW          draws the page
-//   5. FORMS         check-in, reaction test, blood test, exercise, report
+//   4. SHOW          draws the one page (status, 4 readings)
+//   5. INPUT         today's input, clot checklist, report, emergency
 //   6. DEMO + SENSOR solar storm, location, Arduino hooks
 // =========================================================================
 
@@ -261,121 +261,71 @@ function buildWarnings(id, c, S) {
 
 
 // =========================================================================
-// 4. SHOW — draw the page
+// 4. SHOW — draw the one page
 // =========================================================================
 const $ = id => document.getElementById(id);
 const LABEL = { normal: "Normal", watch: "Watch", act: "Act now" };
 const ICON = {
-  normal: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.5 8.2 7 10.5l4.5-5" stroke="#0c1438" stroke-width="2" fill="none"/></svg>',
-  watch:  '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 15 14H1Z" fill="currentColor"/><rect x="7.2" y="5.5" width="1.6" height="4.5" fill="#0c1438"/><rect x="7.2" y="11" width="1.6" height="1.6" fill="#0c1438"/></svg>',
-  act:    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 1h6l4 4v6l-4 4H5l-4-4V5Z" fill="currentColor"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#0c1438" stroke-width="2"/></svg>'
+  normal: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.5 8.2 7 10.5l4.5-5" stroke="#fff" stroke-width="2" fill="none"/></svg>',
+  watch:  '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 15 14H1Z" fill="currentColor"/><rect x="7.2" y="5.5" width="1.6" height="4.5" fill="#fff"/><rect x="7.2" y="11" width="1.6" height="1.6" fill="#fff"/></svg>',
+  act:    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 1h6l4 4v6l-4 4H5l-4-4V5Z" fill="currentColor"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#fff" stroke-width="2"/></svg>'
 };
 const badge = (status, text) => `<span class="status ${status}">${ICON[status]}${text || LABEL[status]}</span>`;
 const time = (d = new Date()) => d.toTimeString().slice(0, 5);
 const addMin = (d, m) => new Date(d.getTime() + m * 60000);
 
-// Small line icons used on buttons (data-icon="...")
-const LINE_ICONS = {
-  clipboard: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/>',
-  zap:       '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
-  flask:     '<path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3"/><path d="M7.5 14h9"/>',
-  dumbbell:  '<path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12"/>',
-  send:      '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>'
-};
-document.querySelectorAll("[data-icon]").forEach(el => {
-  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${LINE_ICONS[el.dataset.icon] || ""}</svg>`;
-});
-
-// Crew buttons, each with a warning sign
+// Crew buttons, each with its status sign
 function showCrew() {
   $("crewSelector").innerHTML = Object.keys(MOCK.crew).map(id => {
     const S = check(id);
-    return `<button class="crew-btn ${id === currentCrew ? "active" : ""} ${S.overall}" data-crew="${id}" title="${MOCK.crew[id].role}: ${LABEL[S.overall]}">
-      <span class="crew-dot">${ICON[S.overall]}</span>${id}</button>`;
+    return `<button class="crew-btn ${id === currentCrew ? "active" : ""} ${S.overall}" data-crew="${id}"
+      aria-pressed="${id === currentCrew}" title="${MOCK.crew[id].role}: ${LABEL[S.overall]}">
+      <span class="crew-dot">${ICON[S.overall]}</span>${id}<span class="sr-only">, ${LABEL[S.overall]}</span></button>`;
   }).join("");
   document.querySelectorAll("[data-crew]").forEach(b => b.onclick = () => {
-    currentCrew = b.dataset.crew; emergency.active = false; emergency.signs = {}; showAll();
+    currentCrew = b.dataset.crew; emergency.active = false; emergency.signs = {}; emergencyAsk = false; showAll();
   });
 }
 
 function showMission() {
   const m = MOCK.mission, last = MOCK.earthLog[MOCK.earthLog.length - 1];
-  const sensorLive = MOCK.crew[currentCrew].vitals.source === "live";
-  $("missionStrip").innerHTML = `
-    <span><strong>Day ${m.day}</strong> · ${m.phase}</span>
-    <span>${MOCK.locations[m.location].label}</span>
-    <span>Earth delay ${m.signalDelayMin} min</span>
-    ${last ? `<span>Last report sent ${time(last.sent)}, reply ~${time(last.reply)}</span>` : ""}
-    <span class="sensor ${sensorLive ? "on" : ""}"><span class="dot"></span>Sensor ${sensorLive ? "connected" : "not connected"}</span>`;
+  $("missionStrip").innerHTML = `<span>Day ${m.day} · ${m.phase}</span><span>Earth delay ${m.signalDelayMin} min</span>` +
+    (last ? `<span>Last report ${time(last.sent)}, reply ~${time(last.reply)}</span>` : "");
 }
 
-// Big status + warning list
+// Status: the most urgent thing and what to do now. Other things as short lines.
 function showStatus(S) {
   const c = MOCK.crew[currentCrew];
-  const acts = S.warnings.filter(w => w.status === "act").length;
-  const watches = S.warnings.length - acts;
-  const headline = { normal: "All good", watch: "Keep watching", act: "Act now" }[S.overall];
-  const sub = S.warnings.length
-    ? [acts ? `${acts} urgent` : "", watches ? `${watches} to watch` : ""].filter(Boolean).join(" · ")
-    : "Every reading is in the normal range. Keep the routine.";
-
-  $("statusCard").className = "status-card " + S.overall;
-  $("statusCard").innerHTML = `
-    <div class="status-main">
-      <div class="big-icon">${ICON[S.overall]}</div>
-      <div>
-        <div class="who">${currentCrew} · ${c.role}</div>
-        <div class="headline">${headline}</div>
-        <div class="sub">${sub}</div>
-        <div class="points">${c.points} points</div>
-      </div>
-    </div>
-    <div class="warnings">
-      ${S.warnings.length ? showWarnings(S.warnings)
-      : `<div class="all-good">${ICON.normal} No warnings. Nothing to do right now.</div>`}
-    </div>`;
-  wireOpeners();
-}
-
-// Most urgent warning big, the others as one-line rows ("act" before "watch")
-function showWarnings(list) {
-  const sorted = [...list].sort((a, b) => RANK[b.status] - RANK[a.status]);
-  const clotBtn = w => w.extra === "clot" ? `<button class="ghost-btn small-btn" data-open="clotModal">Open clot checklist</button>` : "";
+  const sorted = [...S.warnings].sort((a, b) => RANK[b.status] - RANK[a.status]);
   const [first, ...rest] = sorted;
-  return `
-    <div class="warning primary ${first.status}">
-      <span class="w-icon">${ICON[first.status]}</span><span class="sr-only">${LABEL[first.status]}:</span>
-      <div><div class="w-title">${first.title}</div><div class="w-do"><strong>Do now:</strong> ${first.todo}</div>${clotBtn(first)}</div>
-    </div>
-    ${rest.length ? `<ul class="w-rows">${rest.map(w => `
-      <li class="warning row ${w.status}" title="${w.title}. Do now: ${w.todo}">
-        <span class="w-icon">${ICON[w.status]}</span><span class="sr-only">${LABEL[w.status]}:</span>
-        <span class="w-title">${w.title}</span>
-        <span class="w-do">${w.todo}</span>
-        ${clotBtn(w)}
-      </li>`).join("")}</ul>` : ""}`;
+  $("statusCard").innerHTML = `
+    <div class="st-top"><span class="who">${currentCrew} · ${c.role}</span>${badge(S.overall)}</div>
+    ${first ? `
+      <h1 class="st-title">${first.title}</h1>
+      <p class="st-do"><span class="do-label">Do now</span>${first.todo}</p>
+      ${first.extra === "clot" || rest.some(w => w.extra === "clot") ? clotSteps() : ""}
+      ${rest.length ? `<ul class="st-more">${rest.map(w => `
+        <li class="${w.status}" title="Do now: ${w.todo}">${ICON[w.status]}<span class="sr-only">${LABEL[w.status]}:</span><span>${w.title}</span></li>`).join("")}</ul>` : ""}`
+    : `<h1 class="st-title">All good</h1><p class="st-do">Every reading is in the normal range. Keep the routine.</p>`}`;
+  document.querySelectorAll("[data-step]").forEach(cb => cb.onchange = () => {
+    checklistDone[currentCrew][cb.dataset.step] = cb.checked; cb.closest("li").classList.toggle("done", cb.checked);
+  });
 }
 
-// 8 simple tiles
-function showTiles(S) {
+// Four readings only. Everything else is still checked and shows up above when it matters.
+function showVitals(S) {
   const c = MOCK.crew[currentCrew];
-  const src = c.vitals.source === "live" ? "Live sensor" : "Simulated";
-  const tiles = [
-    { name: "Heart rate",     value: c.vitals.hr, unit: "bpm", status: S.hr, note: "Normal 60–100 at rest · " + src },
-    { name: "Temperature",    value: c.vitals.temp.toFixed(1), unit: "°C", status: S.temp, note: "Normal 36.1–37.2 · " + src },
-    { name: "Blood pressure", value: `${c.vitals.bpSys}/${c.vitals.bpDia}`, unit: "", status: S.bp, note: "Normal under 120/80" },
-    { name: "Sleep",          value: S.lastNight, unit: "h", status: S.sleep, note: `Last night · ${S.debt.toFixed(1)} h short this week` },
-    { name: "Mood",           value: S.moodValue, unit: "/ 5", status: worst(S.mood, S.biggestGap.status), note: `You ${c.checkin.self.mood} · crewmate ${c.checkin.mate.mood}` },
-    { name: "Radiation",      value: `<span id="doseValue">${S.dose.toFixed(1)}</span>`, unit: "mSv", status: S.radiation, note: "Career total · limit 600", bar: Math.min(100, S.dose / 6) },
-    { name: "Exercise",       value: c.exercise, unit: "/ 7 days", status: S.exercise, note: "Target 6–7 sessions a week" },
-    { name: "Blood tests",    value: S.clotPattern ? "Danger" : S.labOut.length ? `${S.labOut.length} off` : "OK", unit: "", status: S.blood, note: `Last test day ${c.labs[c.labs.length - 1].day}` }
+  const items = [
+    { name: "Heart rate", value: c.vitals.hr, unit: "bpm", status: S.hr },
+    { name: "Sleep",      value: S.lastNight, unit: "h", status: S.sleep },
+    { name: "Mood",       value: S.moodValue, unit: "/ 5", status: worst(S.mood, S.biggestGap.status) },
+    { name: "Radiation",  value: `<span id="doseValue">${S.dose.toFixed(0)}</span>`, unit: "of 600 mSv", status: S.radiation }
   ];
-  $("tiles").innerHTML = tiles.map(t => `
-    <div class="tile ${t.status}">
-      <div class="tile-head"><span>${t.name}</span>${badge(t.status)}</div>
-      <div class="tile-value">${t.value}<span class="unit">${t.unit}</span></div>
-      ${t.bar !== undefined ? `<div class="mini-bar"><div style="width:${t.bar}%"></div></div>` : ""}
-      <div class="tile-note">${t.note}</div>
+  $("vitals").innerHTML = items.map(t => `
+    <div class="vital ${t.status}">
+      <span class="v-name">${t.name}</span>
+      <span class="v-value">${t.value}<small>${t.unit}</small></span>
+      ${badge(t.status)}
     </div>`).join("");
 }
 
@@ -384,148 +334,56 @@ function showAll() {
   showCrew();
   showMission();
   showStatus(S);
-  showTiles(S);
+  showVitals(S);
+  showEmergency();
+  fillToday(MOCK.crew[currentCrew]);
   autoReport(S);
-  // Warning count in the browser tab, e.g. "(2) Astrodoc"
-  document.title = (S.warnings.length ? `(${S.warnings.length}) ` : "") + "Astrodoc – Crew dashboard";
+  if (typeof showVoiceCrew === "function") showVoiceCrew();
+  document.title = (S.warnings.length ? `(${S.warnings.length}) ` : "") + "Astrodoc";
 }
 
 
 // =========================================================================
-// 5. FORMS — modals
+// 5. INPUT — everything saves at once, no forms to submit
 // =========================================================================
-function wireOpeners() {
-  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openModal(b.dataset.open));
+function scaleButtons(el, value) {
+  el.innerHTML = [1, 2, 3, 4, 5].map(n =>
+    `<button type="button" data-v="${n}" aria-pressed="${n === value}" class="${n === value ? "on" : ""}">${n}</button>`).join("");
 }
-document.querySelectorAll("dialog [data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
-
-function openModal(id) {
-  const c = MOCK.crew[currentCrew];
-  if (id === "checkinModal") fillCheckin(c);
-  if (id === "labModal") fillLabs(c);
-  if (id === "activityModal") fillActivity(c);
-  if (id === "clotModal") fillChecklist();
-  if (id === "limitsModal") fillLimits();
-  $(id).showModal();
-}
-
-// --- Daily check-in ---
-function fillCheckin(c) {
-  const q = Math.min(4, Math.floor(MOCK.mission.day / MOCK.mission.lengthDays * 4) + 1);
-  $("checkinNote").textContent = `${currentCrew}. Mission quarter ${q} of 4: check in ${q === 3 ? "twice a day (third-quarter mood dip)" : "once a day"}.`;
-  $("ciSleep").value = c.sleep.nights[c.sleep.nights.length - 1];
-  $("ciAwake").value = c.sleep.hoursAwake;
-  const opts = v => [1, 2, 3, 4, 5].map(n => `<option ${n === v ? "selected" : ""}>${n}</option>`).join("");
-  $("checkinGrid").innerHTML = `<span></span><span class="head">You</span><span class="head">Crewmate</span>` +
-    ["energy", "focus", "mood"].map(m => `<span>${m[0].toUpperCase() + m.slice(1)}</span>
-      <select id="self-${m}">${opts(c.checkin.self[m])}</select><select id="mate-${m}">${opts(c.checkin.mate[m])}</select>`).join("");
-}
-$("checkinSave").onclick = () => {
-  const c = MOCK.crew[currentCrew];
-  const sleep = parseFloat($("ciSleep").value), awake = parseFloat($("ciAwake").value);
-  if (!isNaN(sleep)) c.sleep.nights[c.sleep.nights.length - 1] = sleep;
-  if (!isNaN(awake)) c.sleep.hoursAwake = awake;
-  ["energy", "focus", "mood"].forEach(m => {
-    c.checkin.self[m] = Number($("self-" + m).value);
-    c.checkin.mate[m] = Number($("mate-" + m).value);
-  });
-  c.points += 10;
-  $("checkinModal").close();
-  showAll();
-};
-
-// --- Reaction test: 1 minute, tap when the box turns mint ---
-const rt = { running: false, shownAt: null, times: [], timer: null, endTimer: null };
-function rtNext() {
-  rt.timer = setTimeout(() => {
-    rt.shownAt = performance.now();
-    $("reactionBox").className = "reaction-box go"; $("reactionBox").textContent = "NOW!";
-    rt.timer = setTimeout(() => { if (rt.shownAt) { rt.times.push(2000); rtWait(); rtNext(); } }, 2000);  // no answer = slow
-  }, 1000 + Math.random() * 3000);
-}
-function rtWait() { rt.shownAt = null; $("reactionBox").className = "reaction-box running"; $("reactionBox").textContent = "Wait…"; }
-function rtTap() {
-  if (!rt.running) return;
-  if (!rt.shownAt) { $("reactionBox").textContent = "Too early. Wait…"; return; }
-  rt.times.push(performance.now() - rt.shownAt);
-  clearTimeout(rt.timer); rtWait(); rtNext();
-}
-function rtStart() {
-  if (rt.running) return;
-  Object.assign(rt, { running: true, times: [] });
-  $("reactionResult").innerHTML = "";
-  rtWait(); rtNext();
-  rt.endTimer = setTimeout(rtFinish, 60000);
-}
-function rtFinish() {
-  if (!rt.running) return;
-  clearTimeout(rt.timer); clearTimeout(rt.endTimer);
-  rt.running = false;
-  $("reactionBox").className = "reaction-box";
-  if (!rt.times.length) { $("reactionBox").textContent = "No answers. Try again."; return; }
-  const c = MOCK.crew[currentCrew];
-  const avg = Math.round(rt.times.reduce((a, b) => a + b, 0) / rt.times.length);
-  c.reaction.lastMs = avg;
-  c.points += 10;
-  const S = check(currentCrew);
-  $("reactionBox").textContent = `${avg} ms average`;
-  $("reactionResult").innerHTML = `<p>${badge(S.reaction, `${LABEL[S.reaction]}: ${S.reactionPct > 0 ? "+" : ""}${S.reactionPct}% vs your usual ${c.reaction.baselineMs} ms`)}</p>`;
-  showAll();
-}
-$("reactionStart").onclick = rtStart;
-$("reactionStop").onclick = rtFinish;
-$("reactionBox").addEventListener("pointerdown", rtTap);
-document.addEventListener("keydown", e => { if (rt.running && e.code === "Space") { e.preventDefault(); rtTap(); } });
-$("reactionModal").addEventListener("close", rtFinish);
-
-// --- Blood test ---
-function fillLabs(c) {
-  $("labForm").innerHTML = LABS.map(L => `<label>${L.name}${L.unit ? ` <span class="muted">(${L.unit})</span>` : ""}<input type="number" step="any" id="lab-${L.key}"></label>`).join("");
-  const recent = c.labs.slice(-3);
-  $("labHistory").innerHTML = `<p class="small muted" style="margin-top:12px">Recent results</p><div class="table-wrap"><table>
-    <tr><th>Test</th>${recent.map(e => `<th>Day ${e.day}</th>`).join("")}</tr>
-    ${LABS.map(L => `<tr><td>${L.name}</td>${recent.map(e => e[L.key] == null ? "<td>—</td>" : `<td class="c-${L.classify(e[L.key])}">${e[L.key]}</td>`).join("")}</tr>`).join("")}
-  </table></div>`;
-}
-$("labSave").onclick = () => {
-  const c = MOCK.crew[currentCrew], entry = { day: MOCK.mission.day };
-  let any = false;
-  LABS.forEach(L => { const v = parseFloat($("lab-" + L.key).value); if (!isNaN(v)) { entry[L.key] = v; any = true; } });
-  if (any) c.labs.push(entry);
-  $("labModal").close();
-  showAll();
-};
-
-// --- Exercise & water ---
-function fillActivity(c) {
-  $("exCount").textContent = c.exercise;
+function fillToday(c) {
+  if (document.activeElement !== $("ciSleep")) $("ciSleep").value = c.sleep.nights[c.sleep.nights.length - 1];
+  scaleButtons($("moodSelf"), c.checkin.self.mood);
+  scaleButtons($("moodMate"), c.checkin.mate.mood);
   $("waterCount").textContent = `${c.water.glasses} / ${c.water.goal}`;
-  $("vitD").value = c.vitD ?? "";
+  $("exCount").textContent = `${c.exercise} / 7`;
 }
-function changeActivity(fn) { const c = MOCK.crew[currentCrew]; fn(c); fillActivity(c); showAll(); }
-$("exPlus").onclick = () => changeActivity(c => { if (c.exercise < 7) { c.exercise++; c.points += 15; } });
-$("exMinus").onclick = () => changeActivity(c => { if (c.exercise > 0) { c.exercise--; c.points = Math.max(0, c.points - 15); } });
-$("waterPlus").onclick = () => changeActivity(c => { c.water.glasses++; c.points += 2; });
-$("waterMinus").onclick = () => changeActivity(c => { if (c.water.glasses > 0) c.water.glasses--; });
-$("vitD").oninput = () => { const v = parseFloat($("vitD").value); MOCK.crew[currentCrew].vitD = isNaN(v) ? null : v; showAll(); };
+const update = fn => { fn(MOCK.crew[currentCrew]); showAll(); };
 
-// --- Clot checklist ---
+$("ciSleep").onchange = () => {
+  const v = parseFloat($("ciSleep").value);
+  if (!isNaN(v)) update(c => { c.sleep.nights[c.sleep.nights.length - 1] = v; });
+};
+$("moodSelf").onclick = e => { const b = e.target.closest("[data-v]"); if (b) update(c => { c.checkin.self.mood = Number(b.dataset.v); }); };
+$("moodMate").onclick = e => { const b = e.target.closest("[data-v]"); if (b) update(c => { c.checkin.mate.mood = Number(b.dataset.v); }); };
+$("waterPlus").onclick  = () => update(c => { c.water.glasses++; });
+$("waterMinus").onclick = () => update(c => { if (c.water.glasses > 0) c.water.glasses--; });
+$("exPlus").onclick  = () => update(c => { if (c.exercise < 7) c.exercise++; });
+$("exMinus").onclick = () => update(c => { if (c.exercise > 0) c.exercise--; });
+
+// --- Clot checklist (shown inside the status when the clot warning is on) ---
 const CLOT_STEPS = [
   "Stop work. Sit or lie still.",
-  "Check for emergency signs: hard to breathe, chest pain, one-sided weakness, speech problem. If yes: press MEDICAL EMERGENCY.",
+  "Check for emergency signs: hard to breathe, chest pain, one-sided weakness, speech problem. If yes: press Emergency.",
   "Note the time any symptom started.",
   "Drink water.",
   "Send the report to the flight surgeon now. Don't wait for a reply.",
   "Prepare the ultrasound for a neck-vein check.",
   "Repeat D-dimer, platelets and fibrinogen within 24 hours."
 ];
-function fillChecklist() {
+function clotSteps() {
   const done = checklistDone[currentCrew] = checklistDone[currentCrew] || {};
-  $("clotChecklist").innerHTML = CLOT_STEPS.map((s, i) =>
-    `<li class="${done[i] ? "done" : ""}"><label><input type="checkbox" data-step="${i}" ${done[i] ? "checked" : ""}><span>${i + 1}. ${s}</span></label></li>`).join("");
-  document.querySelectorAll("[data-step]").forEach(cb => cb.onchange = () => {
-    done[cb.dataset.step] = cb.checked; cb.closest("li").classList.toggle("done", cb.checked);
-  });
+  return `<details class="clot" open><summary>Blood clot checklist</summary><ol class="checklist">${CLOT_STEPS.map((s, i) =>
+    `<li class="${done[i] ? "done" : ""}"><label><input type="checkbox" data-step="${i}" ${done[i] ? "checked" : ""}><span>${s}</span></label></li>`).join("")}</ol></details>`;
 }
 
 // --- Report to Earth (does not wait for a reply) ---
@@ -540,64 +398,43 @@ function autoReport(S) {
   if (sent) showMission();
 }
 $("reportBtn").onclick = () => {
-  const c = MOCK.crew[currentCrew], S = check(currentCrew), m = MOCK.mission;
-  $("reportBody").innerHTML = `
-    <p class="muted small">${currentCrew} (${c.role}) · Day ${m.day}, ${m.phase} · Ship time ${time()}</p>
-    <p><strong>Overall:</strong> ${badge(S.overall)}</p>
-    ${S.warnings.length ? `<ul>${S.warnings.map(w => `<li><strong>${w.title}.</strong> Crew is doing: ${w.todo}</li>`).join("")}</ul>` : "<p>No warnings.</p>"}
-    <p class="small">Heart rate ${c.vitals.hr} bpm · Temp ${c.vitals.temp} °C · BP ${c.vitals.bpSys}/${c.vitals.bpDia} · Sleep ${S.lastNight} h · Radiation ${S.dose.toFixed(0)} mSv</p>
-    <p class="muted small">Signal delay ${m.signalDelayMin} min. The crew is already acting and is not waiting for a reply.</p>
-    <div id="reportSent"></div>`;
-  $("reportModal").showModal();
-};
-$("reportSend").onclick = () => {
   sendToEarth(`${currentCrew}: health report`);
   const last = MOCK.earthLog[MOCK.earthLog.length - 1];
-  $("reportSent").innerHTML = `<div class="notice">Sent at ${time(last.sent)}. Arrives ~${time(last.arrive)}. Earliest reply ~${time(last.reply)}.</div>`;
+  $("reportNote").textContent = `Sent ${time(last.sent)}. Earliest reply ~${time(last.reply)}. Keep going meanwhile.`;
   showMission();
 };
 
-// --- Emergency ---
-const SIGNS = ["Hard to breathe", "Chest pain", "One-sided weakness", "Speech problem", "Severe side pain (kidney stone?)"];
-$("emergencyBtn").onclick = () => {
-  $("emergencySigns").innerHTML = SIGNS.map((s, i) => `<label class="sign-option"><input type="checkbox" data-sign="${i}" ${emergency.signs[i] ? "checked" : ""}>${s}</label>`).join("");
-  $("emergencyStatus").innerHTML = emergency.active ? `<div class="notice">Emergency is active for ${currentCrew}.</div>` : "";
-  $("emergencyModal").showModal();
-};
-$("emergencyDeclare").onclick = () => {
-  emergency.signs = {};
-  document.querySelectorAll("[data-sign]").forEach(cb => { if (cb.checked) emergency.signs[cb.dataset.sign] = true; });
-  emergency.active = true;
-  sendToEarth(`${currentCrew}: MEDICAL EMERGENCY (top priority)`);
-  const last = MOCK.earthLog[MOCK.earthLog.length - 1];
-  $("emergencyStatus").innerHTML = `<div class="notice">Reported at top priority at ${time(last.sent)}. Act now: oxygen mask, keep still.</div>`;
-  showAll();
-};
-$("emergencyClear").onclick = () => { emergency.active = false; emergency.signs = {}; $("emergencyModal").close(); showAll(); };
-
-// --- How colors are decided ---
-const LIMITS = [
-  ["Heart rate at rest (bpm)", "60–100", "50–59 or 101–120", "under 50 or over 120", true],
-  ["Temperature (°C)", "36.1–37.2", "37.3–37.9 or 35.0–36.0", "38.0+ or under 35.0", true],
-  ["Blood pressure (mmHg)", "under 120/80", "120–139 or 80–89", "140/90 or more", true],
-  ["Sleep last night (h)", "7–9", "6 to under 7", "under 6, or awake 17+ h", false],
-  ["Sleep short this week (h below 8)", "under 4", "4 to under 10", "10 or more", true],
-  ["Mood (lower of you and crewmate)", "4–5", "3", "1–2", true],
-  ["You vs crewmate gap", "0–1", "2", "3 or more", true],
-  ["Reaction time vs usual", "under 10% slower", "10–20% slower", "over 20% slower", true],
-  ["Radiation career dose (mSv)", "under 300", "300–480", "over 480, or solar storm", true],
-  ["Exercise sessions per week", "6–7", "4–5", "3 or fewer", true],
-  ["D-dimer (mg/L FEU)", "0.50 or less", "0.5–4.0", "over 4.0", false],
-  ["Platelets (×10⁹/L)", "150–400", "30–150 or 400–1,000", "under 30 or over 1,000", true],
-  ["Fibrinogen (mg/dL)", "200–395", "100–200 or over 395", "under 100", true],
-  ["Clot pattern", "—", "—", "high D-dimer + low platelets + low fibrinogen", false],
-  ["Vitamin D (ng/mL)", "35–90", "outside 35–90", "—", false]
-];
-function fillLimits() {
-  $("limitsTable").innerHTML = `<table><tr><th>Reading</th><th>${badge("normal")}</th><th>${badge("watch")}</th><th>${badge("act")}</th></tr>
-    ${LIMITS.map(r => `<tr><td>${r[0]}${r[4] ? ' <span class="tag">proposal</span>' : ""}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</table>
-    <p class="muted small" style="margin-top:10px">Sources: NASA Human Research Program, NASA OCHMO bone and radiation briefs (600 mSv career limit, NASA-STD-3001), Marshall-Goebel et al., JAMA Network Open 2019, lab reference ranges.</p>`;
+// --- Emergency: ask once, then show what to do ---
+let emergencyAsk = false;
+function showEmergency() {
+  const box = $("emergencyBox");
+  if (emergency.active) {
+    const last = [...MOCK.earthLog].reverse().find(e => /EMERGENCY/.test(e.title));
+    box.className = "emergency-box active";
+    box.innerHTML = `<div><strong>Medical emergency · ${currentCrew}</strong>
+      <p><b>Do now:</b> oxygen mask, keep the person still.${last ? ` Reported to Earth at ${time(last.sent)}.` : ""}</p></div>
+      <button class="soft-btn" id="emergencyClear">Clear</button>`;
+    $("emergencyClear").onclick = () => { emergency.active = false; emergency.signs = {}; showAll(); };
+  } else if (emergencyAsk) {
+    box.className = "emergency-box";
+    box.innerHTML = `<div><strong>Declare a medical emergency for ${currentCrew}?</strong>
+      <p>This sends a top-priority report to Earth.</p></div>
+      <div class="row"><button class="soft-btn" id="emergencyCancel">Cancel</button><button class="danger-btn" id="emergencyDeclare">Declare and report</button></div>`;
+    $("emergencyCancel").onclick = () => { emergencyAsk = false; showEmergency(); };
+    $("emergencyDeclare").onclick = () => {
+      emergencyAsk = false; emergency.active = true;
+      sendToEarth(`${currentCrew}: MEDICAL EMERGENCY (top priority)`);
+      showAll();
+    };
+  }
+  box.hidden = !(emergency.active || emergencyAsk);
 }
+$("emergencyBtn").onclick = () => {
+  if (!emergency.active) emergencyAsk = true;
+  showEmergency();
+  $("emergencyBox").scrollIntoView({ block: "nearest" });
+  ($("emergencyDeclare") || $("emergencyClear")).focus();
+};
 
 
 // =========================================================================
@@ -631,7 +468,7 @@ setInterval(() => {
   Object.values(MOCK.crew).forEach(c => c.radiation.accrued += doseRatePerDay() / 24);
   const S = check(currentCrew);
   if (S.radiation !== before) showAll();
-  else if ($("doseValue")) $("doseValue").textContent = S.dose.toFixed(1);
+  else if ($("doseValue")) $("doseValue").textContent = S.dose.toFixed(0);
 }, 1000);
 
 
