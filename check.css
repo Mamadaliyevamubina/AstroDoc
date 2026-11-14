@@ -216,3 +216,16 @@
   .k-mood { padding: var(--s4); }
 }
 @media (prefers-reduced-motion: reduce) { .mood-card:hover { transform: none; } }
+
+/* The mood card on the dashboard (same pieces as the check's last step) */
+.mood-sec { padding: var(--s5); }
+.mood-sec h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+.mood-sec .muted { margin-top: 2px; font-size: 14px; }
+.mood-sec .mood-grid { margin-top: var(--s4); }
+.mood-sec .mood-card { min-height: 128px; background: rgba(255, 255, 255, .6); }
+.mood-sec .mood-card[aria-checked="true"] { background: #fff; }
+.mood-help { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--edge); }
+.mood-title { font-size: 17px; font-weight: 600; line-height: 1.35; color: var(--ink); }
+.mood-help .k-why { margin-top: var(--s1); }
+@media (max-width: 760px) { .mood-sec .mood-card { min-height: 0; } }
+@media (max-width: 640px) { .mood-sec { padding: var(--s4); } }

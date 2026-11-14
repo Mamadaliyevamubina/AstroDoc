@@ -1,6 +1,8 @@
 // =========================================================================
 // Astrodoc — MOOD CHECK-IN ("How is your inner orbit today?")
-// A step of "Check how I feel" (check.html), just before the result.
+// Used in two places, with the same pieces:
+//   - the dashboard (index.html): its own card for your own health
+//   - "Check how I feel" (check.html): a step just before the result
 //   - Five moods, from "Drifting in deep space" (1) to "Supernova" (5).
 //   - The choice is saved as your own mood (1–5), the same value as
 //     "Your mood" on the dashboard, so it counts in your health status
@@ -79,35 +81,43 @@ function moonSvg(lit) {
 
 const mood = { picked: null, idea: 0, done: new Set() };
 
-// --- The step: pick one of five ---
+// --- The five choices ---
+function moodCards(selected) {
+  return `<div class="mood-grid" role="radiogroup" aria-label="Your mood">
+    ${MOODS.map(m => `
+      <button type="button" class="mood-card" role="radio" aria-checked="${selected === m.v}" data-mood="${m.v}">
+        ${moonSvg((m.v - 1) / 4)}
+        <span class="mood-num">${m.v}</span>
+        <span class="mood-short">${m.short}</span>
+        <span class="mood-name">${m.name}</span>
+      </button>`).join("")}
+  </div>`;
+}
+// Clicks and the 1–5 keys
+function bindMoodCards(root, onPick) {
+  root.querySelectorAll("[data-mood]").forEach(b => b.onclick = () => onPick(+b.dataset.mood));
+  root.querySelector(".mood-grid").onkeydown = e => {
+    if (/^[1-5]$/.test(e.key)) { e.preventDefault(); onPick(+e.key); }
+  };
+}
+
+// --- The step in "Check how I feel" ---
 function drawMood() {
-  const now = mood.picked ?? null;
   $("stage").innerHTML = `
     <h1>How is your inner orbit today?</h1>
     <p class="k-lead">Long missions ask a lot of body and mind. Take a quiet breath, check in honestly, and pick what fits how you feel right now.</p>
-    <div class="mood-grid" role="radiogroup" aria-label="Your mood">
-      ${MOODS.map(m => `
-        <button type="button" class="mood-card" role="radio" aria-checked="${now === m.v}" data-mood="${m.v}">
-          ${moonSvg((m.v - 1) / 4)}
-          <span class="mood-num">${m.v}</span>
-          <span class="mood-short">${m.short}</span>
-          <span class="mood-name">${m.name}</span>
-        </button>`).join("")}
-    </div>
+    ${moodCards(mood.picked)}
     <div class="k-actions">
       <button class="soft-btn" id="backBtn">Back</button>
-      <button class="primary-btn" id="nextBtn" ${now ? "" : "disabled"}>See my result</button>
+      <button class="primary-btn" id="nextBtn" ${mood.picked ? "" : "disabled"}>See my result</button>
     </div>`;
-  $("stage").querySelectorAll("[data-mood]").forEach(b => b.onclick = () => {
-    mood.picked = +b.dataset.mood; mood.idea = 0; mood.done.clear();
-    $("stage").querySelectorAll("[data-mood]").forEach(x => x.setAttribute("aria-checked", String(x === b)));
+  bindMoodCards($("stage"), v => {
+    if (mood.picked !== v) { mood.idea = 0; mood.done.clear(); }
+    mood.picked = v;
+    $("stage").querySelectorAll("[data-mood]").forEach(x => x.setAttribute("aria-checked", String(+x.dataset.mood === v)));
+    $("stage").querySelector(`[data-mood="${v}"]`).focus();
     $("nextBtn").disabled = false;
   });
-  // Arrow keys move between the moods, 1–5 pick directly
-  $("stage").querySelector(".mood-grid").onkeydown = e => {
-    const n = /^[1-5]$/.test(e.key) ? +e.key : null;
-    if (n) { e.preventDefault(); $("stage").querySelector(`[data-mood="${n}"]`).click(); $("stage").querySelector(`[data-mood="${n}"]`).focus(); }
-  };
   $("backBtn").onclick = () => go("measure");
   $("nextBtn").onclick = () => {
     if (!mood.picked) return;
@@ -117,74 +127,108 @@ function drawMood() {
   };
 }
 
-// --- At the end of the result: "Your mood" ---
-function moodResult() {
-  const m = MOODS.find(x => x.v === mood.picked);
+// --- What helps: kind words, an idea, today's list, the journal ---
+function moodHelp(v, { head = true } = {}) {
+  const m = MOODS.find(x => x.v === v);
   if (!m) return "";
   const S = check(me);
   const [ideaTitle, ideaText] = m.ideas[mood.idea % m.ideas.length];
   return `
-    <section class="k-mood" aria-labelledby="moodTitle">
-      <header class="k-mood-head">
-        ${moonSvg((m.v - 1) / 4)}
-        <div>
-          <span class="k-rank">Your mood · ${m.v} of 5 · ${m.name}</span>
-          <h2 id="moodTitle">${m.title}</h2>
-        </div>
-      </header>
-      <p class="k-why">${m.message}</p>
-      ${S.moodValue < m.v ? `<p class="k-mood-note">Your crewmate rated your mood ${S.moodValue} of 5, so your health status uses ${S.moodValue}.</p>` : ""}
-      <div class="k-cols">
-        <div>
-          <h3>Something that could help</h3>
-          <div class="k-idea">
-            <b>${ideaTitle}</b>
-            <p>${ideaText}</p>
-            <button class="text-btn" id="ideaBtn">Another idea</button>
-          </div>
-        </div>
-        <div>
-          <h3>Today <span class="k-count" id="todoCount">${mood.done.size} of ${m.todo.length} done</span></h3>
-          <ul class="k-todo">${m.todo.map((t, i) => `
-            <li><label><input type="checkbox" data-todo="${i}" ${mood.done.has(i) ? "checked" : ""}><span>${t}</span></label></li>`).join("")}
-          </ul>
+    ${head ? `<header class="k-mood-head">
+      ${moonSvg((m.v - 1) / 4)}
+      <div>
+        <span class="k-rank">Your mood · ${m.v} of 5 · ${m.name}</span>
+        <h2>${m.title}</h2>
+      </div>
+    </header>` : `<h3 class="mood-title">${m.title}</h3>`}
+    <p class="k-why">${m.message}</p>
+    ${S.moodValue < m.v ? `<p class="k-mood-note">Your crewmate rated your mood ${S.moodValue} of 5, so your health status uses ${S.moodValue}.</p>` : ""}
+    <div class="k-cols">
+      <div>
+        <h3>Something that could help</h3>
+        <div class="k-idea">
+          <b data-idea-title>${ideaTitle}</b>
+          <p data-idea-text>${ideaText}</p>
+          <button type="button" class="text-btn" data-idea-next>Another idea</button>
         </div>
       </div>
-      <div class="k-journal">
-        <label for="journalText"><h3>Journal</h3><span>${m.prompt}</span></label>
-        <textarea id="journalText" rows="3" placeholder="Only you can see this. It stays on this device."></textarea>
-        <div class="k-journal-row">
-          <button class="soft-btn" id="journalSave">Save note</button>
-          <a class="text-btn" href="chat.html#ask=${encodeURIComponent("Calm me down")}">Breathe with Astrodoc</a>
-          <span class="k-note" id="journalNote" aria-live="polite"></span>
-        </div>
-        <ul class="k-notes" id="journalList">${journalItems()}</ul>
+      <div>
+        <h3>Today <span class="k-count" data-todo-count>${mood.done.size} of ${m.todo.length} done</span></h3>
+        <ul class="k-todo">${m.todo.map((t, i) => `
+          <li><label><input type="checkbox" data-todo="${i}" ${mood.done.has(i) ? "checked" : ""}><span>${t}</span></label></li>`).join("")}
+        </ul>
       </div>
-    </section>`;
+    </div>
+    <div class="k-journal">
+      <label><h3>Journal</h3><span>${m.prompt}</span>
+        <textarea data-journal rows="3" placeholder="Only you can see this. It stays on this device."></textarea></label>
+      <div class="k-journal-row">
+        <button type="button" class="soft-btn" data-journal-save>Save note</button>
+        <a class="text-btn" href="chat.html#ask=${encodeURIComponent("Calm me down")}">Breathe with Astrodoc</a>
+        <span class="k-note" data-journal-note aria-live="polite"></span>
+      </div>
+      <ul class="k-notes" data-journal-list>${journalItems()}</ul>
+    </div>`;
 }
-function bindMoodResult() {
-  if (!$("ideaBtn")) return;
-  const m = MOODS.find(x => x.v === mood.picked);
-  $("ideaBtn").onclick = () => {
+function bindMoodHelp(root, v) {
+  const m = MOODS.find(x => x.v === v);
+  if (!m || !root.querySelector("[data-idea-next]")) return;
+  const q = sel => root.querySelector(sel);
+  q("[data-idea-next]").onclick = () => {
     mood.idea++;
     const [t, d] = m.ideas[mood.idea % m.ideas.length];
-    $("ideaBtn").parentElement.querySelector("b").textContent = t;
-    $("ideaBtn").parentElement.querySelector("p").textContent = d;
+    q("[data-idea-title]").textContent = t;
+    q("[data-idea-text]").textContent = d;
   };
-  document.querySelectorAll("[data-todo]").forEach(c => c.onchange = () => {
+  root.querySelectorAll("[data-todo]").forEach(c => c.onchange = () => {
     c.checked ? mood.done.add(+c.dataset.todo) : mood.done.delete(+c.dataset.todo);
-    $("todoCount").textContent = `${mood.done.size} of ${m.todo.length} done`;
+    q("[data-todo-count]").textContent = `${mood.done.size} of ${m.todo.length} done`;
   });
-  $("journalSave").onclick = () => {
-    const text = $("journalText").value.trim();
-    if (!text) { $("journalNote").textContent = "Write a few words first."; $("journalText").focus(); return; }
+  q("[data-journal-save]").onclick = () => {
+    const text = q("[data-journal]").value.trim();
+    if (!text) { q("[data-journal-note]").textContent = "Write a few words first."; q("[data-journal]").focus(); return; }
     const list = journal();
     list.unshift({ when: new Date().toISOString(), mood: m.v, text: text.slice(0, 1000) });
     try { localStorage.setItem(JOURNAL, JSON.stringify(list.slice(0, 30))); } catch { }
-    $("journalText").value = "";
-    $("journalNote").textContent = "Saved.";
-    $("journalList").innerHTML = journalItems();
+    q("[data-journal]").value = "";
+    q("[data-journal-note]").textContent = "Saved.";
+    q("[data-journal-list]").innerHTML = journalItems();
   };
+}
+
+// --- At the end of the check's result ---
+function moodResult() {
+  return mood.picked ? `<section class="k-mood" id="moodResult" aria-label="Your mood">${moodHelp(mood.picked)}</section>` : "";
+}
+function bindMoodResult() { if ($("moodResult")) bindMoodHelp($("moodResult"), mood.picked); }
+
+// --- The dashboard card (your own health only) ---
+// Drawn again only when the mood or the person changes, so a half-written note is never lost.
+let moodDrawn = "";
+function showMoodCard() {
+  const el = $("moodCard");
+  if (!el || !me) return;
+  const v = MOCK.crew[me].checkin.self.mood, key = `${me}:${v}`;
+  if (key === moodDrawn) return;
+  if (moodDrawn && moodDrawn.split(":")[1] !== String(v)) { mood.idea = 0; mood.done.clear(); }
+  moodDrawn = key;
+  const hadFocus = el.contains(document.activeElement);
+  el.innerHTML = `
+    <div class="mood-top">
+      <div>
+        <h2 id="moodCardTitle">How is your inner orbit today?</h2>
+        <p class="muted">Pick what fits how you feel right now. It counts as your mood.</p>
+      </div>
+    </div>
+    ${moodCards(v)}
+    <div class="mood-help">${moodHelp(v, { head: false })}</div>`;
+  bindMoodCards(el, pick => {
+    mutate(() => { MOCK.crew[me].checkin.self.mood = pick; autoReport(me); });
+    if (typeof showAll === "function") showAll(); else showMoodCard();
+    const b = el.querySelector(`[data-mood="${pick}"]`); if (b) b.focus();
+  });
+  bindMoodHelp(el.querySelector(".mood-help"), v);
+  if (hadFocus) { const b = el.querySelector('[aria-checked="true"]'); if (b) b.focus(); }
 }
 
 // Journal notes: private, only on this device

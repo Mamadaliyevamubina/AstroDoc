@@ -177,6 +177,7 @@ function showAll() {
   showVitals(S);
   showEmergency();
   fillToday(MOCK.crew[currentCrew]);
+  showMoodCard();
   $("changeUser").textContent = `Not the ${MOCK.crew[me].role.toLowerCase()}? Change user`;
   document.title = (S.warnings.length ? `(${S.warnings.length}) ` : "") + "Astrodoc";
 }
@@ -197,7 +198,6 @@ function scaleButtons(el, value) {
 }
 function fillToday(c) {
   if (document.activeElement !== $("ciSleep")) $("ciSleep").value = c.sleep.nights[c.sleep.nights.length - 1];
-  scaleButtons($("moodSelf"), c.checkin.self.mood);
   scaleButtons($("moodMate"), c.checkin.mate.mood);
   $("waterCount").textContent = `${c.water.glasses} / ${c.water.goal}`;
   $("exCount").textContent = `${c.exercise} / 7`;
@@ -213,7 +213,7 @@ $("ciSleep").onchange = () => {
   if (!isNaN(v) && v >= 0 && v <= 24) update(c => { c.sleep.nights[c.sleep.nights.length - 1] = v; });
   else $("ciSleep").value = MOCK.crew[currentCrew].sleep.nights.at(-1);
 };
-$("moodSelf").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; const v = Number(b.dataset.v); update(c => { c.checkin.self.mood = v; }); keepFocus("moodSelf", v); };
+// Your own mood is picked in the mood card (mood.js)
 $("moodMate").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; const v = Number(b.dataset.v); update(c => { c.checkin.mate.mood = v; }); keepFocus("moodMate", v); };
 $("waterPlus").onclick  = () => { update(c => { c.water.glasses++; }); $("waterPlus").focus(); };
 $("waterMinus").onclick = () => { update(c => { if (c.water.glasses > 0) c.water.glasses--; }); $("waterMinus").focus(); };
