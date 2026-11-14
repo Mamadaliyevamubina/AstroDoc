@@ -445,7 +445,7 @@ input:focus-visible, select:focus-visible { outline: none; box-shadow: inset 0 0
 .c-preview svg { width: 14px; height: 14px; }
 .c-preview:disabled { opacity: .45; cursor: default; }
 .c-ai { display: flex; gap: 6px; }
-.c-ai[hidden] { display: none; }
+.c-ai[hidden], .c-preview[hidden] { display: none; }
 .c-ai input { flex: 1; min-width: 0; }
 .c-ai .soft-btn { padding-inline: var(--s3); }
 .c-icon .off, .voice-off .c-icon .on { display: none; }
