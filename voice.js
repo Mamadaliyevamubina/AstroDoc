@@ -1109,14 +1109,14 @@ function suggestFor(t) {
 // =========================================================================
 // --- Real cases: what happened to real astronauts and what their doctors did (data/space-medicine-cases.js) ---
 const CASES = (window.SPACE_CASES && window.SPACE_CASES.cases) || [];   // from data/space-medicine-cases.js
-const CASE_WORDS = [
-  [/\b(clot|d-?dimer|blood test|thrombosis)\b/, "clot"], [/\b(heart|pulse|bpm|rhythm|palpitation)/, "hr"],
-  [/\b(tired|exhausted|fatigue|sleepy)\b/, "tired"], [/\b(sleep|slept|insomnia|awake)\b/, "sleep"],
-  [/\b(lonely|homesick|sad|down|depressed|mood)\b/, "mood"], [/\b(stress|stressed|anxious|nervous)\b/, "stress"],
-  [/\b(headache|head hurts|migraine)\b/, "headache"], [/\b(nausea|nauseous|sick|vomit|throw up|space sickness)\b/, "nausea"],
-  [/\b(fever|temperature|hot|chills)\b/, "temp"], [/\b(cold|flu|cough|sneez)/, "cold"], [/\b(stuffy|blocked nose|congest)/, "congestion"],
-  [/\b(back|spine)\b/, "back"], [/\b(eye|eyes|vision|blurry|see)\b/, "vision"], [/\b(pain|hurts|sore|ache)\b/, "pain"],
-  [/\b(skin|rash|itch)/, "skin"], [/\b(stomach|diarrh|bowel)/, "stomach"], [/\b(infection|urin)/, "infection"]
+const CASE_WORDS = [            // word starts, so "sleeping", "headaches" and "vomited" match too
+  [/\b(clot|d-?dimer|blood test|thrombo)/, "clot"], [/\b(heart|pulse|bpm|rhythm|palpitat)/, "hr"],
+  [/\b(tired|exhaust|fatigue|sleepy|weary)/, "tired"], [/\b(sleep|slept|insomnia|awake|nap)/, "sleep"],
+  [/\b(lonel|homesick|sad\b|down\b|depress|mood|miss (my|home|family))/, "mood"], [/\b(stress|anxi|nervous|panic|worr)/, "stress"],
+  [/\b(headache|head hurt|head ache|migraine)/, "headache"], [/\b(nause|sick|vomit|throw(ing)? up|threw up|space sickness)/, "nausea"],
+  [/\b(fever|temperature|hot\b|chill)/, "temp"], [/\b(cold\b|colds\b|flu\b|cough|sneez)/, "cold"], [/\b(stuffy|blocked nose|congest|nose)/, "congestion"],
+  [/\b(back\b|backache|spine|spinal)/, "back"], [/\b(eye|vision|blur|see\b|sight)/, "vision"], [/\b(pain|hurt|sore|ache)/, "pain"],
+  [/\b(skin|rash|itch)/, "skin"], [/\b(stomach|diarrh|bowel|gas\b)/, "stomach"], [/\b(infect|urin)/, "infection"]
 ];
 // Cases about what was said, or else about the current topic and the person's problems
 function casesFor(text, id = ctx.crew) {
@@ -1235,7 +1235,7 @@ function understand(raw) {
 
   // --- 5a. Real astronaut cases ("has this happened before?") ---
   if (/^(another|next|one more)( real)? (case|story|example)\b/.test(t) && ctx.cases) return tellCase(ctx.cases.list, ctx.cases.i);
-  if (/\b(real (astronaut|case|story|example)s?|happened (before|in space|to (an|other|real) astronauts?)|other astronauts|(did|have|do) (any |other |real )?astronauts|has (this|it|that|anyone) (ever )?happened|in (space )?history|what did (the )?(nasa )?doctors do)\b/.test(t))
+  if (/\b(real (astronaut|case|story|example)s?|happened (before|in space|to (an|other|real) astronauts?)|other astronauts|(did|have|do) (any |other |real )?astronauts|(has|have|did) any ?(one|body)|has (this|it|that|anyone) (ever )?happened|in (space )?history|what did (the )?(nasa )?doctors do)\b/.test(t))
     return tellCase(casesFor(t.replace(/\b(real|astronauts?|case|story|example|happened|before|space|history|nasa|doctors?)\b/g, " "), mine));
 
   // --- 5b. Several things at once ("I slept 6 hours and drank 2 glasses of water") ---
