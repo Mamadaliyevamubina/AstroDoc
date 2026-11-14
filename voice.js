@@ -43,7 +43,7 @@ let muted = localStorage.getItem("astrodoc-mute") === "1";
 
 // Voice settings: female or male voice, and speed. Saved on this device.
 const VOICE_PREFS = "astrodoc-voice";
-const prefs = { gender: "female", rate: 1 };
+const prefs = { gender: "male", rate: 1 };     // male = calm British "JARVIS-style" voice
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(VOICE_PREFS)) || {}); } catch { }
 let voiceExact = true;          // false = this device has no voice of that kind, so the pitch is shifted instead
 
@@ -63,6 +63,9 @@ function chooseVoice() {
     if (/^Google/i.test(n)) s += 60;                         // Chrome's online voices
     if (/Samantha|Ava|Daniel|Alex|Aria|Jenny|Guy|Andrew/i.test(n)) s += 30;
     if (/en[-_]US/i.test(v.lang)) s += 10; else if (/en[-_]GB/i.test(v.lang)) s += 6;
+    // JARVIS-style: the male voice should be a polished British one
+    if (want === "male" && /en[-_]GB/i.test(v.lang)) s += 150;
+    if (want === "male" && /Daniel|Arthur|Oliver|George|Ryan|Thomas|Google UK English Male/i.test(n)) s += 40;
     const g = genderOf(v);
     if (g === want) s += 300; else if (g) s -= 300;
     // macOS novelty voices sound robotic: never use them
@@ -74,8 +77,9 @@ function chooseVoice() {
   voiceExact = !bestVoice || genderOf(bestVoice) === want;
   if (typeof updateVoiceMenu === "function") updateVoiceMenu();
 }
+const otherVoice = () => prefs.gender === "male" ? "Use a female voice" : "Use a male voice";
 // Pitch: a touch higher or lower for each kind; more if we had to fake it
-const voicePitch = () => prefs.gender === "male" ? (voiceExact ? 0.95 : 0.7) : (voiceExact ? 1.05 : 1.25);
+const voicePitch = () => prefs.gender === "male" ? (voiceExact ? 0.9 : 0.7) : (voiceExact ? 1.05 : 1.25);
 function setVoicePrefs(change) {
   Object.assign(prefs, change);
   localStorage.setItem(VOICE_PREFS, JSON.stringify(prefs));
@@ -762,9 +766,9 @@ function capabilities() {
       <li><b>Earth</b>: “Send a report”, “Send a message home”</li>
       <li><b>Explain</b>: “What is D-dimer?”, “What does needs care mean?”</li>
       <li><b>Support</b>: “Calm me down”, “I feel lonely”, “Talk to me”</li>
-      <li><b>Voice</b>: “Use a male voice”, “Speak slower”, “Call me Sam”</li>
+      <li><b>Voice</b>: “${otherVoice()}”, “Speak slower”, “Call me Sam”</li>
       <li><b>Emergency</b>: just say “emergency”</li></ul>`,
-    chips: ["Give me a briefing", "Do my check-in", "Who needs the most help?", "Use a male voice"] };
+    chips: ["Give me a briefing", "Do my check-in", "Who needs the most help?", otherVoice()] };
 }
 
 // --- Compare the crew ---
@@ -969,10 +973,10 @@ function changeVoice(change) {
     const g = change.gender;
     return { say: voiceExact ? pick([`Okay. This is my ${g} voice. How does it sound?`, `Sure. Here's my ${g} voice. Better?`])
                             : `This device doesn't have a ${g} English voice, so I've changed my pitch instead. You can add more voices in your system's speech settings.`,
-      face: "joy", chips: [g === "male" ? "Use a female voice" : "Use a male voice", "Speak slower", "Thanks"] };
+      face: "joy", chips: [otherVoice(), "Speak slower", "Thanks"] };
   }
   return { say: prefs.rate < 1 ? "Okay, I'll speak more slowly." : prefs.rate > 1 ? "Okay, I'll speak a bit faster." : "Okay, back to my normal speed.",
-    chips: [prefs.rate < 1 ? "Normal speed" : "Speak slower", "Use a male voice", "Thanks"] };
+    chips: [prefs.rate < 1 ? "Normal speed" : "Speak slower", otherVoice(), "Thanks"] };
 }
 
 // --- "Did you mean…?" when I don't understand ---
