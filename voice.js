@@ -39,6 +39,8 @@ const partOfDay = () => { const h = new Date().getHours(); return h < 5 ? "eveni
 // 2. VOICE — choose the most natural voice and speak in short sentences
 // =========================================================================
 let bestVoice = null;
+let neural = null;              // the natural (neural) voice model, once loaded (see speak)
+let neuralAudio = null;         // the natural-voice sentence playing right now
 let muted = localStorage.getItem("astrodoc-mute") === "1";
 
 // Voice settings: female or male voice, and speed. Saved on this device.
@@ -107,8 +109,6 @@ function speakable(text) {
 // It downloads once in the background (about 90 MB, then cached); until it's ready,
 // or if it fails, the device's own voice is used instead.
 const NEURAL_VOICE = { male: "bm_george", female: "af_heart" };   // calm British man, warm American woman
-let neural = null;              // the loaded model, or null
-let neuralAudio = null;         // the sentence playing right now
 let neuralQueue = Promise.resolve();
 function loadNeuralVoice() {
   const lowEnd = (navigator.connection && navigator.connection.saveData) || (navigator.deviceMemory && navigator.deviceMemory < 4);
