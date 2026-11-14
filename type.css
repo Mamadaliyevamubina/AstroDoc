@@ -1,0 +1,203 @@
+/* =========================================================
+   ASTRODOC — TYPE (loaded last, after style.css and check.css)
+
+   Two families, each with one job:
+   - Atkinson Hyperlegible Next: everything you read and tap.
+     Made by the Braille Institute for low-vision readers: every letter
+     and number is easy to tell apart (I l 1, 0 O). Right for tired eyes.
+   - Sora: the voice. Headings, big numbers, the brand. Wide, calm, a
+     little space-age.
+   Both are SIL Open Font License, self-hosted (assets/fonts), work offline.
+
+   Sizes: everything is one step bigger than before. Body 17px, smallest
+   text 13px. Labels are sentence case instead of spaced capitals.
+   Sizes below are generated from style.css / check.css, then the
+   hand-tuned roles at the end win.
+   ========================================================= */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("assets/fonts/atkinson-next.woff2") format("woff2");
+  font-weight: 200 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Sora";
+  src: url("assets/fonts/sora.woff2") format("woff2");
+  font-weight: 100 800; font-style: normal; font-display: swap;
+}
+:root {
+  --font: "Atkinson Hyperlegible Next", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Sora", "Atkinson Hyperlegible Next", -apple-system, "Segoe UI", sans-serif;
+}
+
+/* --- sizes from style.css, scaled up --- */
+body { font-size: 16.5px; }
+.small { font-size: 14.5px; }
+.label, .who, .v-name, .field > span:first-child, .c-about-label, .choice-note { font-size: 14.5px; }
+.status { font-size: 14.5px; }
+.soft-btn, .danger-btn { font-size: 15.5px; }
+.text-btn { font-size: 15.5px; }
+.welcome h1 { font-size: 40px; }
+.welcome p { font-size: 17.5px; }
+.choice-name { font-size: 21px; }
+.choice-note { font-size: 14.5px; }
+.brand-name { font-size: 16.5px; }
+.who-btn { font-size: 15.5px; }
+.who-btn .change { font-size: 14.5px; }
+.mission { font-size: 14.5px; }
+.talk-link { font-size: 15.5px; }
+.emergency-btn { font-size: 15.5px; }
+.emergency-box strong { font-size: 17.5px; }
+.emergency-box p { font-size: 15.5px; }
+.help-btn { font-size: 14.5px; }
+.level-help p { font-size: 15.5px; }
+.st-title { font-size: 32px; }
+.st-do { font-size: 17.5px; }
+.do-label { font-size: 14.5px; }
+.st-more li { font-size: 15.5px; }
+.st-more small { font-size: 14.5px; }
+.clot summary { font-size: 15.5px; }
+.checklist li { font-size: 15.5px; }
+.v-value { font-size: 40px; }
+.v-value small { font-size: 14.5px; }
+.today h2 { font-size: 14.5px; }
+input[type=number], input[type=text], select { font-size: 16.5px; }
+.scale button, .counter button { font-size: 16.5px; }
+.counter b { font-size: 20px; }
+.counter button { font-size: 20px; }
+.demo { font-size: 14.5px; }
+.foot { font-size: 14.5px; }
+.c-back { font-size: 15.5px; }
+.c-about { font-size: 15.5px; }
+.c-menu-item { font-size: 16.5px; }
+.c-menu-title { font-size: 13px; }
+.seg button { font-size: 15.5px; }
+.c-menu-note { font-size: 14.5px; }
+.c-state { font-size: 14.5px; }
+.m { font-size: 17.5px; }
+.m-act { font-size: 15.5px; }
+.c-chips button { font-size: 15.5px; }
+.c-composer input { font-size: 17.5px; }
+.c-hint { font-size: 14.5px; }
+.c-hint kbd { font-size: 14px; }
+.chat-page.calm .calm-text { font-size: 36px; }
+@media (max-width: 640px) {
+  .welcome h1 { font-size: 32px; }
+  .v-value { font-size: 32px; }
+  .st-title { font-size: 23px; }
+  .m { font-size: 17px; }
+}
+.crew-name { font-size: 16.5px; }
+.crew-name small { font-size: 14.5px; }
+.crew-why { font-size: 14.5px; }
+.primary-btn { font-size: 15.5px; }
+.st-sent { font-size: 14.5px; }
+.chart figcaption b { font-size: 15.5px; }
+.chart figcaption span { font-size: 14.5px; }
+.chart .band-label { font-size: 12px; }
+.chart .tick, .chart .day { font-size: 12px; }
+.chart .val { font-size: 13px; }
+.chart-note { font-size: 14.5px; }
+.today-note { font-size: 15.5px; }
+.scale-ends { font-size: 13px; }
+body.viewing-mate .today h2 { font-size: 20px; }
+.foot .text-btn { font-size: 14.5px; }
+#aboutName small, .c-menu-item small { font-size: 14.5px; }
+.m-bars .bar i { font-size: 13px; }
+.m-bars-cap { font-size: 13px; }
+.side-title { font-size: 13px; }
+.side-link { font-size: 15.5px; }
+.side-small { font-size: 14.5px; }
+.side-crew-name { font-size: 15.5px; }
+.side-crew-name small { font-size: 13px; }
+.side-crew-why { font-size: 14.5px; }
+.side-rem { font-size: 15.5px; }
+.side-rem time { font-size: 14.5px; }
+.side-foot { font-size: 13px; }
+/* --- sizes from check.css, scaled up --- */
+.k-exit { font-size: 15.5px; }
+.k-step { font-size: 14.5px; }
+.k-stage h1 { font-size: 36px; }
+.k-lead { font-size: 17.5px; }
+.k-note { font-size: 15.5px; }
+.k-actions .primary-btn, .k-actions .danger-btn, .k-actions .soft-btn { font-size: 16.5px; }
+.k-hint { font-size: 14.5px; }
+.k-chip { font-size: 16.5px; }
+.k-picked { font-size: 15.5px; }
+.k-flags label { font-size: 17.5px; }
+.k-do { font-size: 16.5px; }
+.k-emergency .k-do { font-size: 20px; }
+.k-place { font-size: 15.5px; }
+.k-answer { font-size: 18.5px; }
+.k-answer kbd { font-size: 13px; }
+.k-measure input { font-size: 24px; }
+.k-rank { font-size: 14.5px; }
+.k-cause h2 { font-size: 24px; }
+.k-why { font-size: 16.5px; }
+.k-cols h3 { font-size: 15.5px; }
+.k-ev { font-size: 15.5px; }
+.k-final .primary-btn, .k-final .soft-btn { font-size: 16.5px; }
+.check-link { font-size: 15.5px; }
+@media (max-width: 640px) {
+  .k-stage h1 { font-size: 28px; }
+  .k-chip { font-size: 15.5px; }
+}
+
+/* =========================================================
+   ROLES (hand-tuned; these win over the generated sizes)
+   ========================================================= */
+body { font-family: var(--font); font-size: 17px; line-height: 1.55; letter-spacing: .003em; }
+p, li { text-wrap: pretty; }
+input, select, textarea, button { font-family: inherit; }
+
+/* Voice: headings, names, big numbers */
+h1, h2, h3, .st-title, .choice-name, .brand-name, .v-value, .counter b, .calm-text,
+.crew-name, .side-crew-name, .k-cause h2, .chart figcaption b, .emergency-box strong {
+  font-family: var(--font-display);
+}
+.st-title { font-weight: 600; letter-spacing: -.022em; line-height: 1.18; text-wrap: balance; }
+.welcome h1 { font-size: 42px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+.k-stage h1 { font-size: 36px; font-weight: 600; letter-spacing: -.028em; line-height: 1.15; }
+.k-cause h2 { font-size: 24px; font-weight: 600; letter-spacing: -.02em; }
+.choice-name { font-weight: 600; letter-spacing: -.01em; }
+.brand-name { font-weight: 600; letter-spacing: .2em; }
+.v-value { font-size: 46px; font-weight: 300; letter-spacing: -.035em; line-height: 1.1; }
+.v-value small { font-family: var(--font); letter-spacing: 0; font-weight: 500; }
+.counter b { font-size: 22px; font-weight: 400; }
+.calm-text { font-size: 38px; font-weight: 300; letter-spacing: -.01em; }
+.crew-name, .side-crew-name { font-weight: 600; letter-spacing: -.005em; }
+
+/* Reading: a touch bigger, a touch more air */
+.st-do { font-size: 19px; line-height: 1.5; }
+.k-lead { font-size: 18px; line-height: 1.55; }
+.k-why { font-size: 16.5px; line-height: 1.6; }
+.m { font-size: 18px; line-height: 1.6; }
+.st-more b { font-weight: 700; }
+
+/* Labels: sentence case and readable, not spaced capitals */
+.label, .who, .v-name, .field > span:first-child, .c-about-label, .choice-note,
+.side-title, .c-state, .do-label {
+  text-transform: none; letter-spacing: .01em;
+}
+.label, .who, .v-name, .field > span:first-child, .c-about-label { font-size: 15px; font-weight: 700; }
+.choice-note { font-size: 15px; font-weight: 500; }
+.side-title { font-size: 14px; font-weight: 700; }
+.c-state { font-size: 14px; letter-spacing: .02em; }
+.do-label { font-size: 14.5px; font-weight: 700; }
+.today h2 { font-family: var(--font-display); text-transform: none; letter-spacing: -.01em; font-size: 21px; font-weight: 600; color: var(--ink); }
+body.viewing-mate .today h2 { font-size: 21px; }
+
+/* Numbers line up in readings, tiles and the chart */
+.v-value, .counter b, .k-measure input { font-variant-numeric: tabular-nums; }
+/* Atkinson's tabular figures look like code; keep its normal figures in running text */
+.mission, .chart svg, .st-sent, #reportNote, .side, .tick, .day, .val { font-variant-numeric: normal; }
+
+/* Phones: keep it big, but let headings fit */
+@media (max-width: 640px) {
+  body { font-size: 17px; }
+  .welcome h1 { font-size: 32px; }
+  .st-title { font-size: 25px; }
+  .k-stage h1 { font-size: 28px; }
+  .v-value { font-size: 36px; }
+  .st-do { font-size: 18px; }
+  .m { font-size: 17.5px; }
+}

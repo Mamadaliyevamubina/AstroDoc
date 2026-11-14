@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check how I feel · Astrodoc</title>
+  <meta name="theme-color" content="#0c1438">
+  <link rel="icon" href="assets/astrodoc-favicon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="check.css">
+  <link rel="stylesheet" href="type.css">
+</head>
+<body class="check-page">
+
+  <header class="k-top">
+    <a class="brand" href="index.html">
+      <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
+      <span class="brand-name">Astrodoc</span>
+    </a>
+    <!-- Progress: which step, and how far along -->
+    <div class="k-progress" aria-hidden="true"><span id="progressBar"></span></div>
+    <a class="k-exit" href="index.html">Exit check</a>
+  </header>
+
+  <main class="k-main">
+    <p class="k-step" id="stepLabel" aria-live="polite"></p>
+    <!-- Each step is drawn here by check.js -->
+    <section id="stage" class="k-stage" tabindex="-1"></section>
+  </main>
+
+  <footer class="foot">
+    <span>A first indication, not a diagnosis. The medical team must confirm the rules.</span>
+    <span>Prototype. Not a medical device. Simulated data.</span>
+  </footer>
+
+  <script src="core.js"></script>
+  <script src="check.js"></script>
+</body>
+</html>

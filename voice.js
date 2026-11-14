@@ -924,7 +924,12 @@ function parseDuration(t) {
 const durationWords = ms => ms < 60000 ? plural(Math.round(ms / 1000), "second", "seconds")
   : ms < 3600000 ? plural(Math.round(ms / 60000), "minute", "minutes")
   : ms % 3600000 === 0 ? plural(ms / 3600000, "hour", "hours") : `${(ms / 3600000).toFixed(1)} hours`;
-function saveReminders() { try { sessionStorage.setItem(REMIND, JSON.stringify(reminders)); } catch { } }
+function saveReminders() { try { sessionStorage.setItem(REMIND, JSON.stringify(reminders)); } catch { } renderSide(); }
+// After a reload, set the timers again (missed ones ring right away)
+function restoreReminders() {
+  try { reminders = (JSON.parse(sessionStorage.getItem(REMIND)) || []).filter(r => r.due > Date.now() - 10 * 60000); } catch { reminders = []; }
+  reminders.forEach(armReminder);
+}
 function armReminder(r) { timers.set(r.id, setTimeout(() => fireReminder(r), Math.max(0, r.due - Date.now()))); }
 function addReminder(what, ms) {
   const r = { id: Date.now() + Math.random(), what, due: Date.now() + ms, ms };
@@ -1663,16 +1668,32 @@ function updateAbout() {
   $("crewMenu").innerHTML = Object.keys(MOCK.crew).map(id =>
     `<button type="button" class="c-menu-item ${id === ctx.crew ? "on" : ""}" data-pick="${id}"><span>${MOCK.crew[id].role}</span>${badge(check(id).overall)}</button>`).join("");
   $("face").classList.toggle("caring", S.overall === "act");
+  renderSide();
+}
+function talkAbout(id) {
+  ctx.steps = ctx.confirm = ctx.expect = ctx.flow = null;
+  stopSpeaking();
+  deliver(assess(id, { intro: `Okay, let's talk about ${who(id)}. ` }));
 }
 $("crewMenu").addEventListener("click", e => {
   const b = e.target.closest("[data-pick]");
   if (!b) return;
   if ($("crewMenu").hidePopover) $("crewMenu").hidePopover();
-  const id = b.dataset.pick;
-  ctx.steps = ctx.confirm = ctx.expect = null;
-  stopSpeaking();
-  deliver(assess(id, { intro: `Okay, let's talk about ${who(id)}. ` }));
+  talkAbout(b.dataset.pick);
 });
+
+// Sidebar hooks: who we talk about, switching, and the reminders list
+function sideCurrent() { return ctx.crew; }
+function sideView(id) { talkAbout(id); }
+function sideExtras() {
+  if (!reminders.length) return "";
+  const label = r => r.what === "nap" ? "Wake up from nap" : r.what === "timer" ? "Timer" : Cap(r.what);
+  return `<section class="side-group" aria-labelledby="sideRemTitle">
+    <h2 class="side-title" id="sideRemTitle">Reminders</h2>
+    ${reminders.slice().sort((a, b) => a.due - b.due).map(r => `<div class="side-rem">${SIDE_ICON.bell}<span>${escapeHtml(label(r))}</span><time>${time(new Date(r.due))}</time></div>`).join("")}
+    <button type="button" class="side-link side-small" data-say="Cancel reminders"><span>Cancel all</span></button>
+  </section>`;
+}
 
 function updateMute() {
   $("muteBtn").setAttribute("aria-label", muted ? "Voice settings, voice is off" : "Voice settings");
@@ -1735,6 +1756,7 @@ startDosimeter(changed => { if (changed) updateAbout(); });
 
 // START
 updateMute();
+restoreReminders();
 const restored = restoreHistory();
 updateAbout();
 if (!restored) {
@@ -1744,4 +1766,7 @@ if (!restored) {
   setChips(g.chips);
   expression(g.face);
 } else setChips(defaultChips());
+// Opened from the dashboard sidebar with a question ready ("chat.html#ask=…")
+const asked = decodeURIComponent((location.hash.match(/^#ask=(.+)$/) || [])[1] || "");
+if (asked) { history.replaceState(null, "", location.pathname); setTimeout(() => respond(asked), 500); }
 if (matchMedia("(pointer: fine)").matches) $("voiceInput").focus({ preventScroll: true });

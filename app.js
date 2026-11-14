@@ -171,6 +171,7 @@ function showAll() {
   const S = check(currentCrew);
   document.body.classList.toggle("viewing-mate", !isMe(currentCrew));
   showCrewStrip();
+  renderSide();
   showMission();
   showStatus(S);
   showVitals(S);
@@ -179,6 +180,10 @@ function showAll() {
   $("changeUser").textContent = `Not the ${MOCK.crew[me].role.toLowerCase()}? Change user`;
   document.title = (S.warnings.length ? `(${S.warnings.length}) ` : "") + "Astrodoc";
 }
+// Sidebar: who is shown, and switching from it
+function sideCurrent() { return currentCrew; }
+function sideView(id) { view(id); }
+
 // The chat page changed something (e.g. logged sleep by voice): redraw
 function onSharedChange() { showAll(); }
 
