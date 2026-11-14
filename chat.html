@@ -52,6 +52,14 @@
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
         Hear it
       </button>
+      <!-- AI understanding: a Claude API key saved only in this browser -->
+      <p class="c-menu-title" id="aiLabel">AI understanding</p>
+      <form class="c-ai" id="aiForm" aria-labelledby="aiLabel">
+        <input type="password" id="aiKey" placeholder="Paste Claude API key" autocomplete="off" spellcheck="false" aria-label="Claude API key">
+        <button type="submit" class="soft-btn">Connect</button>
+      </form>
+      <p class="c-menu-note" id="aiNote"></p>
+      <button type="button" class="soft-btn c-preview" id="aiOff" hidden>Disconnect AI</button>
     </div>
   </header>
 
@@ -123,6 +131,6 @@
   <script src="core.js"></script>
   <script src="sidebar.js"></script>
   <script src="data/space-medicine-cases.js?v=1"></script>
-  <script src="voice.js?v=cases9"></script>
+  <script src="voice.js?v=ai2"></script>
 </body>
 </html>

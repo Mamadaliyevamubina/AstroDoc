@@ -1425,10 +1425,12 @@ function defaultChips() {
                                           : ["How is everyone?", "Log my sleep", "Talk to me", "Calm me down"];
 }
 
-// --- Claude (through the AstroDoc server) understands what was said ---
+// --- Claude understands what was said ---
+// Either through the AstroDoc server (server/worker.js), or straight from this browser with a
+// Claude API key the user pasted into the voice menu (saved only on this device, never in the code).
 // Emergencies and yes/no or step-by-step flows stay on the built-in rules: instant and predictable.
 const aiHistory = [];
-const useAI = text => !!ASTRODOC_SERVER && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
+const useAI = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
 function crewSnapshot(text) {
   const crew = {};
   Object.keys(MOCK.crew).forEach(id => {
@@ -1440,14 +1442,85 @@ function crewSnapshot(text) {
     .map(c => ({ mission: c.mission, year: c.year, felt: c.felt, doctorsDid: c.response, outcome: c.outcome, source: c.source.title }));
   return { mission: MOCK.mission, talkingAbout: ROLE[ctx.crew], userIs: me ? ROLE[me] : null, userName: userName() || null, crew, pastCases };
 }
+const AI_KEY = "astrodoc-claude-key";
+const claudeKey = () => { try { return localStorage.getItem(AI_KEY) || ""; } catch { return ""; } };
+let aiProblem = "";              // shown in the voice menu when the key doesn't work
+// Same instructions and reply shape as server/worker.js: keep the two in step
+const AI_SYSTEM = `You are AstroDoc, the voice health companion for a small astronaut crew on a long space mission.
+Your words are read aloud, so:
+- Answer in one to three short, natural spoken sentences. No markdown, lists, emojis or headings.
+- Sound soft, gentle and polite, like a kind nurse who is also a trusted crewmate: say "please", thank people,
+  acknowledge how they feel, and never sound abrupt or alarming, even when something needs care now.
+- Say numbers the way a person would say them out loud.
+
+You are given the crew's current health data as JSON in each message. Use only that data for facts about the crew;
+if something isn't in the data, say you don't have that reading.
+"pastCases" are real, documented NASA cases of what astronauts felt and what their doctors did. When one fits,
+you may briefly mention it ("On Apollo 13 in 1970, ...") to reassure or guide. Never invent cases, and never tell
+anyone to take a medicine just because an astronaut once did. Explain what a reading means in plain words and
+say what to do now. You support the crew but do not replace the flight surgeon: for anything serious, say a report
+should go to Earth. Medical emergencies are handled by the app before they reach you.
+
+The person may type with typos, slang or half sentences. Work out what they mean.
+
+Some requests are actions the app performs itself. When the message asks for one of these, put the matching
+command in "command", written exactly in this style (fill in the numbers and names), and still write a short "reply":
+- Log a reading: "I slept 7 hours", "I drank 3 glasses of water", "My mood is 4 out of 5", "My heart rate is 72",
+  "The pilot slept 6 hours", "The commander drank 2 glasses of water"
+- "Do my check-in", "Give me a briefing", "Send a report", "Send a message home"
+- "Set a 20 minute nap timer", "Remind me to drink water in 1 hour"
+- "Use a female voice", "Use a male voice", "Speak slower", "Speak faster", "Mute"
+- "Calm me down" (guided breathing), "Call me Sam"
+- "What should I do?" (step-by-step guidance for the person being discussed)
+Otherwise leave "command" empty and answer in "reply".
+
+Set "focus" to the crew member the conversation is now about ("commander", "pilot" or "mission specialist"),
+or leave it empty if it hasn't changed.`;
+const AI_SCHEMA = {
+  type: "object",
+  properties: {
+    reply: { type: "string" },
+    command: { type: "string" },
+    focus: { type: "string", enum: ["", "commander", "pilot", "mission specialist"] }
+  },
+  required: ["reply", "command", "focus"],
+  additionalProperties: false
+};
+async function askClaude(text) {
+  const past = aiHistory.slice(-12);
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json", "x-api-key": claudeKey(), "anthropic-version": "2023-06-01",
+      "anthropic-beta": "server-side-fallback-2026-07-01", "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-opus-5-5", max_tokens: 2000, system: AI_SYSTEM,
+      messages: [...past, { role: "user", content: `Crew data now:\n${JSON.stringify(crewSnapshot(text))}\n\nThey said: ${text}` }],
+      fallbacks: "default",                            // if a safety check declines, retry on the recommended model
+      output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } }   // low effort: quick spoken replies
+    }),
+    signal: AbortSignal.timeout(20000)
+  });
+  if (res.status === 401 || res.status === 403) { aiProblem = "That key wasn't accepted. Check it and connect again."; updateAiMenu(); }
+  else if (res.status === 400 && /credit|billing/i.test(await res.clone().text())) { aiProblem = "The Claude account has no credit left. Add credit in the Claude Console."; updateAiMenu(); }
+  if (!res.ok) throw new Error("Claude " + res.status);
+  const msg = await res.json();
+  if (msg.stop_reason === "refusal") return {};    // the built-in replies answer instead
+  if (aiProblem) { aiProblem = ""; updateAiMenu(); }
+  return JSON.parse((msg.content || []).filter(b => b.type === "text").map(b => b.text).join(""));
+}
+async function askServer(text) {
+  const res = await fetch(ASTRODOC_SERVER + "/chat", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot(text) }), signal: AbortSignal.timeout(20000)
+  });
+  if (!res.ok) throw new Error("chat " + res.status);
+  return res.json();
+}
 async function askAI(text) {
   try {
-    const res = await fetch(ASTRODOC_SERVER + "/chat", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot(text) }), signal: AbortSignal.timeout(20000)
-    });
-    if (!res.ok) throw new Error("chat " + res.status);
-    const { reply, command, focus } = await res.json();
+    const { reply, command, focus } = ASTRODOC_SERVER ? await askServer(text) : await askClaude(text);
     if (!reply && !command) return null;
     const id = Object.keys(ROLE).find(k => ROLE[k] === focus);
     if (id && id !== ctx.crew) { ctx.crew = id; updateAbout(); }
@@ -1457,7 +1530,7 @@ async function askAI(text) {
     }
     return reply ? { say: reply, chips: defaultChips(), fromAI: true } : null;
   } catch (e) {
-    console.warn("AstroDoc server unavailable, using built-in replies.", e);
+    console.warn("AI unavailable, using built-in replies.", e);
     return null;
   }
 }
@@ -1773,6 +1846,27 @@ $("voiceMenu").addEventListener("click", e => {
     speak(SAMPLE());
   } else if (b.id === "voicePreview") speak(SAMPLE());
 });
+
+// The "AI understanding" part of the voice menu
+function updateAiMenu() {
+  const on = !!claudeKey();
+  $("aiForm").hidden = on || !!ASTRODOC_SERVER;
+  $("aiOff").hidden = !on || !!ASTRODOC_SERVER;
+  $("aiNote").textContent = ASTRODOC_SERVER ? "Connected through the AstroDoc server."
+    : aiProblem || (on ? "Connected to Claude. The key is saved only in this browser."
+    : "Off: I use my built-in rules. Paste a Claude API key to understand anything you say.");
+}
+$("aiForm").onsubmit = e => {
+  e.preventDefault();
+  const key = $("aiKey").value.trim();
+  $("aiKey").value = "";
+  if (!/^sk-ant-/.test(key)) { aiProblem = "That doesn't look like a Claude API key. It starts with sk-ant-."; updateAiMenu(); return; }
+  try { localStorage.setItem(AI_KEY, key); } catch { }
+  aiProblem = "";
+  updateAiMenu();
+};
+$("aiOff").onclick = () => { try { localStorage.removeItem(AI_KEY); } catch { } aiProblem = ""; updateAiMenu(); };
+updateAiMenu();
 
 $("micBtn").onclick = () => startListening();
 $("voiceForm").onsubmit = e => {
