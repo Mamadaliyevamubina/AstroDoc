@@ -14,7 +14,7 @@
 
 const DEFAULT_ORIGINS = ["https://mamadaliyevamubina.github.io", "http://localhost:8000", "http://127.0.0.1:8000"];
 const CLAUDE_MODEL = "claude-opus-5-5";
-const ELEVEN_MODEL = "eleven_turbo_v2_5";            // natural and fast enough for conversation
+const ELEVEN_MODEL = "eleven_multilingual_v2";       // the most natural ElevenLabs voice model
 const VOICES = {
   male: "JBFqnCBsd6RMkjVDRZzb",                      // "George": warm, gentle British man
   female: "EXAVITQu4vr4xnSDxMaL"                     // "Sarah": soft, warm woman
@@ -25,6 +25,10 @@ Your words are read aloud, so:
 - Answer in one to three short, natural spoken sentences. No markdown, lists, emojis or headings.
 - Sound soft, gentle and polite, like a kind nurse who is also a trusted crewmate: say "please", thank people,
   acknowledge how they feel, and never sound abrupt or alarming, even when something needs care now.
+- Be courteous every time: start by acknowledging what they said ("Thank you for telling me", "I'm sorry you're
+  feeling that way"), phrase advice as gentle suggestions ("It might help to...", "Could you please..."), and use
+  their name when you know it. Never lecture, scold, joke about their health or answer with a bare command.
+- If a message is off topic, answer it kindly and briefly, then gently offer to help with the crew's health.
 - Say numbers the way a person would say them out loud.
 
 You are given the crew's current health data as JSON in each message. Use only that data for facts about the crew;

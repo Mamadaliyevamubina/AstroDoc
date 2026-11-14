@@ -40,13 +40,19 @@ const partOfDay = () => { const h = new Date().getHours(); return h < 5 ? "eveni
 // =========================================================================
 let bestVoice = null;
 let neural = null;              // the natural (neural) voice model, once loaded (see speak)
+let neuralLoading = false;
 let neuralAudio = null;         // the natural-voice sentence playing right now
 
 // AstroDoc server (server/worker.js): Claude understands and answers, ElevenLabs speaks.
-// Empty = no server: the built-in replies and the in-browser voice are used.
+// Empty = no server: keys pasted into the voice menu are used, or else the built-in replies and voices.
 const ASTRODOC_SERVER = "";
-let cloudVoiceOff = false;      // set when the server's voice fails, for the rest of the visit
-const cloudVoice = () => !!ASTRODOC_SERVER && !cloudVoiceOff;
+// ElevenLabs voice with a key pasted into the voice menu (saved only in this browser)
+const VOICE_KEY = "astrodoc-eleven-key";
+const elevenKey = () => { try { return localStorage.getItem(VOICE_KEY) || ""; } catch { return ""; } };
+const ELEVEN_VOICES = { female: "EXAVITQu4vr4xnSDxMaL", male: "JBFqnCBsd6RMkjVDRZzb" };   // "Sarah": soft, warm woman; "George": warm, gentle British man
+let voiceProblem = "";          // shown in the voice menu when the ElevenLabs key doesn't work
+let cloudVoiceOff = false;      // set when the natural voice fails, for the rest of the visit
+const cloudVoice = () => (!!ASTRODOC_SERVER || !!elevenKey()) && !cloudVoiceOff;
 let muted = localStorage.getItem("astrodoc-mute") === "1";
 
 // Voice settings: female or male voice, and speed. Saved on this device.
@@ -119,22 +125,43 @@ const NEURAL_VOICE = { male: "bm_george", female: "af_heart" };   // calm Britis
 let neuralQueue = Promise.resolve();
 function loadNeuralVoice() {
   const lowEnd = (navigator.connection && navigator.connection.saveData) || (navigator.deviceMemory && navigator.deviceMemory < 4);
-  if (lowEnd || !window.WebAssembly) return;
+  if (neural || neuralLoading || lowEnd || !window.WebAssembly) return;
+  neuralLoading = true;
   import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm")
     .then(({ KokoroTTS }) => KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", { dtype: "q8", device: "wasm" }))
     .then(tts => tts.generate("Ready.", { voice: NEURAL_VOICE[prefs.gender] || NEURAL_VOICE.male }).then(() => tts, () => tts))   // warm up, so the first reply isn't slow
     .then(tts => { neural = tts; if (typeof updateVoiceMenu === "function") updateVoiceMenu(); })
     .catch(e => console.warn("Natural voice unavailable, using the device voice.", e));
 }
-if (!ASTRODOC_SERVER) setTimeout(loadNeuralVoice, 1500);  // after the page has settled (with a server, only if its voice fails)
+if (!cloudVoice()) setTimeout(loadNeuralVoice, 1500);  // after the page has settled (with the natural voice, only if it fails)
 
 // The server's voice (ElevenLabs): one mp3 per sentence
 async function cloudClip(text, token, speed) {
   if (token !== speakToken) return null;
-  const res = await fetch(ASTRODOC_SERVER + "/speak", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, voice: prefs.gender, speed }), signal: AbortSignal.timeout(15000)
-  });
+  const res = ASTRODOC_SERVER
+    ? await fetch(ASTRODOC_SERVER + "/speak", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: prefs.gender, speed }), signal: AbortSignal.timeout(15000)
+      })
+    : await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICES[prefs.gender] || ELEVEN_VOICES.female}?output_format=mp3_44100_128`, {
+        method: "POST", headers: { "Content-Type": "application/json", "xi-api-key": elevenKey() },
+        body: JSON.stringify({ text, model_id: "eleven_multilingual_v2",       // the most natural ElevenLabs voice model
+          voice_settings: { stability: 0.7, similarity_boost: 0.75, style: 0, speed: Math.min(1.2, Math.max(0.7, speed)) } }),
+        signal: AbortSignal.timeout(15000)
+      });
+  if (!ASTRODOC_SERVER && !res.ok) {
+    // ElevenLabs says why in detail.status / detail.message: show it, so the fix is clear
+    let detail = {};
+    try { detail = (await res.json()).detail || {}; } catch { }
+    if (typeof detail === "string") detail = { message: detail };
+    const why = String(detail.status || "") + " " + String(detail.message || "");
+    if (/invalid_api_key/.test(why)) try { localStorage.removeItem(VOICE_KEY); } catch { }   // a wrong key: ask for it again
+    voiceProblem = /invalid_api_key/.test(why) ? "That ElevenLabs key wasn't accepted. Please copy it again and connect."
+      : /missing_permission|permission/i.test(why) ? "This key isn't allowed to make speech. In ElevenLabs, edit the key and turn on Text to Speech, then reconnect."
+      : /unusual_activity|free tier|free_users/i.test(why) ? "ElevenLabs blocked free-plan use from here. A paid plan (Starter) fixes it. I'm using my free voice."
+      : /quota|credit|limit/i.test(why) || res.status === 402 || res.status === 429 ? "The ElevenLabs account is out of voice credit for now. I'm using my free voice."
+      : `ElevenLabs said: ${(detail.message || "error " + res.status).slice(0, 160)}`;
+  }
   if (!res.ok) throw new Error("speak " + res.status);
   return URL.createObjectURL(await res.blob());
 }
@@ -175,7 +202,7 @@ async function speakClips(parts, token, rate, pitch, onDone, makeClip) {
     if (token !== speakToken) { if (url) URL.revokeObjectURL(url); return; }
     if (i + 1 < parts.length && url) next = makeClip(parts[i + 1], token, rate);   // prepare the next sentence while this one plays
     if (!url || !(await playClip(url, token))) {
-      if (failed && makeClip === cloudClip) { cloudVoiceOff = true; loadNeuralVoice(); updateVoiceMenu(); }   // try the in-browser voice next time
+      if (failed && makeClip === cloudClip) { if (!voiceProblem && !ASTRODOC_SERVER) voiceProblem = "I couldn't reach ElevenLabs. Check the internet connection. I'm using my free voice."; cloudVoiceOff = true; loadNeuralVoice(); updateVoiceMenu(); updateKeyMenus(); }   // try the in-browser voice next time
       if (token === speakToken) speakDevice(parts.slice(i), token, rate, pitch, onDone);
       return;
     }
@@ -1218,7 +1245,7 @@ function understand(raw) {
   }
   if (/\b(what is|do you know|say) my name\b|\bwho am i\b/.test(t))
     return userName() ? { say: `You're ${userName()}. I remember.`, face: "joy" } : { say: "You haven't told me yet. Just say: call me, and then your name." };
-  if (/\bforget my name\b/.test(t)) { localStorage.removeItem(NAME_KEY); return { say: "Done, I've forgotten it." }; }
+  if (/\bforget my name\b/.test(t)) { localStorage.removeItem(NAME_KEY); return { say: "Of course. I've forgotten it." }; }
 
   // --- 5. Guided steps in progress ---
   if (ctx.steps) {
@@ -1396,18 +1423,18 @@ function understand(raw) {
   if (/\b(who|what) are you\b|\byour name\b/.test(t)) return { say: "I'm Astrodoc, the crew's health companion. I watch the readings, explain them in plain words, and tell you what to do right away, because Earth is too far away to wait for.", chips: ["What can you do?"] };
   if (/\b(help|what can you do|what can i (say|ask)|commands|options)\b/.test(t)) return capabilities();
   if (/\b(love you|you are (cute|sweet|nice|great|the best)|good (bot|job))\b/.test(t)) return { say: pick(["Aw, that made my day. I'm always here for you.", "Thank you. You're pretty great yourself."]), face: "joy" };
-  if (YES.test(t)) return { say: "Okay! What would you like to do?", chips: defaultChips() };
-  if (NO.test(t)) return { say: "No problem. I'm here whenever you need me.", chips: defaultChips() };
+  if (YES.test(t)) return { say: "Wonderful. What would you like to do?", chips: defaultChips() };
+  if (NO.test(t)) return { say: "Of course, that's completely fine. I'm here whenever you need me.", chips: defaultChips() };
 
   // --- 17. Didn't understand ---
   ctx.misses++;
-  if (ctx.misses >= 3) { ctx.misses = 0; return { ...capabilities(), say: "Sorry, I still didn't get that. Here's what I can help with." }; }
+  if (ctx.misses >= 3) { ctx.misses = 0; return { ...capabilities(), say: "I'm so sorry, I still didn't quite understand. Here's what I can help with, if that's useful." }; }
   const guess = suggestFor(t);
   if (guess.length) {
-    ctx.confirm = { yes: () => understand(guess[0]), no: () => ({ say: "Okay. Try saying it another way, or ask: what can you do?", chips: ["What can you do?"] }) };
-    return { say: `${pick(["I'm not completely sure.", "Hmm, let me check I understood."])} Did you mean: ${guess[0]}`, chips: [...guess, "What can you do?"], missed: true };
+    ctx.confirm = { yes: () => understand(guess[0]), no: () => ({ say: "That's okay. Could you please say it another way? Or you can ask me: what can you do?", chips: ["What can you do?"] }) };
+    return { say: `${pick(["I'm sorry, I want to be sure I understood.", "Just to make sure I understood you correctly."])} Did you mean: ${guess[0]}`, chips: [...guess, "What can you do?"], missed: true };
   }
-  return { say: pick(["Sorry, I didn't quite catch that. You could ask: how is the pilot?", "Hmm, I'm not sure what you mean. Try: what should I do?"]), chips: [...defaultChips().slice(0, 3), "What can you do?"], missed: true };
+  return { say: pick(["I'm sorry, I didn't quite catch that. You could ask me, for example: how is the pilot?", "I'm sorry, I'm not sure I understood. Could you please try asking: what should I do?"]), chips: [...defaultChips().slice(0, 3), "What can you do?"], missed: true };
 }
 
 function greeting() {
@@ -1425,10 +1452,12 @@ function defaultChips() {
                                           : ["How is everyone?", "Log my sleep", "Talk to me", "Calm me down"];
 }
 
-// --- Claude (through the AstroDoc server) understands what was said ---
+// --- Claude understands what was said ---
+// Either through the AstroDoc server (server/worker.js), or straight from this browser with a
+// Claude API key the user pasted into the voice menu (saved only on this device, never in the code).
 // Emergencies and yes/no or step-by-step flows stay on the built-in rules: instant and predictable.
 const aiHistory = [];
-const useAI = text => !!ASTRODOC_SERVER && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
+const useAI = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
 function crewSnapshot(text) {
   const crew = {};
   Object.keys(MOCK.crew).forEach(id => {
@@ -1440,14 +1469,92 @@ function crewSnapshot(text) {
     .map(c => ({ mission: c.mission, year: c.year, felt: c.felt, doctorsDid: c.response, outcome: c.outcome, source: c.source.title }));
   return { mission: MOCK.mission, talkingAbout: ROLE[ctx.crew], userIs: me ? ROLE[me] : null, userName: userName() || null, crew, pastCases };
 }
+const AI_KEY = "astrodoc-claude-key";
+const claudeKey = () => { try { return localStorage.getItem(AI_KEY) || ""; } catch { return ""; } };
+let aiProblem = "";              // shown in the voice menu when the key doesn't work
+// Same instructions and reply shape as server/worker.js: keep the two in step
+const AI_SYSTEM = `You are AstroDoc, the voice health companion for a small astronaut crew on a long space mission.
+Your words are read aloud, so:
+- Answer in one to three short, natural spoken sentences. No markdown, lists, emojis or headings.
+- Sound soft, gentle and polite, like a kind nurse who is also a trusted crewmate: say "please", thank people,
+  acknowledge how they feel, and never sound abrupt or alarming, even when something needs care now.
+- Be courteous every time: start by acknowledging what they said ("Thank you for telling me", "I'm sorry you're
+  feeling that way"), phrase advice as gentle suggestions ("It might help to...", "Could you please..."), and use
+  their name when you know it. Never lecture, scold, joke about their health or answer with a bare command.
+- If a message is off topic, answer it kindly and briefly, then gently offer to help with the crew's health.
+- Say numbers the way a person would say them out loud.
+
+You are given the crew's current health data as JSON in each message. Use only that data for facts about the crew;
+if something isn't in the data, say you don't have that reading.
+"pastCases" are real, documented NASA cases of what astronauts felt and what their doctors did. When one fits,
+you may briefly mention it ("On Apollo 13 in 1970, ...") to reassure or guide. Never invent cases, and never tell
+anyone to take a medicine just because an astronaut once did. Explain what a reading means in plain words and
+say what to do now. You support the crew but do not replace the flight surgeon: for anything serious, say a report
+should go to Earth. Medical emergencies are handled by the app before they reach you.
+
+The person may type with typos, slang or half sentences. Work out what they mean.
+
+Some requests are actions the app performs itself. When the message asks for one of these, put the matching
+command in "command", written exactly in this style (fill in the numbers and names), and still write a short "reply":
+- Log a reading: "I slept 7 hours", "I drank 3 glasses of water", "My mood is 4 out of 5", "My heart rate is 72",
+  "The pilot slept 6 hours", "The commander drank 2 glasses of water"
+- "Do my check-in", "Give me a briefing", "Send a report", "Send a message home"
+- "Set a 20 minute nap timer", "Remind me to drink water in 1 hour"
+- "Use a female voice", "Use a male voice", "Speak slower", "Speak faster", "Mute"
+- "Calm me down" (guided breathing), "Call me Sam"
+- "What should I do?" (step-by-step guidance for the person being discussed)
+Otherwise leave "command" empty and answer in "reply".
+
+Set "focus" to the crew member the conversation is now about ("commander", "pilot" or "mission specialist"),
+or leave it empty if it hasn't changed.`;
+const AI_SCHEMA = {
+  type: "object",
+  properties: {
+    reply: { type: "string" },
+    command: { type: "string" },
+    focus: { type: "string", enum: ["", "commander", "pilot", "mission specialist"] }
+  },
+  required: ["reply", "command", "focus"],
+  additionalProperties: false
+};
+async function askClaude(text) {
+  const past = aiHistory.slice(-12);
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json", "x-api-key": claudeKey(), "anthropic-version": "2023-06-01",
+      "anthropic-beta": "server-side-fallback-2026-07-01", "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-opus-5-5", max_tokens: 2000, system: AI_SYSTEM,
+      messages: [...past, { role: "user", content: `Crew data now:\n${JSON.stringify(crewSnapshot(text))}\n\nThey said: ${text}` }],
+      fallbacks: "default",                            // if a safety check declines, retry on the recommended model
+      output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } }   // low effort: quick spoken replies
+    }),
+    signal: AbortSignal.timeout(20000)
+  });
+  if (res.status === 401 || res.status === 403) {          // a wrong key: forget it and ask again
+    try { localStorage.removeItem(AI_KEY); } catch { }
+    aiProblem = "That key wasn't accepted. Check it and connect again."; updateAiMenu();
+  }
+  else if (res.status === 400 && /credit|billing/i.test(await res.clone().text())) { aiProblem = "The Claude account has no credit left. Add credit in the Claude Console."; updateAiMenu(); }
+  if (!res.ok) throw new Error("Claude " + res.status);
+  const msg = await res.json();
+  if (msg.stop_reason === "refusal") return {};    // the built-in replies answer instead
+  if (aiProblem) { aiProblem = ""; updateAiMenu(); }
+  return JSON.parse((msg.content || []).filter(b => b.type === "text").map(b => b.text).join(""));
+}
+async function askServer(text) {
+  const res = await fetch(ASTRODOC_SERVER + "/chat", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot(text) }), signal: AbortSignal.timeout(20000)
+  });
+  if (!res.ok) throw new Error("chat " + res.status);
+  return res.json();
+}
 async function askAI(text) {
   try {
-    const res = await fetch(ASTRODOC_SERVER + "/chat", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot(text) }), signal: AbortSignal.timeout(20000)
-    });
-    if (!res.ok) throw new Error("chat " + res.status);
-    const { reply, command, focus } = await res.json();
+    const { reply, command, focus } = ASTRODOC_SERVER ? await askServer(text) : await askClaude(text);
     if (!reply && !command) return null;
     const id = Object.keys(ROLE).find(k => ROLE[k] === focus);
     if (id && id !== ctx.crew) { ctx.crew = id; updateAbout(); }
@@ -1457,7 +1564,7 @@ async function askAI(text) {
     }
     return reply ? { say: reply, chips: defaultChips(), fromAI: true } : null;
   } catch (e) {
-    console.warn("AstroDoc server unavailable, using built-in replies.", e);
+    console.warn("AI unavailable, using built-in replies.", e);
     return null;
   }
 }
@@ -1773,6 +1880,51 @@ $("voiceMenu").addEventListener("click", e => {
     speak(SAMPLE());
   } else if (b.id === "voicePreview") speak(SAMPLE());
 });
+
+// The "AI understanding" and "Natural voice" parts of the voice menu
+function updateKeyMenus() {
+  updateAiMenu();
+  const on = !!elevenKey();
+  $("voiceKeyForm").hidden = on || !!ASTRODOC_SERVER;
+  $("voiceKeyOff").hidden = !on || !!ASTRODOC_SERVER;
+  $("voiceKeyNote").textContent = ASTRODOC_SERVER ? "Using the AstroDoc server's voice."
+    : voiceProblem || (on ? "Connected to ElevenLabs. The key is saved only in this browser."
+    : "Off: I use my free voice. Paste an ElevenLabs API key for a warm, human voice.");
+}
+$("voiceKeyForm").onsubmit = e => {
+  e.preventDefault();
+  const key = $("voiceKey").value.trim();
+  $("voiceKey").value = "";
+  if (key.length < 20 || /\s/.test(key)) { voiceProblem = "That doesn't look like an ElevenLabs API key."; updateKeyMenus(); return; }
+  try { localStorage.setItem(VOICE_KEY, key); } catch { }
+  voiceProblem = ""; cloudVoiceOff = false;
+  updateKeyMenus(); updateVoiceMenu();
+  speak(SAMPLE());                                   // let them hear the new voice right away
+};
+$("voiceKeyOff").onclick = () => {
+  try { localStorage.removeItem(VOICE_KEY); } catch { }
+  voiceProblem = ""; stopSpeaking(); loadNeuralVoice();
+  updateKeyMenus(); updateVoiceMenu();
+};
+function updateAiMenu() {
+  const on = !!claudeKey();
+  $("aiForm").hidden = on || !!ASTRODOC_SERVER;
+  $("aiOff").hidden = !on || !!ASTRODOC_SERVER;
+  $("aiNote").textContent = ASTRODOC_SERVER ? "Connected through the AstroDoc server."
+    : aiProblem || (on ? "Connected to Claude. The key is saved only in this browser."
+    : "Off: I use my built-in rules. Paste a Claude API key to understand anything you say.");
+}
+$("aiForm").onsubmit = e => {
+  e.preventDefault();
+  const key = $("aiKey").value.trim();
+  $("aiKey").value = "";
+  if (!/^sk-ant-/.test(key)) { aiProblem = "That doesn't look like a Claude API key. It starts with sk-ant-."; updateAiMenu(); return; }
+  try { localStorage.setItem(AI_KEY, key); } catch { }
+  aiProblem = "";
+  updateAiMenu();
+};
+$("aiOff").onclick = () => { try { localStorage.removeItem(AI_KEY); } catch { } aiProblem = ""; updateAiMenu(); };
+updateKeyMenus();
 
 $("micBtn").onclick = () => startListening();
 $("voiceForm").onsubmit = e => {

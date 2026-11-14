@@ -293,7 +293,7 @@ body.choosing .welcome {
 .field { display: flex; flex-direction: column; gap: var(--s2); }
 .input-unit { display: flex; align-items: center; gap: var(--s2); }
 .input-unit em { font-style: normal; color: var(--muted); }
-input[type=number], input[type=text], select {
+input[type=number], input[type=text], input[type=password], select {
   font: inherit; font-size: 15px; color: var(--ink);
   padding: 8px var(--s3); border: none; border-radius: var(--r-md);
   background: var(--glass-2); box-shadow: inset 0 0 0 1px var(--edge); width: 100%;
@@ -429,7 +429,7 @@ input:focus-visible, select:focus-visible { outline: none; box-shadow: inset 0 0
 .c-icon:focus-visible { border-radius: 50%; }
 .c-icon svg { width: 20px; height: 20px; }
 /* Voice settings menu (under the speaker button, right side) */
-.c-voice { inset: 56px max(var(--s3), calc(50vw - 372px)) auto auto; translate: none; min-width: 0; width: 280px; padding: var(--s3); }
+.c-voice { inset: 56px max(var(--s3), calc(50vw - 372px)) auto auto; translate: none; min-width: 0; width: 280px; padding: var(--s3); max-height: calc(100dvh - 72px); overflow-y: auto; }
 .c-menu-title { margin: 0 0 6px 2px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .c-menu-title:not(:first-child) { margin-top: var(--s3); }
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--sunk); box-shadow: inset 0 0 0 1px var(--edge); }
@@ -444,6 +444,10 @@ input:focus-visible, select:focus-visible { outline: none; box-shadow: inset 0 0
 .c-preview { width: 100%; margin-top: var(--s3); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .c-preview svg { width: 14px; height: 14px; }
 .c-preview:disabled { opacity: .45; cursor: default; }
+.c-ai { display: flex; gap: 6px; }
+.c-ai[hidden], .c-preview[hidden] { display: none; }
+.c-ai input { flex: 1; min-width: 0; }
+.c-ai .soft-btn { padding-inline: var(--s3); }
 .c-icon .off, .voice-off .c-icon .on { display: none; }
 .voice-off .c-icon .off { display: block; }
 
