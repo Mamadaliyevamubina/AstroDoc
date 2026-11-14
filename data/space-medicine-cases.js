@@ -2,8 +2,8 @@
 // A script, not a .json file, so it also loads when chat.html is opened straight from the computer (file://).
 window.SPACE_CASES = {
   "title": "AstroDoc space medicine cases",
-  "about": "Real, publicly documented cases where astronauts reported how they felt in space and NASA flight surgeons or doctors responded. Each case is summarized in plain words from the cited NASA or peer-reviewed source. Astronauts are identified only by crew role, as in the sources. This is history and education, not medical advice: medicine names describe what was done at the time, not what anyone should take.",
-  "updated": "2026-11-14",
+  "about": "Real, publicly documented cases where astronauts reported how they felt in space and NASA flight surgeons or doctors responded. Every case comes only from NASA sources (NASA reports, NASA history books and the NASA Technical Reports Server) and is summarized in plain words. Astronauts are identified only by crew role. This is history and education, not medical advice: medicine names describe what was done at the time, not what anyone should take.",
+  "updated": "2026-11-15",
   "cases": [
     {
       "id": "apollo7-cold",
@@ -195,20 +195,20 @@ window.SPACE_CASES = {
     {
       "id": "iss-jugular-clot",
       "mission": "International Space Station",
-      "year": 2020,
+      "year": 2019,
       "who": "An ISS crewmember (not named)",
       "tags": [
         "clot",
         "labs",
         "trend"
       ],
-      "felt": "A blood clot in the jugular (neck) vein was found during a research ultrasound about two months into a six-month mission. It was the first time NASA had found this in space.",
-      "response": "Doctors on Earth, including an outside blood-clot specialist, guided the astronaut's own ultrasound scans in real time and started a blood thinner that was on board (enoxaparin). The dose was lowered so the supply would last until a cargo ship delivered a second blood thinner (apixaban).",
-      "outcome": "The clot shrank. The astronaut stopped the blood thinner shortly before landing, and after landing no more treatment was needed.",
-      "lesson": "Clots can form in space with no warning. Follow the clot checklist, use the ultrasound with Earth's guidance, and report at once.",
+      "felt": "During a NASA study, ultrasound scans around day 50 of the mission showed slow or backward blood flow in the neck vein in 6 of 11 crewmembers, and one crewmember had a blood clot blocking the vein. NASA lists the warning signs as neck vein swelling, more face or eyelid puffiness than usual in space, and headache, though a clot can also give no symptoms.",
+      "response": "NASA flight surgeons on the ground treated the crewmember in space with blood-thinning medicine, guided by ultrasound scans done on the station. The blood thinner was stopped several days before landing, so bleeding would be less dangerous if there was an injury on the way home.",
+      "outcome": "With treatment the crewmember completed the mission. NASA now screens crews for this kind of clot and has a working group that wrote in-flight treatment guidelines.",
+      "lesson": "A clot can form in space without warning. Report neck swelling, a puffy face beyond the usual, or a new headache, and follow the clot checklist with Earth's guidance.",
       "source": {
-        "title": "Venous Thrombosis during Spaceflight, New England Journal of Medicine (2020)",
-        "url": "https://www.nejm.org/doi/full/10.1056/NEJMc1905875"
+        "title": "NASA Venous Thromboembolism (VTE) Working Group Summary Report, April 2025",
+        "url": "https://ntrs.nasa.gov/api/citations/20250001074/downloads/Venous%20Thromboembolism%20VTE%20Report%20REV1%20April%202025.pdf"
       }
     },
     {
@@ -233,54 +233,54 @@ window.SPACE_CASES = {
       "id": "iss-co2-headache",
       "mission": "International Space Station",
       "year": 2014,
-      "who": "ISS crewmembers, 2001 to 2012",
+      "who": "ISS astronauts",
       "tags": [
         "headache",
         "tired"
       ],
-      "felt": "Crews reported headaches on the station.",
-      "response": "A NASA flight surgeon, Dr Jennifer Law, studied ISS crew data from 2001 to 2012 and found that for each 1 mm Hg rise in cabin carbon dioxide, the odds of a crew headache doubled. The study supported keeping station CO2 at or below 4 mm Hg.",
-      "outcome": "NASA works to keep station CO2 low, within what the air system can do.",
-      "lesson": "A headache in space can come from the air, not just the body. Check cabin CO2 and ventilation when several people have headaches.",
+      "felt": "Headaches were reported by 19 of 49 ISS astronauts in a NASA study. Most were moderate and often needed pain relief medicine. Tiredness and poor sleep were also reported when carbon dioxide was higher.",
+      "response": "Astronauts usually tell their flight surgeon about these symptoms in a private medical conference. The flight surgeon then asks the engineers to adjust the station's air system to lower the carbon dioxide.",
+      "outcome": "NASA's health standard now limits cabin carbon dioxide to keep headaches rare.",
+      "lesson": "A headache in space can come from the air, not just the body. Tell the doctor, and check the cabin carbon dioxide when several people have headaches.",
       "source": {
-        "title": "Headaches an occupational hazard for astronauts (on Law et al., Journal of Occupational and Environmental Medicine, 2014)",
-        "url": "https://www.news-medical.net/news/20140501/Headaches-an-occupational-hazard-astronauts.aspx"
+        "title": "NASA-STD-3001 Technical Brief: Carbon Dioxide (OCHMO-TB-004)",
+        "url": "https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-004-carbon-dioxide.pdf"
       }
     },
     {
       "id": "iss-vision",
       "mission": "Long-duration ISS missions",
-      "year": 2023,
+      "year": 2024,
       "who": "Long-duration astronauts",
       "tags": [
         "eyes",
         "vision"
       ],
-      "felt": "Many long-duration astronauts reported that their near and distance vision got worse in space.",
-      "response": "NASA eye specialists named it Spaceflight Associated Neuro-ocular Syndrome (SANS), monitor astronauts' eyes, and supply glasses of different strengths on board so astronauts can switch as their vision changes.",
-      "outcome": "A NASA optometrist has said no one has had permanent vision loss from SANS, though some astronauts' prescriptions stayed changed for years.",
-      "lesson": "Blurry vision in space should be reported and checked, and spare glasses help right away.",
+      "felt": "Seventy percent of long-duration crew show at least one sign of eye changes in space (Spaceflight Associated Neuro-ocular Syndrome), and many notice their near vision getting blurrier.",
+      "response": "NASA eye doctors check every crewmember's eyes before, during and after flight. Every astronaut flies with at least three pairs of prescription glasses of different strengths, called Space Anticipation Glasses, so they can switch as their vision changes.",
+      "outcome": "NASA reports that, to date, no permanent loss of vision has been found in any crewmember.",
+      "lesson": "Blurry vision in space should be reported and checked. Switching to the stronger pair of glasses helps right away.",
       "source": {
-        "title": "Eye Problems Cloud NASA's Vision of Mars (Scientific American)",
-        "url": "https://www.scientificamerican.com/article/nasas-mars-plans-complicated-by-eye-problems-during-long-spaceflights/"
+        "title": "NASA-STD-3001 Technical Brief: Spaceflight Associated Neuro-ocular Syndrome (OCHMO-MTB-001)",
+        "url": "https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf"
       }
     },
     {
       "id": "iss-back-pain",
-      "mission": "Long-duration ISS missions",
-      "year": 2016,
-      "who": "U.S. astronauts",
+      "mission": "Space Shuttle flights",
+      "year": 1995,
+      "who": "Shuttle crewmembers",
       "tags": [
         "pain",
         "back"
       ],
-      "felt": "Over half of U.S. astronauts report spine pain during their mission, as the spine stretches without gravity.",
-      "response": "Astronauts report that curling into a flexed fetal tuck position to stretch is the most effective relief. Researchers recommend exercise to protect the back muscles.",
-      "outcome": "Back muscle loss was measured after flight, and new exercise countermeasures are being studied.",
-      "lesson": "Back pain early in a mission is common. Stretching in a tuck position helps; keep up the exercise plan.",
+      "felt": "Fourteen of 19 Shuttle crewmembers had back pain in space. They described it as a dull ache, mostly in the lower back, and usually mild.",
+      "response": "NASA researchers traced the pain to the spine stretching a few centimeters without gravity, and recreated it on Earth in a head-down bed-rest study to learn how to treat it.",
+      "outcome": "The pain eased once the spine stopped lengthening, usually within the first days.",
+      "lesson": "Back pain early in a mission is common and usually passes. Gentle stretching and the exercise plan help.",
       "source": {
-        "title": "Lumbar spine paraspinal muscle and disc changes in astronauts after long-duration spaceflight (Spine, 2016)",
-        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5588025"
+        "title": "NASA: Back Pain During 6 deg Head-Down Tilt Approximates That During Actual Microgravity (1995)",
+        "url": "https://ntrs.nasa.gov/citations/19970016831"
       }
     },
     {
@@ -318,6 +318,99 @@ window.SPACE_CASES = {
       "source": {
         "title": "NASA: Isolation, what can we learn from the experiences of NASA astronauts",
         "url": "https://www.nasa.gov/humans-in-space/isolation-what-can-we-learn-from-the-experiences-of-nasa-astronauts"
+      }
+    },
+    {
+      "id": "iss-congestion",
+      "mission": "International Space Station",
+      "year": 2019,
+      "who": "ISS crewmembers, 2001 to 2018",
+      "tags": [
+        "congestion",
+        "headache",
+        "sleep"
+      ],
+      "felt": "A blocked, stuffy nose is one of the most common complaints on the station. More than half of crewmembers used medicine for congestion, and it came with headaches and poorer sleep.",
+      "response": "NASA flight surgeons collected these complaints in private medical conferences and studied them. They found congestion was linked with headaches and became more likely as the station got older, possibly from floating dust and mold.",
+      "outcome": "NASA doctors treat it as a real health issue, because it can disturb sleep, lead to sinus infections and even prevent spacewalks.",
+      "lesson": "Don't ignore a stuffy nose in space. Report it, especially with a headache or poor sleep.",
+      "source": {
+        "title": "NASA: Nasal Congestion on the International Space Station (Weinberg et al., 2019)",
+        "url": "https://ntrs.nasa.gov/api/citations/20200001669/downloads/20200001669.pdf"
+      }
+    },
+    {
+      "id": "astp-toxic-gas",
+      "mission": "Apollo-Soyuz",
+      "year": 1975,
+      "who": "All three crewmembers",
+      "tags": [
+        "breathing",
+        "chest",
+        "cough"
+      ],
+      "felt": "During landing, toxic gas from the thrusters leaked into the capsule for almost five minutes. One crewmember was unconscious when the capsule was opened, and the crew had chest tightness, a burning feeling behind the breastbone and a cough on deep breaths.",
+      "response": "Doctors treated them in hospital with steroid medicine, watching closely because lung swelling from this gas appears about a day later.",
+      "outcome": "Their chest X-rays were normal again five days after landing, they left hospital after about six days, and no long-term health effects were reported.",
+      "lesson": "After breathing fumes, symptoms can get worse a day later. Report chest tightness or coughing right away, even if it seems mild.",
+      "source": {
+        "title": "NASA: Aerospace Toxicology and Microbiology (James)",
+        "url": "https://ntrs.nasa.gov/api/citations/20070032022/downloads/20070032022.pdf"
+      }
+    },
+    {
+      "id": "skylab3-motion-sickness",
+      "mission": "Skylab 3",
+      "year": 1973,
+      "who": "The whole crew",
+      "tags": [
+        "nausea",
+        "motion sickness"
+      ],
+      "felt": "All three crewmembers had motion sickness starting on launch day, and felt worst after full meals.",
+      "response": "NASA doctors recommended eating more, smaller meals. A motion-sickness expert advised gentle head movements a few times a day rather than only resting, and Houston let the crew set up the station at their own pace.",
+      "outcome": "The crew recovered. Afterwards preventing motion sickness became a top priority for NASA.",
+      "lesson": "With space sickness, eat small meals, go at your own pace and tell the doctors. A day or two longer is fine.",
+      "source": {
+        "title": "NASA History: Living and Working in Space (SP-4208), Chapter 16",
+        "url": "https://www.nasa.gov/wp-content/uploads/static/history/SP-4208/ch16.htm"
+      }
+    },
+    {
+      "id": "skylab4-hidden-sickness",
+      "mission": "Skylab 4",
+      "year": 1973,
+      "who": "The pilot",
+      "tags": [
+        "nausea",
+        "report"
+      ],
+      "felt": "On the first day in the station the pilot vomited. The crew talked about keeping it quiet and reported only that he hadn't eaten his meal.",
+      "response": "The flight surgeons learned about it from an onboard recording and held a medical conference with the crew that afternoon. They treated vomiting as more serious than nausea. Mission management reminded the crew that hiding symptoms was a serious mistake.",
+      "outcome": "The pilot was recovering by the next morning, and the commander agreed that hiding it had been a bad decision.",
+      "lesson": "Always tell the doctors how you really feel. They can only help with what they know about.",
+      "source": {
+        "title": "NASA History: Living and Working in Space (SP-4208), Chapter 17",
+        "url": "https://www.nasa.gov/wp-content/uploads/static/history/SP-4208/ch17.htm"
+      }
+    },
+    {
+      "id": "skylab4-workload",
+      "mission": "Skylab 4",
+      "year": 1973,
+      "who": "The whole crew",
+      "tags": [
+        "stress",
+        "tired",
+        "mood"
+      ],
+      "felt": "The crew felt rushed and very frustrated by a packed schedule. The commander said falling behind was demoralizing and that a 16-hour day was more than they would work on the ground.",
+      "response": "The crew asked for an honest talk, and on 30 December 1973 they discussed it openly with Mission Control. Houston gave them an uninterrupted hour before bed and let them do non-urgent tasks whenever suited them best. The workload had already been cut by about 15 percent.",
+      "outcome": "Two days later the flight director said the crew was more alert, ahead of the plan and organizing its own schedule. The crew physician had also noted they seemed less rushed.",
+      "lesson": "Feeling overloaded is worth saying out loud. A calmer, more flexible schedule helps both health and work.",
+      "source": {
+        "title": "NASA History: Living and Working in Space (SP-4208), Chapter 17",
+        "url": "https://www.nasa.gov/wp-content/uploads/static/history/SP-4208/ch17.htm"
       }
     }
   ]
