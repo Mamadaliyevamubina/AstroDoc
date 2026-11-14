@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <title>Astrodoc · Companion</title>
+  <meta name="description" content="Talk to Astrodoc, the crew's health companion.">
+  <link rel="icon" href="assets/astrodoc-favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="chat-page">
+
+  <!-- ===================== TOP: back · who we talk about · sound ===================== -->
+  <header class="c-top">
+    <a class="c-back" href="index.html" aria-label="Back to the dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      <span>Dashboard</span>
+    </a>
+
+    <button class="c-about" id="aboutBtn" popovertarget="crewMenu" aria-haspopup="true">
+      <span class="c-about-label">Talking about</span>
+      <span id="aboutName"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
+    </button>
+    <div class="c-menu" id="crewMenu" popover aria-label="Choose who to talk about"></div>
+
+    <button class="c-icon" id="muteBtn" aria-pressed="false" aria-label="Mute voice" title="Mute voice">
+      <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+    </button>
+  </header>
+
+  <!-- ===================== THE COMPANION ===================== -->
+  <section class="c-stage" aria-label="Astrodoc">
+    <!-- Companion face: no head, floating features on a soft mint glow.
+         voice.js sets: blink, listening, thinking, talking, caring, joy, in/hold/out -->
+    <svg class="face" id="face" viewBox="0 0 200 170" aria-hidden="true">
+      <defs>
+        <radialGradient id="faceGlow">
+          <stop offset="0" stop-color="#5be1c8" stop-opacity=".34"/>
+          <stop offset=".6" stop-color="#5be1c8" stop-opacity=".1"/>
+          <stop offset="1" stop-color="#5be1c8" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle class="glow" cx="100" cy="86" r="92" fill="url(#faceGlow)"/>
+      <g class="features">
+        <path class="brow brow-l" d="M50 42 Q63 34 77 39" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+        <path class="brow brow-r" d="M123 39 Q137 34 150 42" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+        <g class="eye eye-l">
+          <ellipse cx="64" cy="76" rx="17" ry="21" fill="#2a3160"/>
+          <g class="pupil">
+            <ellipse cx="64" cy="85" rx="9.5" ry="6.5" fill="#5be1c8" opacity=".6"/>
+            <circle cx="70" cy="67" r="6" fill="#fff"/>
+            <circle cx="58.5" cy="86" r="2.6" fill="#fff" opacity=".9"/>
+          </g>
+        </g>
+        <g class="eye eye-r">
+          <ellipse cx="136" cy="76" rx="17" ry="21" fill="#2a3160"/>
+          <g class="pupil">
+            <ellipse cx="136" cy="85" rx="9.5" ry="6.5" fill="#5be1c8" opacity=".6"/>
+            <circle cx="142" cy="67" r="6" fill="#fff"/>
+            <circle cx="130.5" cy="86" r="2.6" fill="#fff" opacity=".9"/>
+          </g>
+        </g>
+        <path class="happy" d="M48 80 Q64 64 80 80" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+        <path class="happy" d="M120 80 Q136 64 152 80" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+        <ellipse class="cheek" cx="40" cy="106" rx="12" ry="6.5"/>
+        <ellipse class="cheek" cx="160" cy="106" rx="12" ry="6.5"/>
+        <path class="smile" d="M90 110 Q100 119 110 110" fill="none" stroke="#2a3160" stroke-width="4.5" stroke-linecap="round"/>
+        <ellipse class="mouth-open" cx="100" cy="114" rx="8" ry="7" fill="#2a3160"/>
+      </g>
+    </svg>
+    <p class="c-state" id="voiceState" aria-live="polite"></p>
+
+    <!-- Calm mode (breathing) -->
+    <p class="calm-text" id="calmText" aria-live="polite"></p>
+    <button class="soft-btn calm-exit" id="calmExit">I feel better</button>
+  </section>
+
+  <!-- ===================== CONVERSATION ===================== -->
+  <main class="c-log" id="voiceLog" aria-live="polite" aria-label="Conversation"></main>
+
+  <!-- ===================== DOCK: suggestions + composer ===================== -->
+  <footer class="c-dock">
+    <div class="c-chips" id="chips" aria-label="Suggestions"></div>
+    <form class="c-composer" id="voiceForm" autocomplete="off">
+      <input id="voiceInput" type="text" placeholder="Ask anything, or say how you feel…" aria-label="Message Astrodoc" enterkeyhint="send">
+      <button type="button" class="c-mic" id="micBtn" aria-label="Talk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <button type="submit" class="c-send" id="sendBtn" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+      </button>
+    </form>
+    <p class="c-hint" id="hint"><kbd>Space</kbd> hold to talk · <kbd>Esc</kbd> stop</p>
+  </footer>
+
+  <script src="core.js"></script>
+  <script src="voice.js"></script>
+</body>
+</html>

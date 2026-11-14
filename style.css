@@ -90,7 +90,7 @@ button { font: inherit; color: inherit; }
    ========================================================= */
 .top {
   display: flex; align-items: center; gap: var(--s3) var(--s5);
-  width: 100%; max-width: 1160px; margin: 0 auto;
+  width: 100%; max-width: 960px; margin: 0 auto;
   padding: var(--s4) var(--s5);
 }
 .brand { display: inline-flex; align-items: center; gap: var(--s2); text-decoration: none; color: var(--ink); }
@@ -151,9 +151,9 @@ body.choosing .welcome {
    PAGE
    ========================================================= */
 .page {
-  flex: 1; width: 100%; max-width: 1160px; margin: 0 auto;
+  flex: 1; width: 100%; max-width: 960px; margin: 0 auto;
   padding: var(--s2) var(--s5) var(--s6);
-  display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--s5); align-items: start;
+  display: block;
 }
 .main-col { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
 
@@ -173,6 +173,14 @@ body.choosing .welcome {
 .status-card { padding: var(--s5) var(--s5) var(--s4); }
 .st-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
 .who { font-size: 13px; font-weight: 600; color: var(--muted); }
+.st-level { display: inline-flex; align-items: center; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
+.help-btn { background: none; border: none; padding: 2px 4px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--mint-ink); }
+.help-btn:hover { text-decoration: underline; }
+.level-help { margin-top: var(--s3); padding: var(--s3) var(--s4); border-radius: var(--r-lg); background: var(--sunk); display: flex; flex-direction: column; gap: var(--s2); }
+.level-help[hidden] { display: none; }
+.level-help p { display: flex; gap: var(--s3); align-items: baseline; font-size: 14px; color: var(--ink-soft); }
+.level-help .status { flex: none; min-width: 140px; }
+.level-help p.current { color: var(--ink); font-weight: 550; }
 .st-title { font-size: 24px; font-weight: 650; letter-spacing: -.015em; margin: var(--s3) 0 var(--s2); }
 .st-do { font-size: 16px; color: var(--ink-soft); max-width: 62ch; }
 .do-label {
@@ -246,88 +254,43 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--mint-ink); 
 .demo-grid input[type=range] { accent-color: var(--mint-ink); width: 100%; }
 
 /* =========================================================
-   COMPANION CHAT
+   COMPANION FACE (shared by the chat page and the mini face)
+   Classes set by voice.js: .blink .listening .thinking .talking
+   .caring .joy  and in calm mode .in / .hold / .out
    ========================================================= */
-.chat {
-  position: sticky; top: var(--s4);
-  display: flex; flex-direction: column; gap: var(--s3);
-  padding: var(--s4) var(--s4) var(--s3);
-  height: min(640px, calc(100vh - 100px)); min-height: 460px;
-}
-.face-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--s1); }
-.voice-crew { display: flex; align-items: center; gap: var(--s2); font-size: 14px; font-weight: 600; color: var(--ink-soft); }
-
-.voice-log { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s2); padding: 2px; scrollbar-width: thin; }
-.vmsg { padding: 9px 13px; border-radius: var(--r-lg); font-size: 14px; line-height: 1.5; max-width: 92%; }
-.vmsg.assistant { background: var(--sunk); align-self: flex-start; border-bottom-left-radius: 6px; }
-.vmsg.user { background: var(--mint-wash); align-self: flex-end; border-bottom-right-radius: 6px; }
-
-.voice-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.voice-chips button {
-  font-size: 13px; font-weight: 600; padding: 6px var(--s3);
-  border: none; border-radius: var(--r-pill); background: var(--sunk); color: var(--ink-soft); cursor: pointer;
-}
-.voice-chips button:hover { background: #e6e8ec; color: var(--ink); }
-.voice-chips .calm-chip { background: var(--mint-wash); color: var(--mint-ink); }
-
-.voice-form { display: flex; gap: 6px; align-items: center; }
-.voice-form input { flex: 1; min-width: 0; border-radius: var(--r-pill); padding-left: var(--s4); }
-.mic-btn, .send-btn {
-  flex: none; width: 40px; height: 40px; border-radius: 50%; border: none;
-  display: grid; place-items: center; cursor: pointer;
-}
-.mic-btn { background: var(--sunk); color: var(--ink); }
-.mic-btn:hover { background: #e6e8ec; }
-.send-btn { background: var(--mint); color: var(--ink); }
-.mic-btn svg, .send-btn svg { width: 19px; height: 19px; }
-.mic-btn:focus-visible, .send-btn:focus-visible { border-radius: 50%; }
-.mic-btn.listening { background: var(--mint); animation: pulse 1.4s infinite; }
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(91, 225, 200, .55); }
-  100% { box-shadow: 0 0 0 14px rgba(91, 225, 200, 0); }
-}
-.voice-state { text-align: center; min-height: 20px; }
-
-/* ---------- The companion face ----------
-   Classes set by voice.js: .blink .listening .talking .caring  .in/.hold/.out */
 .face {
   width: 150px; height: auto; aspect-ratio: 200 / 170; overflow: visible;
   animation: float 5s ease-in-out infinite;
-  transition: transform 4s ease-in-out, width .4s ease;
+  transition: transform 4s ease-in-out, width .5s cubic-bezier(.2, .8, .2, 1);
 }
 .face .glow { opacity: .9; transition: opacity 3s; }
-.face .cheek { fill: #ff9fb9; opacity: .55; }
-.face .eye { transform-box: fill-box; transform-origin: center; transition: transform .25s ease, opacity .9s ease; }
+.face .cheek { fill: #ff9fb9; opacity: .55; transition: opacity .6s; }
+.face .eye { transform-box: fill-box; transform-origin: center; transition: transform .25s ease, opacity .5s ease; }
 .face .pupil { transition: transform .35s ease-out; }
 .face .brow { transform-box: fill-box; transform-origin: center; transition: translate .4s ease, rotate .6s ease; }
-.face .happy { opacity: 0; transition: opacity .9s ease; }
+.face .happy { opacity: 0; transition: opacity .5s ease; }
 .face .mouth-open { display: none; transform-box: fill-box; transform-origin: center; }
 
 .face.blink .eye { transform: scaleY(.08); transition-duration: .07s; }
 .face.listening .brow { translate: 0 -6px; }
 .face.listening .eye { transform: scale(1.07); }
 .face.listening.blink .eye { transform: scale(1.07, .08); }
+.face.thinking .brow-l { translate: 0 -4px; }
+.face.thinking .brow-r { translate: 0 1px; }
 .face.talking .smile { display: none; }
 .face.talking .mouth-open { display: block; animation: talk .28s ease-in-out infinite alternate; }
 .face.caring .brow-l { rotate: -14deg; translate: 0 2px; }
 .face.caring .brow-r { rotate: 14deg; translate: 0 2px; }
 .face.caring.listening .brow { translate: 0 -3px; }
+/* joy: a happy squint for a moment (good news, thanks) */
+.face.joy .eye { opacity: 0; transform: scaleY(.3); }
+.face.joy .happy { opacity: 1; }
+.face.joy .cheek { opacity: .8; }
 
 @keyframes talk  { from { transform: scaleY(.3) scaleX(1.08); } to { transform: scaleY(1) scaleX(.92); } }
 @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
 
-/* Calm mode: the companion fills the screen, a quiet soft room */
-.calm-text, .calm-exit { display: none; }
-.chat.calm {
-  position: fixed; inset: 0; z-index: 50; height: auto; max-height: none;
-  border-radius: 0; justify-content: center;
-  background: radial-gradient(ellipse 60% 55% at 50% 42%, #eefaf6 0%, var(--page) 70%);
-}
-.chat.calm .voice-log, .chat.calm .voice-chips, .chat.calm .voice-form,
-.chat.calm .voice-state, .chat.calm .voice-crew { display: none; }
-.chat.calm .face { width: 280px; animation-duration: 9s; }
-.chat.calm .calm-text { display: block; font-size: 28px; font-weight: 550; color: var(--ink-soft); min-height: 42px; margin-top: var(--s5); text-align: center; }
-.chat.calm .calm-exit { display: inline-block; margin-top: var(--s3); }
+/* Calm mode breathing */
 .face.in, .face.hold { transform: scale(1.12); }
 .face.in .glow, .face.hold .glow { opacity: 1; }
 .face.in .brow, .face.hold .brow { translate: 0 -3px; }
@@ -336,9 +299,177 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--mint-ink); 
 .face.out .eye { opacity: 0; transform: scaleY(.3); transition-duration: 1.6s; }
 .face.out .happy { opacity: 1; transition-duration: 1.6s; }
 
+/* Mini face in the dashboard header */
+.talk-link {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: 4px var(--s4) 4px 6px; border-radius: var(--r-pill);
+  background: var(--mint-wash); color: var(--mint-ink);
+  font-size: 14px; font-weight: 650; text-decoration: none; white-space: nowrap;
+  transition: background-color .15s;
+}
+.talk-link:hover { background: #d8f2eb; }
+.mini-face { width: 34px; height: 26px; flex: none; overflow: visible; }
+.mini-face .mini-eye { transform-box: fill-box; transform-origin: center; animation: mini-blink 5.5s infinite; }
+@keyframes mini-blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+
+/* =========================================================
+   COMPANION PAGE (chat.html) — no panels: the face and the words
+   float on the soft background; only the composer is frosted glass.
+   ========================================================= */
+.chat-page {
+  height: 100vh; height: 100dvh; min-height: 0; overflow: hidden;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 18%, rgba(91, 225, 200, .13), transparent 70%),
+    var(--page);
+}
+.c-top {
+  width: 100%; max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: var(--s3) var(--s4);
+}
+.c-back {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 6px var(--s3) 6px 6px; border-radius: var(--r-pill);
+  color: var(--ink-soft); font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.c-back svg { width: 20px; height: 20px; }
+.c-back:hover { background: rgba(38, 44, 79, .05); color: var(--ink); }
+.c-about {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: 6px var(--s3); border: none; border-radius: var(--r-pill);
+  background: transparent; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink);
+}
+.c-about:hover { background: rgba(38, 44, 79, .05); }
+.c-about-label { color: var(--muted); font-weight: 500; }
+#aboutName { display: inline-flex; align-items: center; gap: var(--s2); }
+.c-about > svg { width: 16px; height: 16px; color: var(--muted); }
+.c-menu {
+  margin: 0; inset: 56px auto auto 50%; translate: -50% 0; position: fixed;
+  min-width: 280px; padding: 6px; border: none; border-radius: var(--r-lg);
+  background: rgba(255, 255, 255, .92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(38, 44, 79, .14), 0 0 0 1px rgba(38, 44, 79, .05);
+}
+.c-menu-item {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: 10px var(--s3); border: none; border-radius: var(--r-md);
+  background: transparent; cursor: pointer; font-size: 15px; font-weight: 600; text-align: left;
+}
+.c-menu-item:hover, .c-menu-item.on { background: var(--sunk); }
+.c-icon {
+  width: 40px; height: 40px; border: none; border-radius: 50%;
+  display: grid; place-items: center; background: transparent; color: var(--ink-soft); cursor: pointer;
+}
+.c-icon:hover { background: rgba(38, 44, 79, .05); color: var(--ink); }
+.c-icon:focus-visible { border-radius: 50%; }
+.c-icon svg { width: 20px; height: 20px; }
+.c-icon .off, .muted .c-icon .on { display: none; }
+.muted .c-icon .off { display: block; }
+
+/* The face: big and centred until the conversation starts, then it steps back */
+.c-stage { display: flex; flex-direction: column; align-items: center; padding: var(--s2) 0 0; transition: padding .5s cubic-bezier(.2, .8, .2, 1); }
+body:not(.talking-started) .c-stage { padding-top: 8vh; }   /* first look: face and greeting together, a little above centre */
+.c-stage .face { width: 210px; }
+.talking-started .c-stage .face { width: 104px; }
+.c-state { min-height: 20px; margin: 2px 0 0; font-size: 13px; color: var(--muted); letter-spacing: .01em; }
+
+/* Conversation: Astrodoc writes on the background, you get a soft mint bubble */
+.c-log {
+  width: 100%; max-width: 680px; margin: 0 auto; overflow-y: auto; min-height: 0;
+  display: flex; flex-direction: column; gap: var(--s4);
+  padding: var(--s3) var(--s5) var(--s4);
+  scrollbar-width: thin; scrollbar-color: rgba(38, 44, 79, .15) transparent;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 24px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px);
+}
+.talking-started .c-log > :first-child { margin-top: auto; }   /* once talking, new messages sit near the composer */
+.m { max-width: 88%; font-size: 16px; line-height: 1.55; animation: rise .35s cubic-bezier(.2, .8, .2, 1) both; }
+.m.bot { align-self: flex-start; color: var(--ink); }
+.m.you {
+  align-self: flex-end; padding: 9px var(--s4); border-radius: 20px 20px 6px 20px;
+  background: var(--mint-wash); color: #12443b;
+}
+.m.you.ghost { opacity: .6; font-style: italic; animation: none; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.m-text .status { vertical-align: 1px; }
+.m-list { list-style: none; margin: var(--s2) 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.m-list li { display: flex; gap: 10px; align-items: baseline; }
+.m-list li .status { flex: none; }
+.m-list.plain li { display: block; color: var(--ink-soft); }
+.m-list.plain b { color: var(--ink); font-weight: 650; }
+.m-steps { margin: var(--s2) 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; color: var(--muted); }
+.m-steps li.now { color: var(--ink); font-weight: 600; }
+.m-steps li.done { text-decoration: line-through; text-decoration-color: rgba(38, 44, 79, .3); }
+.m-actions { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.m-act {
+  padding: 7px 14px; border: none; border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .8); box-shadow: 0 0 0 1px rgba(38, 44, 79, .1);
+  font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; text-decoration: none;
+}
+.m-act:hover { background: #fff; box-shadow: 0 0 0 1px rgba(38, 44, 79, .2); }
+.m-act.danger { background: var(--act); color: #fff; box-shadow: none; }
+.m-act.link { color: var(--mint-ink); }
+.m-act:disabled { opacity: .45; cursor: default; }
+
+/* Dock: suggestions + composer */
+.c-dock { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 var(--s4) var(--s3); }
+.c-chips { display: flex; gap: var(--s2); overflow-x: auto; padding: 2px 2px var(--s3); scrollbar-width: none; }
+.c-chips::-webkit-scrollbar { display: none; }
+.c-chips button {
+  flex: none; padding: 7px 14px; border: none; border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .6); box-shadow: 0 0 0 1px rgba(38, 44, 79, .08);
+  font-size: 14px; font-weight: 550; color: var(--ink-soft); cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.c-chips button:hover { background: #fff; color: var(--ink); }
+.c-composer {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 6px 6px var(--s5); border-radius: 28px;
+  background: rgba(255, 255, 255, .72);
+  backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: 0 1px 2px rgba(38, 44, 79, .05), 0 10px 30px rgba(38, 44, 79, .08), 0 0 0 1px rgba(38, 44, 79, .06);
+}
+.c-composer:focus-within { box-shadow: 0 1px 2px rgba(38, 44, 79, .05), 0 10px 30px rgba(38, 44, 79, .08), 0 0 0 2px rgba(23, 122, 105, .35); }
+.c-composer input {
+  flex: 1; min-width: 0; padding: 10px 0; border: none; background: transparent;
+  font-size: 16px; color: var(--ink);
+}
+.c-composer input:focus-visible { outline: none; background: transparent; }
+.c-composer input::placeholder { color: #8d91a8; }
+.c-mic, .c-send {
+  flex: none; width: 44px; height: 44px; border: none; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer; transition: background-color .15s, transform .15s;
+}
+.c-mic { background: transparent; color: var(--ink-soft); }
+.c-mic:hover { background: var(--sunk); color: var(--ink); }
+.c-send { background: var(--ink); color: #fff; }
+.c-send:hover { transform: scale(1.05); }
+.c-mic svg, .c-send svg { width: 20px; height: 20px; }
+.c-mic:focus-visible, .c-send:focus-visible { border-radius: 50%; }
+.c-mic.listening { background: var(--mint); color: var(--ink); animation: pulse 1.4s infinite; }
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(91, 225, 200, .55); }
+  100% { box-shadow: 0 0 0 16px rgba(91, 225, 200, 0); }
+}
+.c-hint { margin: var(--s2) 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+.c-hint kbd {
+  font: inherit; font-size: 12.5px; font-weight: 600; padding: 0 6px; border-radius: 5px;
+  background: rgba(38, 44, 79, .06); color: var(--ink-soft);
+}
+@media (pointer: coarse) { .c-hint { display: none; } }
+
+/* Calm mode: the page becomes a quiet room with only the face and the words */
+.calm-text, .calm-exit { display: none; }
+.chat-page.calm { grid-template-rows: auto 1fr; }
+.chat-page.calm .c-log, .chat-page.calm .c-dock, .chat-page.calm .c-about, .chat-page.calm .c-state { display: none; }
+.chat-page.calm .c-stage { justify-content: center; padding-bottom: 10vh; }
+.chat-page.calm .c-stage .face { width: 280px; animation-duration: 9s; }
+.chat-page.calm .calm-text { display: block; margin: var(--s5) 0 0; font-size: 28px; font-weight: 550; color: var(--ink-soft); min-height: 42px; text-align: center; }
+.chat-page.calm .calm-exit { display: inline-block; margin-top: var(--s4); background: rgba(255, 255, 255, .7); }
+
 /* ---------- Footer ---------- */
 .foot {
-  width: 100%; max-width: 1160px; margin: 0 auto;
+  width: 100%; max-width: 960px; margin: 0 auto;
   padding: var(--s4) var(--s5) var(--s5);
   display: flex; justify-content: space-between; gap: var(--s3); flex-wrap: wrap;
   font-size: 13px; color: var(--muted);
@@ -351,8 +482,6 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--mint-ink); 
   .top { flex-wrap: wrap; }
   .mission { order: 5; flex-basis: 100%; }
   .emergency-btn { margin-left: auto; }
-  .page { grid-template-columns: 1fr; }
-  .chat { position: static; height: 520px; }
 }
 @media (max-width: 640px) {
   .top, .page, .foot { padding-left: var(--s4); padding-right: var(--s4); }
@@ -367,11 +496,21 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--mint-ink); 
   .st-title { font-size: 21px; }
   .today-grid { grid-template-columns: 1fr; }
   .demo-grid { grid-template-columns: 1fr; }
-  .chat.calm .face { width: 220px; }
+  .level-help p { flex-direction: column; gap: var(--s1); }
+  .talk-link { padding-right: var(--s3); }
+  .c-top { padding: var(--s2) var(--s3); }
+  .c-back span, .c-about-label { display: none; }
+  .c-stage .face { width: 170px; }
+  .talking-started .c-stage .face { width: 84px; }
+  .c-log { padding: var(--s2) var(--s4) var(--s3); }
+  .m { max-width: 94%; font-size: 15.5px; }
+  .c-dock { padding: 0 var(--s3) var(--s3); }
+  .chat-page.calm .c-stage .face { width: 220px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .choice:hover { transform: none; }
-  .face { animation: none; }
+  .face, .mini-face .mini-eye, .m { animation: none; }
   .face .pupil { transition: none; }
+  .c-mic.listening { animation: none; box-shadow: 0 0 0 4px rgba(91, 225, 200, .5); }
 }
