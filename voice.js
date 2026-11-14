@@ -51,7 +51,7 @@ let muted = localStorage.getItem("astrodoc-mute") === "1";
 
 // Voice settings: female or male voice, and speed. Saved on this device.
 const VOICE_PREFS = "astrodoc-voice";
-const prefs = { gender: "male", rate: 1 };     // male = calm British "JARVIS-style" voice
+const prefs = { gender: "female", rate: 1 };   // default: a soft, polite female voice
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(VOICE_PREFS)) || {}); } catch { }
 let voiceExact = true;          // false = this device has no voice of that kind, so the pitch is shifted instead
 
@@ -70,6 +70,7 @@ function chooseVoice() {
     if (/premium|enhanced/i.test(n)) s += 80;                // e.g. macOS "Ava (Premium)"
     if (/^Google/i.test(n)) s += 60;                         // Chrome's online voices
     if (/Samantha|Ava|Daniel|Alex|Aria|Jenny|Guy|Andrew/i.test(n)) s += 30;
+    if (want === "female" && /\bZoe\b|\bAva\b|Jenny|Aria|Sonia|Libby/i.test(n)) s += 25;   // the gentlest-sounding female voices
     if (/en[-_]US/i.test(v.lang)) s += 10; else if (/en[-_]GB/i.test(v.lang)) s += 6;
     // JARVIS-style: the male voice should be a polished British one
     if (want === "male" && /en[-_]GB/i.test(v.lang)) s += 150;
@@ -87,7 +88,7 @@ function chooseVoice() {
 }
 const otherVoice = () => prefs.gender === "male" ? "Use a female voice" : "Use a male voice";
 // Pitch: a touch higher or lower for each kind; more if we had to fake it
-const voicePitch = () => prefs.gender === "male" ? (voiceExact ? 0.9 : 0.7) : (voiceExact ? 1.05 : 1.25);
+const voicePitch = () => prefs.gender === "male" ? (voiceExact ? 0.9 : 0.7) : (voiceExact ? 1 : 1.2);   // soft, not shrill
 function setVoicePrefs(change) {
   Object.assign(prefs, change);
   localStorage.setItem(VOICE_PREFS, JSON.stringify(prefs));
@@ -184,7 +185,7 @@ async function speakClips(parts, token, rate, pitch, onDone, makeClip) {
 }
 
 let speakToken = 0;
-function speak(text, { rate = 0.97, pitch = voicePitch(), onDone } = {}) {
+function speak(text, { rate = 0.92, pitch = voicePitch(), onDone } = {}) {   // unhurried, gentle pace
   rate *= prefs.rate;
   const token = ++speakToken;
   if (!text) { if (onDone) onDone(); return; }

@@ -16,14 +16,15 @@ const DEFAULT_ORIGINS = ["https://mamadaliyevamubina.github.io", "http://localho
 const CLAUDE_MODEL = "claude-opus-5-5";
 const ELEVEN_MODEL = "eleven_turbo_v2_5";            // natural and fast enough for conversation
 const VOICES = {
-  male: "onwK4e9ZLuTAKqWW03F9",                      // "Daniel": calm, polished British man (JARVIS-style)
+  male: "JBFqnCBsd6RMkjVDRZzb",                      // "George": warm, gentle British man
   female: "EXAVITQu4vr4xnSDxMaL"                     // "Sarah": soft, warm woman
 };
 
 const SYSTEM = `You are AstroDoc, the voice health companion for a small astronaut crew on a long space mission.
 Your words are read aloud, so:
 - Answer in one to three short, natural spoken sentences. No markdown, lists, emojis or headings.
-- Sound calm, warm and capable, like a trusted crewmate who is also a medic.
+- Sound soft, gentle and polite, like a kind nurse who is also a trusted crewmate: say "please", thank people,
+  acknowledge how they feel, and never sound abrupt or alarming, even when something needs care now.
 - Say numbers the way a person would say them out loud.
 
 You are given the crew's current health data as JSON in each message. Use only that data for facts about the crew;
@@ -135,7 +136,7 @@ async function speak({ text, voice, speed }, env, cors) {
     body: JSON.stringify({
       text: words,
       model_id: ELEVEN_MODEL,
-      voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: Math.min(1.2, Math.max(0.7, Number(speed) || 1)) }
+      voice_settings: { stability: 0.7, similarity_boost: 0.75, style: 0, speed: Math.min(1.2, Math.max(0.7, Number(speed) || 1)) }
     })
   });
   if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${(await res.text()).slice(0, 300)}`);

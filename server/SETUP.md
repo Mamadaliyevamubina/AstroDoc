@@ -35,6 +35,6 @@ const ASTRODOC_SERVER = "https://astrodoc.your-name.workers.dev";
 ```
 
 ## Changing voices
-Defaults: **Daniel** (calm British man, JARVIS-style) and **Sarah** (soft, warm woman).
+Defaults: **Sarah** (soft, warm woman, used by default) and **George** (warm, gentle British man).
 To use other ElevenLabs voices, copy a voice's ID from the ElevenLabs Voice Library and add plain
 variables `VOICE_MALE` / `VOICE_FEMALE` on the worker.
