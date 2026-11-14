@@ -395,6 +395,7 @@ function allCrew() {
   };
   const worstId = ids[0], wS = check(worstId);
   ctx.level = null;
+  if (wS.warnings.length) { ctx.crew = worstId; ctx.topic = wS.warnings[0].key; ctx.more = []; updateAbout(); }   // "why?" now explains the most urgent one
   const say = `Here's everyone. ${ids.map(line).join(" ")}` + (wS.overall !== "normal" ? ` Want to start with ${who(worstId)}?` : " Lovely, the whole crew is healthy.");
   if (wS.overall !== "normal") ctx.confirm = { yes: () => assess(worstId), no: () => ({ say: "Okay. Ask me about anyone, any time." }) };
   return {
@@ -1082,7 +1083,7 @@ function updateMute() {
   $("muteBtn").setAttribute("aria-pressed", String(muted));
   $("muteBtn").setAttribute("aria-label", muted ? "Turn voice on" : "Mute voice");
   $("muteBtn").title = muted ? "Voice is off" : "Voice is on";
-  document.body.classList.toggle("muted", muted);
+  document.body.classList.toggle("voice-off", muted);   // not "muted": that is also a text style
 }
 $("muteBtn").onclick = () => {
   muted = !muted;

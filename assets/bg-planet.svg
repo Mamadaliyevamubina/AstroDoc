@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" fill="none">
+  <!-- The Astrodoc logo shape (planet, orbit ring, plus), drawn as a vector so it stays sharp as a large background. -->
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f1f5ff"/>
+      <stop offset="1" stop-color="#bfe9ff"/>
+    </linearGradient>
+  </defs>
+  <!-- back half of the orbit (behind the planet) -->
+  <path d="M556 168 C 610 196, 520 262, 330 312" stroke="#5be1c8" stroke-width="22" stroke-linecap="round"/>
+  <!-- planet -->
+  <circle cx="300" cy="300" r="176" stroke="url(#ring)" stroke-width="26"/>
+  <!-- front half of the orbit -->
+  <path d="M330 312 C 170 354, 40 380, 74 330 C 88 309, 118 290, 150 276" stroke="#5be1c8" stroke-width="22" stroke-linecap="round"/>
+  <!-- plus -->
+  <path d="M520 54 V 150 M 472 102 H 568" stroke="#5be1c8" stroke-width="26" stroke-linecap="round"/>
+</svg>
