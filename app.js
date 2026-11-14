@@ -223,37 +223,38 @@ function check(id) {
 
 // One plain-language warning per problem, each with what to do now
 function buildWarnings(id, c, S) {
+  // Each warning has a "key" so the voice assistant can say it in natural words
   const W = [];
-  const add = (status, title, todo, extra) => { if (bad(status)) W.push({ status, title, todo, extra }); };
+  const add = (key, status, title, todo, extra) => { if (bad(status)) W.push({ key, status, title, todo, extra }); };
 
-  if (id === currentCrew && emergency.active) W.push({ status: "act", title: "Medical emergency declared", todo: "Oxygen mask, keep the person still. Report sent to Earth at top priority." });
-  if (S.storm) W.push({ status: "act", title: "Solar storm: radiation danger", todo: ADVICE.solar });
+  if (id === currentCrew && emergency.active) add("emergency", "act", "Medical emergency declared", "Oxygen mask, keep the person still. Report sent to Earth at top priority.");
+  if (S.storm) add("storm", "act", "Solar storm: radiation danger", ADVICE.solar);
   if (S.clotPattern) {
-    W.push({ status: "act", title: "Possible blood clot (dangerous pattern in blood test)", todo: ADVICE.clotAct, extra: "clot" });
+    add("clot", "act", "Possible blood clot (dangerous pattern in blood test)", ADVICE.clotAct, "clot");
   } else if (S.labOut.length) {
-    add(S.blood, `Blood test outside normal: ${S.labOut.map(l => l.name).join(", ")}`, S.blood === "act" ? ADVICE.clotAct : ADVICE.clotWatch, S.blood === "act" ? "clot" : null);
+    add("labs", S.blood, `Blood test outside normal: ${S.labOut.map(l => l.name).join(", ")}`, S.blood === "act" ? ADVICE.clotAct : ADVICE.clotWatch, S.blood === "act" ? "clot" : null);
   }
-  if (S.labTrend.length) add("act", `Blood test getting worse: ${S.labTrend.join(", ")}`, "Report sent to the flight surgeon automatically. Repeat the test within 24 hours.");
+  if (S.labTrend.length) add("trend", "act", `Blood test getting worse: ${S.labTrend.join(", ")}`, "Report sent to the flight surgeon automatically. Repeat the test within 24 hours.");
 
   if (S.tired) {
-    add(worst(S.sleep, S.reaction, S.hr), `Tired: short sleep, slow reactions and high heart rate (${c.vitals.hr} bpm)`, ADVICE.tired);
+    add("tired", worst(S.sleep, S.reaction, S.hr), `Tired: short sleep, slow reactions and high heart rate (${c.vitals.hr} bpm)`, ADVICE.tired);
   } else {
     const shortNight = bad(T.sleepNight(S.lastNight, c.sleep.hoursAwake));
-    add(S.sleep, shortNight
+    add("sleep", S.sleep, shortNight
       ? `Not enough sleep: ${S.lastNight} h last night, ${S.debt.toFixed(1)} h short this week`
       : `Sleep debt: ${S.debt.toFixed(1)} h short this week`, ADVICE.sleep);
-    add(S.reaction, `Reactions ${S.reactionPct}% slower than usual`, ADVICE.reaction);
-    add(S.hr, `Heart rate ${c.vitals.hr > 100 ? "high" : "low"}: ${c.vitals.hr} bpm`, ADVICE.hr);
+    add("reaction", S.reaction, `Reactions ${S.reactionPct}% slower than usual`, ADVICE.reaction);
+    add("hr", S.hr, `Heart rate ${c.vitals.hr > 100 ? "high" : "low"}: ${c.vitals.hr} bpm`, ADVICE.hr);
   }
-  add(S.temp, `Temperature ${c.vitals.temp >= 37.3 ? "high" : "low"}: ${c.vitals.temp} °C`, ADVICE.temp);
-  add(S.bp, `Blood pressure high: ${c.vitals.bpSys}/${c.vitals.bpDia}`, ADVICE.bp);
-  add(S.mood, `Low mood: ${S.moodValue} of 5`, S.mood === "act" ? ADVICE.moodAct : ADVICE.moodWatch);
+  add("temp", S.temp, `Temperature ${c.vitals.temp >= 37.3 ? "high" : "low"}: ${c.vitals.temp} °C`, ADVICE.temp);
+  add("bp", S.bp, `Blood pressure high: ${c.vitals.bpSys}/${c.vitals.bpDia}`, ADVICE.bp);
+  add("mood", S.mood, `Low mood: ${S.moodValue} of 5`, S.mood === "act" ? ADVICE.moodAct : ADVICE.moodWatch);
   const g = S.biggestGap;
-  add(g.status, `Crewmate sees you differently (${g.m}: you ${g.self}, crewmate ${g.mate})`, ADVICE.gap);
-  if (!S.storm) add(S.radiation, `Radiation dose high: ${S.dose.toFixed(0)} of 600 mSv`, ADVICE.dose);
-  add(S.exercise, `Too little exercise: ${c.exercise} of 6 sessions this week`, ADVICE.exercise);
-  add(S.water, `Drink more water: ${c.water.glasses} of ${c.water.goal} glasses`, ADVICE.water);
-  add(S.vitD, `Vitamin D out of range: ${c.vitD} ng/mL`, ADVICE.vitD);
+  add("gap", g.status, `Crewmate sees you differently (${g.m}: you ${g.self}, crewmate ${g.mate})`, ADVICE.gap);
+  if (!S.storm) add("dose", S.radiation, `Radiation dose high: ${S.dose.toFixed(0)} of 600 mSv`, ADVICE.dose);
+  add("exercise", S.exercise, `Too little exercise: ${c.exercise} of 6 sessions this week`, ADVICE.exercise);
+  add("water", S.water, `Drink more water: ${c.water.glasses} of ${c.water.goal} glasses`, ADVICE.water);
+  add("vitd", S.vitD, `Vitamin D out of range: ${c.vitD} ng/mL`, ADVICE.vitD);
 
   return W.sort((a, b) => RANK[b.status] - RANK[a.status]);
 }
@@ -330,15 +331,29 @@ function showStatus(S) {
       </div>
     </div>
     <div class="warnings">
-      ${S.warnings.length ? S.warnings.map(w => `
-        <div class="warning ${w.status}">
-          <span class="w-icon">${ICON[w.status]}</span>
-          <div><div class="w-title">${w.title}</div><div class="w-do"><strong>Do now:</strong> ${w.todo}</div>
-          ${w.extra === "clot" ? `<button class="ghost-btn small-btn" data-open="clotModal">Open clot checklist</button>` : ""}</div>
-        </div>`).join("")
+      ${S.warnings.length ? showWarnings(S.warnings)
       : `<div class="all-good">${ICON.normal} No warnings. Nothing to do right now.</div>`}
     </div>`;
   wireOpeners();
+}
+
+// Most urgent warning big, the others as one-line rows ("act" before "watch")
+function showWarnings(list) {
+  const sorted = [...list].sort((a, b) => RANK[b.status] - RANK[a.status]);
+  const clotBtn = w => w.extra === "clot" ? `<button class="ghost-btn small-btn" data-open="clotModal">Open clot checklist</button>` : "";
+  const [first, ...rest] = sorted;
+  return `
+    <div class="warning primary ${first.status}">
+      <span class="w-icon">${ICON[first.status]}</span><span class="sr-only">${LABEL[first.status]}:</span>
+      <div><div class="w-title">${first.title}</div><div class="w-do"><strong>Do now:</strong> ${first.todo}</div>${clotBtn(first)}</div>
+    </div>
+    ${rest.length ? `<ul class="w-rows">${rest.map(w => `
+      <li class="warning row ${w.status}" title="${w.title}. Do now: ${w.todo}">
+        <span class="w-icon">${ICON[w.status]}</span><span class="sr-only">${LABEL[w.status]}:</span>
+        <span class="w-title">${w.title}</span>
+        <span class="w-do">${w.todo}</span>
+        ${clotBtn(w)}
+      </li>`).join("")}</ul>` : ""}`;
 }
 
 // 8 simple tiles
