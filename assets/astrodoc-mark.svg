@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="180 50 640 520">
-  <!-- Astrodoc mark: planet ring, orbit and medical plus (Dombit purple) -->
-  <circle cx="500" cy="340" r="186" fill="none" stroke="#2b003f" stroke-width="38"/>
-  <path d="M205 425 A311 45 -18.7 0 0 795 225" fill="none" stroke="#8e00d5" stroke-width="32" stroke-linecap="round"/>
-  <path d="M705 85 V205 M645 145 H765" stroke="#8e00d5" stroke-width="40" stroke-linecap="round"/>
-</svg>
