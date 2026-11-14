@@ -1,4 +1,6 @@
-{
+// AstroDoc space medicine cases: the case database (see "about" below).
+// A script, not a .json file, so it also loads when chat.html is opened straight from the computer (file://).
+window.SPACE_CASES = {
   "title": "AstroDoc space medicine cases",
   "about": "Real, publicly documented cases where astronauts reported how they felt in space and NASA flight surgeons or doctors responded. Each case is summarized in plain words from the cited NASA or peer-reviewed source. Astronauts are identified only by crew role, as in the sources. This is history and education, not medical advice: medicine names describe what was done at the time, not what anyone should take.",
   "updated": "2026-11-14",
@@ -319,4 +321,4 @@
       }
     }
   ]
-}
+};

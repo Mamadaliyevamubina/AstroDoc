@@ -1107,9 +1107,8 @@ function suggestFor(t) {
 // =========================================================================
 // 6. CONVERSATION — understand one message and pick the reply
 // =========================================================================
-// --- Real cases: what happened to real astronauts and what their doctors did (data/space-medicine-cases.json) ---
-let CASES = [];
-fetch("data/space-medicine-cases.json").then(r => r.json()).then(d => { CASES = d.cases || []; }).catch(() => { });
+// --- Real cases: what happened to real astronauts and what their doctors did (data/space-medicine-cases.js) ---
+const CASES = (window.SPACE_CASES && window.SPACE_CASES.cases) || [];   // from data/space-medicine-cases.js
 const CASE_WORDS = [
   [/\b(clot|d-?dimer|blood test|thrombosis)\b/, "clot"], [/\b(heart|pulse|bpm|rhythm|palpitation)/, "hr"],
   [/\b(tired|exhausted|fatigue|sleepy)\b/, "tired"], [/\b(sleep|slept|insomnia|awake)\b/, "sleep"],
@@ -1128,7 +1127,7 @@ function casesFor(text, id = ctx.crew) {
   return CASES.filter(c => hits(c)).sort((a, b) => hits(b) - hits(a));   // best match first
 }
 function tellCase(list, i = 0) {
-  if (!CASES.length) return { say: "My library of real astronaut cases is still loading. Please ask me again in a moment.", chips: defaultChips() };
+  if (!CASES.length) return { say: "My library of real astronaut cases did not load. Please reload the page.", chips: defaultChips() };
   if (!list.length) return { say: "I don't have a real case about that yet. You could ask about sleep, headaches, space sickness, loneliness or blood clots.",
     chips: ["Real case about sleep", "Real case about blood clots", "Real case about loneliness"] };
   const c = list[i % list.length];
