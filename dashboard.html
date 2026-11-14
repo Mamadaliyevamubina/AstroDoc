@@ -169,6 +169,54 @@
     <div class="modal-actions"><button class="primary-btn" data-close>Close</button></div>
   </dialog>
 
+  <!-- ===================== VOICE ASSISTANT ===================== -->
+  <button class="voice-fab" id="voiceFab" aria-label="Open voice assistant">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    Ask Astrodoc
+  </button>
+  <div class="voice-panel" id="voicePanel" hidden>
+    <div class="voice-head">
+      <strong>Voice assistant</strong>
+      <button class="close-x" id="voiceClose" aria-label="Close">×</button>
+    </div>
+
+    <!-- Friendly face: blinks, talks while speaking, breathes in calm mode -->
+    <div class="face-wrap">
+      <svg class="face" id="face" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="head" cx="60" cy="60" r="54"/>
+        <g class="eye"><ellipse cx="42" cy="52" rx="9" ry="11" fill="#fff"/><circle cx="43" cy="54" r="5" fill="#0c1438"/><circle cx="45" cy="51" r="1.8" fill="#fff"/></g>
+        <g class="eye"><ellipse cx="78" cy="52" rx="9" ry="11" fill="#fff"/><circle cx="79" cy="54" r="5" fill="#0c1438"/><circle cx="81" cy="51" r="1.8" fill="#fff"/></g>
+        <ellipse class="cheek" cx="28" cy="72" rx="7" ry="4"/>
+        <ellipse class="cheek" cx="92" cy="72" rx="7" ry="4"/>
+        <path class="smile" d="M46 76 Q60 89 74 76" fill="none" stroke="#0c1438" stroke-width="4" stroke-linecap="round"/>
+        <ellipse class="mouth-open" cx="60" cy="80" rx="9" ry="7" fill="#0c1438"/>
+      </svg>
+      <div class="voice-crew" id="voiceCrew"></div>
+      <div class="calm-text" id="calmText"></div>
+      <button class="ghost-btn calm-exit" id="calmExit">I feel better</button>
+    </div>
+    <div class="voice-mic-row">
+      <button class="mic-btn" id="micBtn" aria-label="Start listening">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <span id="voiceState">Press the mic and ask a question</span>
+    </div>
+    <div class="voice-log" id="voiceLog"></div>
+    <div class="voice-chips">
+      <button data-ask="How is the commander?">Commander</button>
+      <button data-ask="How is the pilot?">Pilot</button>
+      <button data-ask="How is the mission specialist?">Specialist</button>
+      <button data-ask="All crew status">All crew</button>
+      <button data-ask="What should I do?">What to do?</button>
+      <button data-ask="Calm me down" class="calm-chip">Calm me down</button>
+    </div>
+    <form class="voice-form" id="voiceForm">
+      <input id="voiceInput" type="text" placeholder="Or type: how is the pilot?" autocomplete="off">
+      <button class="primary-btn" type="submit">Ask</button>
+    </form>
+  </div>
+
   <script src="app.js"></script>
+  <script src="voice.js"></script>
 </body>
 </html>
