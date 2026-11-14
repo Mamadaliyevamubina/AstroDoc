@@ -1,5 +1,5 @@
 // =========================================================================
-// AstroDoc — Crew Health Monitor (NASA Space Apps 2026)
+// Astrodoc — Crew Health Monitor (NASA Space Apps 2026)
 // File layout:
 //   1. MOCK          all fake data (replace with real data later)
 //   2. THRESHOLDS    the app's brain: turns numbers into normal / watch / act

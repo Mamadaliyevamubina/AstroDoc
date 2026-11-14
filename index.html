@@ -3,18 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AstroDoc – Crew Health Monitor</title>
-  <link rel="icon" href="assets/astrodoc-mark.jpg">
+  <title>Astrodoc – Crew Health Monitor</title>
+  <link rel="icon" href="assets/astrodoc-mark.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- ===================== TOP NAV (Dombit-style floating pill) ===================== -->
   <header class="nav">
-    <div class="brand">
-      <span class="brand-mark"><img src="assets/astrodoc-mark.jpg" alt="AstroDoc logo"></span>
+    <div class="brand" role="img" aria-label="Astrodoc">
+      <!-- Astrodoc logo, redrawn from astrodoc.jpg. Colors: --logo-ring and --logo-accent in style.css -->
+      <svg class="logo-mark" viewBox="180 50 640 520" aria-hidden="true">
+        <circle class="ring" cx="500" cy="340" r="186" fill="none" stroke-width="38"/>
+        <path class="orbit" d="M205 425 A311 45 -18.7 0 0 795 225" fill="none" stroke-width="32" stroke-linecap="round"/>
+        <path class="plus" d="M705 85 V205 M645 145 H765" stroke-width="40" stroke-linecap="round"/>
+      </svg>
       <span class="brand-text">
-        <strong>AstroDoc</strong>
+        <strong class="wordmark">ASTRODOC</strong>
         <small>by Dombit Education</small>
       </span>
     </div>
@@ -323,7 +328,7 @@
   </aside>
 
   <footer class="footer">
-    <span class="foot-brand"><img src="assets/dombit-mark-white.svg" alt="">Dombit Education · NASA Space Apps Challenge 2026</span>
+    <span class="foot-brand"><svg class="logo-mark" viewBox="180 50 640 520" aria-hidden="true"><circle class="ring" cx="500" cy="340" r="186" fill="none" stroke-width="38"/><path class="orbit" d="M205 425 A311 45 -18.7 0 0 795 225" fill="none" stroke-width="32" stroke-linecap="round"/><path class="plus" d="M705 85 V205 M645 145 H765" stroke-width="40" stroke-linecap="round"/></svg><span><span class="wordmark">ASTRODOC</span> · Dombit Education · NASA Space Apps Challenge 2026</span></span>
     <span>Prototype. Not a medical device. Simulated data.</span>
   </footer>
 
