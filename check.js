@@ -4,7 +4,8 @@
 //   2. SAFETY    emergency signs first
 //   3. QUESTIONS one at a time, only for the places you chose
 //   4. MEASURE   heart rate and temperature (Arduino sensor or typed)
-//   5. RESULT    what it could be, why, and what to do now
+//   5. MOOD      how is your inner orbit today? (mood.js)
+//   6. RESULT    what it could be, why, what to do now, and your mood
 // The rules below are TEAM PROPOSALS from NASA HRP research.
 // The medical team must confirm them. A first indication, not a diagnosis.
 // =========================================================================
@@ -89,13 +90,13 @@ const CAUSES = {
 // STATE
 // =========================================================================
 const st = {
-  step: "where",            // where → safety → questions → measure → result (or emergency)
+  step: "where",            // where → safety → questions → measure → mood → result (or emergency)
   places: new Set(),
   flags: new Set(),
   qs: [], qi: 0, answers: {},   // answers[index in QUESTIONS] = "yes" | "no" | "unsure"
   hr: C.vitals.hr, temp: C.vitals.temp
 };
-const STEPS = ["where", "safety", "questions", "measure", "result"];
+const STEPS = ["where", "safety", "questions", "measure", "mood", "result"];
 function go(step) {
   st.step = step;
   draw();
@@ -108,12 +109,12 @@ function progress() {
   if (st.step === "questions" && st.qs.length) frac = (2 + st.qi / st.qs.length) / (STEPS.length - 1);
   $("progressBar").style.width = `${Math.round(frac * 100)}%`;
   $("stepLabel").textContent = st.step === "emergency" ? "Possible emergency"
-    : st.step === "questions" ? `Step 3 of 5 · Question ${st.qi + 1} of ${st.qs.length}`
-    : `Step ${i + 1} of 5`;
+    : st.step === "questions" ? `Step 3 of ${STEPS.length} · Question ${st.qi + 1} of ${st.qs.length}`
+    : `Step ${i + 1} of ${STEPS.length}`;
 }
 function draw() {
   progress();
-  ({ where: drawWhere, safety: drawSafety, questions: drawQuestion, measure: drawMeasure, result: drawResult, emergency: drawEmergency })[st.step]();
+  ({ where: drawWhere, safety: drawSafety, questions: drawQuestion, measure: drawMeasure, mood: drawMood, result: drawResult, emergency: drawEmergency })[st.step]();
 }
 
 
@@ -307,7 +308,7 @@ function drawMeasure() {
     if (hr >= 30 && hr <= 220) st.hr = Math.round(hr);
     if (temp >= 34 && temp <= 42) st.temp = temp;
     mutate(() => { const c = MOCK.crew[me]; c.vitals.hr = st.hr; c.vitals.temp = st.temp; autoReport(me); });
-    go("result");
+    go("mood");
   };
 }
 // The Arduino code can call this while the check is open
@@ -337,7 +338,9 @@ function assessCheck() {
   if (S.tired) add("fatigue", 3, `Sleep ${S.lastNight} h, slower reactions, heart rate ${st.hr}`);
   else if (bad(S.sleep)) add("fatigue", 2, `Only ${S.lastNight} h of sleep last night`);
   if (st.hr > 100 && !S.tired) add("fatigue", 1, `Heart rate ${st.hr} at rest`);
-  if (bad(S.mood)) add("mood", 2, `Mood ${S.moodValue} of 5`);
+  // The mood check-in (step 5) is saved as your mood, so it counts here
+  const picked = typeof MOODS !== "undefined" && MOODS.find(m => m.v === mood.picked);
+  if (bad(S.mood)) add("mood", S.mood === "act" ? 3 : 2, picked && picked.v === S.moodValue ? `You feel “${picked.name}” (${picked.v} of 5)` : `Mood ${S.moodValue} of 5`);
   if (S.biggestGap.status !== "normal") add("mood", 1, "Your crewmate sees you differently");
   if (bad(S.water)) add("kidney", 1, `Only ${C.water.glasses} of ${C.water.goal} glasses of water`);
   if (S.storm) add("radiation", 3, "Solar storm right now");
@@ -352,6 +355,7 @@ function assessCheck() {
       if (key === "fatigue" && S.tired) level = "act";
       if (key === "fever" && tStatus === "act") level = "act";
       if (key === "radiation" && S.storm) level = "act";
+      if (key === "mood" && S.mood === "act") level = "act";      // same as the dashboard: mood 1–2 needs care
       const C0 = CAUSES[key];
       return { ...C0, todo: level === "watch" && C0.todoWatch ? C0.todoWatch : C0.todo, key, level, evidence: ev[key] };
     })
@@ -378,6 +382,7 @@ function drawResult() {
           <div><h3>Because</h3><ul class="k-ev">${c.evidence.map(e => `<li>${e}</li>`).join("")}</ul></div>
         </div>
       </article>`).join("")}
+    ${moodResult()}
     <div class="k-final">
       <button class="${overall === "act" ? "primary-btn" : "soft-btn"}" id="reportBtn">Send this to the flight surgeon</button>
       <a class="soft-btn" href="chat.html">Talk to Astrodoc</a>
@@ -385,13 +390,14 @@ function drawResult() {
       <button class="text-btn" id="againBtn">Start again</button>
     </div>
     <p class="k-note" id="reportNote" aria-live="polite"></p>`;
+  bindMoodResult();
   $("reportBtn").onclick = () => {
-    const summary = list.length ? list.map(c => c.name).join("; ") : "nothing worrying";
+    const summary = (list.length ? list.map(c => c.name).join("; ") : "nothing worrying") + (mood.picked ? `; mood ${mood.picked} of 5` : "");
     const last = mutate(() => { sendToEarth(`${me}: self-check: ${summary} (places: ${[...st.places].map(p => PLACES[p]).join(", ")})`); return MOCK.earthLog[MOCK.earthLog.length - 1]; });
     $("reportBtn").disabled = true;
     $("reportNote").textContent = `Sent ${time(last.sent)}. Earliest reply ~${time(last.reply)}. Don't wait for it: follow the steps above.`;
   };
-  $("againBtn").onclick = () => { if (body3d) st.places.forEach(p => body3d.set(p, false)); st.places.clear(); st.flags.clear(); st.answers = {}; st.qs = []; st.qi = 0; go("where"); };
+  $("againBtn").onclick = () => { if (body3d) st.places.forEach(p => body3d.set(p, false)); st.places.clear(); st.flags.clear(); st.answers = {}; st.qs = []; st.qi = 0; mood.picked = null; go("where"); };
 }
 
 

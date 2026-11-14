@@ -10,7 +10,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 
 const MINT = 0x2fbfa6;
 
-function mount(host, { url, onToggle, label = p => p }) {
+function mount(host, { url, onToggle, onPick, label = p => p }) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const W = () => host.clientWidth, H = () => host.clientHeight;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -89,23 +89,29 @@ function mount(host, { url, onToggle, label = p => p }) {
     return { place: placeAt(local), point: lifted };
   }
 
-  function marker(point) {
+  function marker(point, color = MINT) {
     const g = new THREE.Group(); g.position.copy(point);
     const dot = new THREE.Mesh(new THREE.SphereGeometry(size.y * 0.018, 20, 20),
-      new THREE.MeshBasicMaterial({ color: MINT, transparent: true, opacity: .95 }));
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .95 }));
     const halo = new THREE.Mesh(new THREE.SphereGeometry(size.y * 0.045, 24, 24),
-      new THREE.MeshBasicMaterial({ color: MINT, transparent: true, opacity: .3, depthWrite: false }));
-    dot.renderOrder = halo.renderOrder = 10; g.add(halo, dot); g.userData.halo = halo;
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .3, depthWrite: false }));
+    dot.renderOrder = halo.renderOrder = 10; g.add(halo, dot); g.userData = { halo, dot };
     return g;
   }
-  function set(place, on, point) {
+  // on/off a marker. color: any CSS/hex color (status colors on the dashboard)
+  function set(place, on, point, color) {
     const has = hits.has(place);
     if (on && !has) {
       const p = point || defaultPoint(place);
-      if (p) { const m = marker(p); markers.add(m); hits.set(place, m); }
+      if (p) { const m = marker(p, color ?? MINT); markers.add(m); hits.set(place, m); }
+    } else if (on && has && color != null) {
+      const m = hits.get(place); m.userData.dot.material.color.set(color); m.userData.halo.material.color.set(color);
     } else if (!on && has) { markers.remove(hits.get(place)); hits.delete(place); }
     needsRender = true;
   }
+  let selected = null;
+  function select(place) { selected = place; needsRender = true; }
+  function clear() { hits.forEach(m => markers.remove(m)); hits.clear(); needsRender = true; }
   // Where a marker goes when the place was chosen from the list instead of the model
   function defaultPoint(place) {
     if (!box) return null;
@@ -134,6 +140,7 @@ function mount(host, { url, onToggle, label = p => p }) {
   renderer.domElement.addEventListener("pointerup", e => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
     const p = pick(e); if (!p) return;
+    if (onPick) { onPick(p.place, p.point); return; }
     const on = !hits.has(p.place);
     set(p.place, on, p.point);
     onToggle && onToggle(p.place, on);
@@ -164,13 +171,13 @@ function mount(host, { url, onToggle, label = p => p }) {
     if (turning) turning(t);
     controls.update();
     const pulse = reduce ? 1 : 1 + Math.sin(clock.getElapsedTime() * 3) * 0.12;
-    if (hits.size) { hits.forEach(m => m.userData.halo.scale.setScalar(pulse)); needsRender = true; }
+    if (hits.size) { hits.forEach((m, k) => m.userData.halo.scale.setScalar(pulse * (k === selected ? 1.6 : 1))); needsRender = true; }
     if (needsRender) { renderer.render(scene, camera); needsRender = false; }
   }
   requestAnimationFrame(loop);
   new ResizeObserver(() => { if (!W() || !H()) return; renderer.setSize(W(), H()); camera.aspect = W() / H(); camera.updateProjectionMatrix(); needsRender = true; }).observe(host);
 
-  return { ready, set, turn, has: p => hits.has(p) };
+  return { ready, set, select, clear, turn, has: p => hits.has(p) };
 }
 
 window.Body3D = { mount };

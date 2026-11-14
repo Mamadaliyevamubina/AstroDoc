@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="check.css">
   <link rel="stylesheet" href="type.css">
+  <link rel="stylesheet" href="bodymap.css">
 </head>
 <body class="choosing">
 
@@ -72,6 +73,9 @@
       <!-- ===================== 2. FOUR READINGS ===================== -->
       <section class="vitals" id="vitals" aria-label="Readings"></section>
 
+      <!-- ===================== BODY MAP (3D) — built in bodymap.js ===================== -->
+      <section class="card bodymap" id="bodyMap" aria-labelledby="bmTitle"></section>
+
       <!-- ===================== 3. TODAY (input) ===================== -->
       <section class="card today" id="today" aria-labelledby="todayTitle">
         <h2 id="todayTitle">Today</h2>
@@ -127,5 +131,7 @@
   <script src="core.js"></script>
   <script src="sidebar.js"></script>
   <script src="app.js"></script>
+  <script src="assets/js/body3d.js" defer></script>
+  <script src="bodymap.js" defer></script>
 </body>
 </html>

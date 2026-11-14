@@ -708,40 +708,16 @@ body.viewing-mate .today h2 { text-transform: none; letter-spacing: -.01em; font
 .side-link:hover svg { color: var(--ink-soft); }
 .side-link[aria-current="page"] { background: var(--mint-wash); color: var(--mint); box-shadow: inset 2px 0 0 var(--mint); }
 .side-link[aria-current="page"] svg { color: var(--mint); }
-.side-small { min-height: 32px; font-size: 13px; color: var(--muted); padding-left: 40px; }
 
-/* Crew rows: status icon + the reason, the same words as the dashboard */
+/* Crew rows: just the names (health status lives on the pages) */
 .side-crew {
-  display: flex; align-items: flex-start; gap: var(--s3); width: 100%;
-  padding: 9px var(--s2); border: none; border-radius: var(--r-md); background: transparent; cursor: pointer; text-align: left;
-  transition: background-color .15s;
+  display: flex; align-items: baseline; gap: var(--s2); width: 100%; min-height: 40px;
+  padding: 8px var(--s2) 8px 40px; border: none; border-radius: var(--r-md); background: transparent; cursor: pointer; text-align: left;
+  font-size: 14px; font-weight: 600; color: var(--ink-soft); transition: background-color .15s, color .15s;
 }
-.side-crew:hover { background: var(--glass-2); }
-.side-crew[aria-current="true"] { background: #fff; box-shadow: inset 0 0 0 1px var(--edge), inset 2px 0 0 var(--mint), 0 1px 3px rgba(38, 44, 79, .08); }
-.side-crew-icon svg { width: 18px; height: 18px; display: block; margin-top: 2px; }
-.side-crew-icon svg path[stroke="#fff"] { stroke: var(--space); }
-.side-crew-icon svg rect[fill="#fff"] { fill: var(--space); }
-.side-crew.normal .side-crew-icon { color: var(--normal); }
-.side-crew.watch  .side-crew-icon { color: var(--watch); }
-.side-crew.act    .side-crew-icon { color: var(--act); }
-.side-crew-text { display: flex; flex-direction: column; min-width: 0; }
-.side-crew-name { font-size: 14px; font-weight: 600; color: var(--ink); }
-.side-crew-name small { margin-left: var(--s2); font-size: 12px; font-weight: 500; color: var(--muted); }
-.side-crew-why { font-size: 13px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.side-crew.act .side-crew-why { color: var(--act); font-weight: 600; }
-
-.side-rem { display: flex; align-items: center; gap: var(--s3); padding: 6px var(--s2); font-size: 14px; color: var(--ink-soft); }
-.side-rem svg { width: 18px; height: 18px; flex: none; color: var(--mint); }
-.side-rem span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.side-rem time { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-
-.side-foot {
-  margin-top: auto; padding: var(--s3) var(--s2) 0; border-top: 1px solid var(--edge);
-  display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums;
-}
-.side-storm { display: inline-flex; align-items: center; gap: 6px; color: var(--act); font-weight: 600; }
-.side-storm svg { width: 14px; height: 14px; }
-.side-storm svg path[stroke="#fff"] { stroke: var(--space); }
+.side-crew small { font-size: 12px; font-weight: 500; color: var(--muted); }
+.side-crew:hover { background: var(--glass-2); color: var(--ink); }
+.side-crew[aria-current="true"] { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--edge), 0 1px 3px rgba(38, 44, 79, .08); }
 
 /* Menu button (phones) and the dimmed backdrop */
 .side-toggle {

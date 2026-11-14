@@ -1725,18 +1725,9 @@ $("crewMenu").addEventListener("click", e => {
   talkAbout(b.dataset.pick);
 });
 
-// Sidebar hooks: who we talk about, switching, and the reminders list
+// Sidebar hooks: who we talk about, and switching
 function sideCurrent() { return ctx.crew; }
 function sideView(id) { talkAbout(id); }
-function sideExtras() {
-  if (!reminders.length) return "";
-  const label = r => r.what === "nap" ? "Wake up from nap" : r.what === "timer" ? "Timer" : Cap(r.what);
-  return `<section class="side-group" aria-labelledby="sideRemTitle">
-    <h2 class="side-title" id="sideRemTitle">Reminders</h2>
-    ${reminders.slice().sort((a, b) => a.due - b.due).map(r => `<div class="side-rem">${SIDE_ICON.bell}<span>${escapeHtml(label(r))}</span><time>${time(new Date(r.due))}</time></div>`).join("")}
-    <button type="button" class="side-link side-small" data-say="Cancel reminders"><span>Cancel all</span></button>
-  </section>`;
-}
 
 function updateMute() {
   $("muteBtn").setAttribute("aria-label", muted ? "Voice settings, voice is off" : "Voice settings");
