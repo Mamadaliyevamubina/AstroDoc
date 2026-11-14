@@ -41,6 +41,12 @@ const partOfDay = () => { const h = new Date().getHours(); return h < 5 ? "eveni
 let bestVoice = null;
 let neural = null;              // the natural (neural) voice model, once loaded (see speak)
 let neuralAudio = null;         // the natural-voice sentence playing right now
+
+// AstroDoc server (server/worker.js): Claude understands and answers, ElevenLabs speaks.
+// Empty = no server: the built-in replies and the in-browser voice are used.
+const ASTRODOC_SERVER = "";
+let cloudVoiceOff = false;      // set when the server's voice fails, for the rest of the visit
+const cloudVoice = () => !!ASTRODOC_SERVER && !cloudVoiceOff;
 let muted = localStorage.getItem("astrodoc-mute") === "1";
 
 // Voice settings: female or male voice, and speed. Saved on this device.
@@ -119,7 +125,18 @@ function loadNeuralVoice() {
     .then(tts => { neural = tts; if (typeof updateVoiceMenu === "function") updateVoiceMenu(); })
     .catch(e => console.warn("Natural voice unavailable, using the device voice.", e));
 }
-setTimeout(loadNeuralVoice, 1500);  // after the page has settled
+if (!ASTRODOC_SERVER) setTimeout(loadNeuralVoice, 1500);  // after the page has settled (with a server, only if its voice fails)
+
+// The server's voice (ElevenLabs): one mp3 per sentence
+async function cloudClip(text, token, speed) {
+  if (token !== speakToken) return null;
+  const res = await fetch(ASTRODOC_SERVER + "/speak", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, voice: prefs.gender, speed }), signal: AbortSignal.timeout(15000)
+  });
+  if (!res.ok) throw new Error("speak " + res.status);
+  return URL.createObjectURL(await res.blob());
+}
 
 // One sentence at a time, so two never run in the model together
 function neuralClip(text, token, speed) {
@@ -148,14 +165,16 @@ function playClip(url, token) {
     a.play().catch(() => finish(false));                     // e.g. the browser blocked autoplay
   });
 }
-async function speakNeural(parts, token, rate, pitch, onDone) {
-  let next = neuralClip(parts[0], token, rate);
+// Play sentence clips one after another (server voice or in-browser voice)
+async function speakClips(parts, token, rate, pitch, onDone, makeClip) {
+  let next = makeClip(parts[0], token, rate);
   for (let i = 0; i < parts.length; i++) {
-    let url = null;
-    try { url = await next; } catch (e) { console.warn("Natural voice failed, using the device voice.", e); }
+    let url = null, failed = false;
+    try { url = await next; } catch (e) { failed = true; console.warn("Natural voice failed, using the device voice.", e); }
     if (token !== speakToken) { if (url) URL.revokeObjectURL(url); return; }
-    if (i + 1 < parts.length && url) next = neuralClip(parts[i + 1], token, rate);   // prepare the next sentence while this one plays
+    if (i + 1 < parts.length && url) next = makeClip(parts[i + 1], token, rate);   // prepare the next sentence while this one plays
     if (!url || !(await playClip(url, token))) {
+      if (failed && makeClip === cloudClip) { cloudVoiceOff = true; loadNeuralVoice(); updateVoiceMenu(); }   // try the in-browser voice next time
       if (token === speakToken) speakDevice(parts.slice(i), token, rate, pitch, onDone);
       return;
     }
@@ -169,7 +188,7 @@ function speak(text, { rate = 0.97, pitch = voicePitch(), onDone } = {}) {
   rate *= prefs.rate;
   const token = ++speakToken;
   if (!text) { if (onDone) onDone(); return; }
-  const canSpeak = neural || "speechSynthesis" in window;
+  const canSpeak = cloudVoice() || neural || "speechSynthesis" in window;
   if (muted || !canSpeak) {                           // no sound: the mouth still moves a little
     faceMode("talking", true);
     setTimeout(() => { if (token === speakToken) { faceMode("talking", false); if (onDone) onDone(); } }, Math.min(2200, 400 + text.length * 18));
@@ -178,7 +197,8 @@ function speak(text, { rate = 0.97, pitch = voicePitch(), onDone } = {}) {
   stopAudio();
   const parts = speakable(text).split(/(?<=[.!?])\s+/).filter(p => p.trim());
   if (!parts.length) { if (onDone) onDone(); return; }
-  if (neural) speakNeural(parts, token, rate, pitch, onDone);
+  if (cloudVoice()) speakClips(parts, token, rate, pitch, onDone, cloudClip);
+  else if (neural) speakClips(parts, token, rate, pitch, onDone, neuralClip);
   else speakDevice(parts, token, rate, pitch, onDone);
 }
 function speakDevice(parts, token, rate, pitch, onDone) {
@@ -1043,7 +1063,7 @@ function changeVoice(change) {
   setVoicePrefs(change);
   if (change.gender) {
     const g = change.gender;
-    return { say: voiceExact || neural ? pick([`Okay. This is my ${g} voice. How does it sound?`, `Sure. Here's my ${g} voice. Better?`])
+    return { say: voiceExact || neural || cloudVoice() ? pick([`Okay. This is my ${g} voice. How does it sound?`, `Sure. Here's my ${g} voice. Better?`])
                             : `This device doesn't have a ${g} English voice, so I've changed my pitch instead. You can add more voices in your system's speech settings.`,
       face: "joy", chips: [otherVoice(), "Speak slower", "Thanks"] };
   }
@@ -1080,6 +1100,7 @@ function suggestFor(t) {
 // =========================================================================
 // 6. CONVERSATION — understand one message and pick the reply
 // =========================================================================
+const EMERGENCY = /\b(emergency|help me|cannot breathe|can not breathe|not breathing|chest pain|passed out|fainted|unconscious|not responding|seizure|bleeding badly|stroke|heart attack)\b/;
 function understand(raw) {
   const t = normalize(raw);
   if (!t) return null;
@@ -1092,8 +1113,7 @@ function understand(raw) {
   const mine = one || selfId || ctx.crew;    // for logging, feelings and symptoms
 
   // --- 1. Emergency words always win ---
-  if (/\b(emergency|help me|cannot breathe|can not breathe|not breathing|chest pain|passed out|fainted|unconscious|not responding|seizure|bleeding badly|stroke|heart attack)\b/.test(t))
-    return emergencyFlow(subj);
+  if (EMERGENCY.test(t)) return emergencyFlow(subj);
 
   // --- 2. Waiting for yes / no ---
   if (ctx.confirm) {
@@ -1359,6 +1379,41 @@ function defaultChips() {
                                           : ["How is everyone?", "Log my sleep", "Talk to me", "Calm me down"];
 }
 
+// --- Claude (through the AstroDoc server) understands what was said ---
+// Emergencies and yes/no or step-by-step flows stay on the built-in rules: instant and predictable.
+const aiHistory = [];
+const useAI = text => !!ASTRODOC_SERVER && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
+function crewSnapshot() {
+  const crew = {};
+  Object.keys(MOCK.crew).forEach(id => {
+    const c = MOCK.crew[id], S = check(id);
+    crew[ROLE[id]] = { status: LABEL[S.overall] || LABEL.normal, vitals: c.vitals, lastNightSleepHours: S.lastNight,
+      problems: S.warnings.map(w => ({ level: LABEL[w.status], what: w.title, whatToDo: w.todo })) };
+  });
+  return { mission: MOCK.mission, talkingAbout: ROLE[ctx.crew], userIs: me ? ROLE[me] : null, userName: userName() || null, crew };
+}
+async function askAI(text) {
+  try {
+    const res = await fetch(ASTRODOC_SERVER + "/chat", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot() }), signal: AbortSignal.timeout(20000)
+    });
+    if (!res.ok) throw new Error("chat " + res.status);
+    const { reply, command, focus } = await res.json();
+    if (!reply && !command) return null;
+    const id = Object.keys(ROLE).find(k => ROLE[k] === focus);
+    if (id && id !== ctx.crew) { ctx.crew = id; updateAbout(); }
+    if (command) {                                    // an action the app does itself
+      const r = understand(command);
+      if (r && !r.missed && (r.say || r.then)) return r;
+    }
+    return reply ? { say: reply, chips: defaultChips(), fromAI: true } : null;
+  } catch (e) {
+    console.warn("AstroDoc server unavailable, using built-in replies.", e);
+    return null;
+  }
+}
+
 // --- Deliver one reply: a short "thinking" beat, then show and say it ---
 let lastWasVoice = false, busy = 0;
 async function respond(raw, { voice = false } = {}) {
@@ -1367,14 +1422,23 @@ async function respond(raw, { voice = false } = {}) {
   addMessage("you", escapeHtml(text));
   stopSpeaking();
   lastWasVoice = voice;
-  const r = understand(text);
-  if (r && !r.missed) ctx.misses = 0;
-  if (!r || (!r.say && !r.then)) { setChips(r?.chips || defaultChips()); return; }
-  if (!r.say) { r.then(); return; }
   const my = ++busy;
-  setThinking(true);
-  await wait(r.urgent ? 150 : Math.min(950, 320 + r.say.length * 3));   // a natural beat, never slow in an emergency
-  if (my !== busy) return;
+  let r = null;
+  if (useAI(text)) {
+    setThinking(true);
+    r = await askAI(text);
+    if (my !== busy) return;
+  }
+  if (!r) r = understand(text);
+  if (r && !r.missed) ctx.misses = 0;
+  if (!r || (!r.say && !r.then)) { setThinking(false); setChips(r?.chips || defaultChips()); return; }
+  if (!r.say) { setThinking(false); r.then(); return; }
+  aiHistory.push({ role: "user", content: text }, { role: "assistant", content: r.say });
+  if (!r.fromAI) {
+    setThinking(true);
+    await wait(r.urgent ? 150 : Math.min(950, 320 + r.say.length * 3));   // a natural beat, never slow in an emergency
+    if (my !== busy) return;
+  }
   setThinking(false);
   deliver(r);
 }
@@ -1626,9 +1690,11 @@ function updateVoiceMenu() {
     b.setAttribute("aria-pressed", String(r === 1 ? prefs.rate > 0.92 && prefs.rate < 1.08 : r < 1 ? prefs.rate <= 0.92 : prefs.rate >= 1.08));
     b.disabled = muted;
   });
-  $("voicePreview").disabled = muted || !(neural || "speechSynthesis" in window);
-  $("voiceNote").textContent = !(neural || "speechSynthesis" in window) ? "This browser can't speak. Replies are written only."
+  const canSpeak = cloudVoice() || neural || "speechSynthesis" in window;
+  $("voicePreview").disabled = muted || !canSpeak;
+  $("voiceNote").textContent = !canSpeak ? "This browser can't speak. Replies are written only."
     : muted ? "I'll only write my replies."
+    : cloudVoice() ? `Voice: natural ${prefs.gender === "male" ? "British male" : "female"} voice (ElevenLabs)`
     : neural ? `Voice: natural ${prefs.gender === "male" ? "British male" : "female"} voice`
     : !bestVoice ? "Loading voices…"
     : voiceExact ? `Voice: ${bestVoice.name.replace(/\s*\(.*\)\s*$/, "").replace(/^Microsoft\s+/, "")}`
