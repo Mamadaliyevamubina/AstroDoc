@@ -103,18 +103,86 @@ function speakable(text) {
     .replace(/[()]/g, ", ");
 }
 
+// Natural voice: the Kokoro neural voice runs inside the browser (no key, no server).
+// It downloads once in the background (about 90 MB, then cached); until it's ready,
+// or if it fails, the device's own voice is used instead.
+const NEURAL_VOICE = { male: "bm_george", female: "af_heart" };   // calm British man, warm American woman
+let neural = null;              // the loaded model, or null
+let neuralAudio = null;         // the sentence playing right now
+let neuralQueue = Promise.resolve();
+function loadNeuralVoice() {
+  const lowEnd = (navigator.connection && navigator.connection.saveData) || (navigator.deviceMemory && navigator.deviceMemory < 4);
+  if (lowEnd || !window.WebAssembly) return;
+  import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm")
+    .then(({ KokoroTTS }) => KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", { dtype: "q8", device: "wasm" }))
+    .then(tts => tts.generate("Ready.", { voice: NEURAL_VOICE[prefs.gender] || NEURAL_VOICE.male }).then(() => tts, () => tts))   // warm up, so the first reply isn't slow
+    .then(tts => { neural = tts; if (typeof updateVoiceMenu === "function") updateVoiceMenu(); })
+    .catch(e => console.warn("Natural voice unavailable, using the device voice.", e));
+}
+setTimeout(loadNeuralVoice, 1500);  // after the page has settled
+
+// One sentence at a time, so two never run in the model together
+function neuralClip(text, token, speed) {
+  const job = neuralQueue.then(() => token !== speakToken ? null
+    : neural.generate(text, { voice: NEURAL_VOICE[prefs.gender] || NEURAL_VOICE.male, speed })
+        .then(a => URL.createObjectURL(a.toBlob())));
+  neuralQueue = job.catch(() => { });
+  return job;
+}
+function playClip(url, token) {
+  return new Promise(resolve => {
+    const a = neuralAudio = new Audio(url);
+    let done = false;
+    const finish = ok => {
+      if (done) return;
+      done = true;
+      if (neuralAudio === a) neuralAudio = null;
+      URL.revokeObjectURL(url);
+      if (token === speakToken) faceMode("talking", false);   // the mouth rests between sentences
+      resolve(ok);
+    };
+    a.onplay = () => { if (token === speakToken) { faceMode("talking", true); setState(""); } };
+    a.onended = () => finish(true);
+    a.onerror = () => finish(false);
+    a.stop = () => { a.pause(); finish(true); };
+    a.play().catch(() => finish(false));                     // e.g. the browser blocked autoplay
+  });
+}
+async function speakNeural(parts, token, rate, pitch, onDone) {
+  let next = neuralClip(parts[0], token, rate);
+  for (let i = 0; i < parts.length; i++) {
+    let url = null;
+    try { url = await next; } catch (e) { console.warn("Natural voice failed, using the device voice.", e); }
+    if (token !== speakToken) { if (url) URL.revokeObjectURL(url); return; }
+    if (i + 1 < parts.length && url) next = neuralClip(parts[i + 1], token, rate);   // prepare the next sentence while this one plays
+    if (!url || !(await playClip(url, token))) {
+      if (token === speakToken) speakDevice(parts.slice(i), token, rate, pitch, onDone);
+      return;
+    }
+    if (token !== speakToken) return;
+  }
+  if (onDone) onDone();
+}
+
 let speakToken = 0;
 function speak(text, { rate = 0.97, pitch = voicePitch(), onDone } = {}) {
   rate *= prefs.rate;
   const token = ++speakToken;
   if (!text) { if (onDone) onDone(); return; }
-  if (muted || !("speechSynthesis" in window)) {     // no sound: the mouth still moves a little
+  const canSpeak = neural || "speechSynthesis" in window;
+  if (muted || !canSpeak) {                           // no sound: the mouth still moves a little
     faceMode("talking", true);
     setTimeout(() => { if (token === speakToken) { faceMode("talking", false); if (onDone) onDone(); } }, Math.min(2200, 400 + text.length * 18));
     return;
   }
-  speechSynthesis.cancel();
+  stopAudio();
   const parts = speakable(text).split(/(?<=[.!?])\s+/).filter(p => p.trim());
+  if (!parts.length) { if (onDone) onDone(); return; }
+  if (neural) speakNeural(parts, token, rate, pitch, onDone);
+  else speakDevice(parts, token, rate, pitch, onDone);
+}
+function speakDevice(parts, token, rate, pitch, onDone) {
+  if (!("speechSynthesis" in window)) { if (onDone) onDone(); return; }
   parts.forEach((part, i) => {
     const u = new SpeechSynthesisUtterance(part);
     if (bestVoice) { u.voice = bestVoice; u.lang = bestVoice.lang; } else u.lang = "en-US";
@@ -129,9 +197,13 @@ function speak(text, { rate = 0.97, pitch = voicePitch(), onDone } = {}) {
     speechSynthesis.speak(u);
   });
 }
+function stopAudio() {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  if (neuralAudio) neuralAudio.stop();
+}
 function stopSpeaking() {
   speakToken++;
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  stopAudio();
   faceMode("talking", false);
 }
 
@@ -971,7 +1043,7 @@ function changeVoice(change) {
   setVoicePrefs(change);
   if (change.gender) {
     const g = change.gender;
-    return { say: voiceExact ? pick([`Okay. This is my ${g} voice. How does it sound?`, `Sure. Here's my ${g} voice. Better?`])
+    return { say: voiceExact || neural ? pick([`Okay. This is my ${g} voice. How does it sound?`, `Sure. Here's my ${g} voice. Better?`])
                             : `This device doesn't have a ${g} English voice, so I've changed my pitch instead. You can add more voices in your system's speech settings.`,
       face: "joy", chips: [otherVoice(), "Speak slower", "Thanks"] };
   }
@@ -1554,9 +1626,10 @@ function updateVoiceMenu() {
     b.setAttribute("aria-pressed", String(r === 1 ? prefs.rate > 0.92 && prefs.rate < 1.08 : r < 1 ? prefs.rate <= 0.92 : prefs.rate >= 1.08));
     b.disabled = muted;
   });
-  $("voicePreview").disabled = muted || !("speechSynthesis" in window);
-  $("voiceNote").textContent = !("speechSynthesis" in window) ? "This browser can't speak. Replies are written only."
+  $("voicePreview").disabled = muted || !(neural || "speechSynthesis" in window);
+  $("voiceNote").textContent = !(neural || "speechSynthesis" in window) ? "This browser can't speak. Replies are written only."
     : muted ? "I'll only write my replies."
+    : neural ? `Voice: natural ${prefs.gender === "male" ? "British male" : "female"} voice`
     : !bestVoice ? "Loading voices…"
     : voiceExact ? `Voice: ${bestVoice.name.replace(/\s*\(.*\)\s*$/, "").replace(/^Microsoft\s+/, "")}`
     : `This device has no ${prefs.gender} English voice, so I change my pitch instead.`;
