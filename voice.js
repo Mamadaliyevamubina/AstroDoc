@@ -1124,7 +1124,8 @@ function casesFor(text, id = ctx.crew) {
   const tags = new Set(CASE_WORDS.filter(([re]) => re.test(text)).map(([, tag]) => tag));
   if (!tags.size && ctx.topic) tags.add(ctx.topic);
   if (!tags.size && id && MOCK.crew[id]) check(id).warnings.forEach(w => tags.add(w.key));
-  return CASES.filter(c => c.tags.some(t => tags.has(t)));
+  const hits = c => c.tags.filter(t => tags.has(t)).length;
+  return CASES.filter(c => hits(c)).sort((a, b) => hits(b) - hits(a));   // best match first
 }
 function tellCase(list, i = 0) {
   if (!CASES.length) return { say: "My library of real astronaut cases is still loading. Please ask me again in a moment.", chips: defaultChips() };
