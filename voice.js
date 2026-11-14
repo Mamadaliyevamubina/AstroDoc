@@ -150,10 +150,17 @@ async function cloudClip(text, token, speed) {
         signal: AbortSignal.timeout(15000)
       });
   if (!ASTRODOC_SERVER && !res.ok) {
-    if (res.status === 401) try { localStorage.removeItem(VOICE_KEY); } catch { }   // a wrong key: ask for it again
-    voiceProblem = res.status === 401 ? "That ElevenLabs key wasn't accepted. Check it and connect again."
-      : res.status === 402 || res.status === 429 ? "The ElevenLabs account is out of voice credit for now. I'm using my free voice."
-      : "The natural voice isn't reachable right now. I'm using my free voice.";
+    // ElevenLabs says why in detail.status / detail.message: show it, so the fix is clear
+    let detail = {};
+    try { detail = (await res.json()).detail || {}; } catch { }
+    if (typeof detail === "string") detail = { message: detail };
+    const why = String(detail.status || "") + " " + String(detail.message || "");
+    if (/invalid_api_key/.test(why)) try { localStorage.removeItem(VOICE_KEY); } catch { }   // a wrong key: ask for it again
+    voiceProblem = /invalid_api_key/.test(why) ? "That ElevenLabs key wasn't accepted. Please copy it again and connect."
+      : /missing_permission|permission/i.test(why) ? "This key isn't allowed to make speech. In ElevenLabs, edit the key and turn on Text to Speech, then reconnect."
+      : /unusual_activity|free tier|free_users/i.test(why) ? "ElevenLabs blocked free-plan use from here. A paid plan (Starter) fixes it. I'm using my free voice."
+      : /quota|credit|limit/i.test(why) || res.status === 402 || res.status === 429 ? "The ElevenLabs account is out of voice credit for now. I'm using my free voice."
+      : `ElevenLabs said: ${(detail.message || "error " + res.status).slice(0, 160)}`;
   }
   if (!res.ok) throw new Error("speak " + res.status);
   return URL.createObjectURL(await res.blob());
@@ -195,7 +202,7 @@ async function speakClips(parts, token, rate, pitch, onDone, makeClip) {
     if (token !== speakToken) { if (url) URL.revokeObjectURL(url); return; }
     if (i + 1 < parts.length && url) next = makeClip(parts[i + 1], token, rate);   // prepare the next sentence while this one plays
     if (!url || !(await playClip(url, token))) {
-      if (failed && makeClip === cloudClip) { cloudVoiceOff = true; loadNeuralVoice(); updateVoiceMenu(); updateKeyMenus(); }   // try the in-browser voice next time
+      if (failed && makeClip === cloudClip) { if (!voiceProblem && !ASTRODOC_SERVER) voiceProblem = "I couldn't reach ElevenLabs. Check the internet connection. I'm using my free voice."; cloudVoiceOff = true; loadNeuralVoice(); updateVoiceMenu(); updateKeyMenus(); }   // try the in-browser voice next time
       if (token === speakToken) speakDevice(parts.slice(i), token, rate, pitch, onDone);
       return;
     }
