@@ -11,14 +11,14 @@
 </head>
 <body class="choosing">
 
-  <!-- ===================== WELCOME: choose who to check on ===================== -->
+  <!-- ===================== WELCOME: who are you? (asked once) ===================== -->
   <section class="welcome" id="welcome" aria-labelledby="welcomeTitle">
     <span class="brand">
       <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
       <span class="brand-name">Astrodoc</span>
     </span>
-    <h1 id="welcomeTitle">Who are you checking on?</h1>
-    <p class="muted">Choose a crew member to see their health and what to do now.</p>
+    <h1 id="welcomeTitle">Who are you?</h1>
+    <p class="muted">Choose once. Astrodoc then opens on your own health, with your crewmates one tap away.</p>
     <!-- Choices are built in app.js -->
     <div class="choices" id="crewSelector"></div>
   </section>
@@ -29,8 +29,6 @@
       <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
       <span class="brand-name">Astrodoc</span>
     </a>
-    <!-- The chosen crew member. Click to choose again. -->
-    <button class="who-btn" id="switchCrew"></button>
     <!-- Mission line is built in app.js -->
     <div class="mission" id="missionStrip"></div>
     <!-- The companion lives on its own page -->
@@ -49,6 +47,9 @@
 
   <main class="page">
     <div class="main-col">
+      <!-- You and your crewmates: one tap to switch. Built in app.js -->
+      <nav class="crew-strip" id="crewStrip" aria-label="You and your crewmates"></nav>
+
       <!-- Emergency: confirm / active banner, built in app.js -->
       <section class="emergency-box" id="emergencyBox" hidden></section>
 
@@ -56,7 +57,7 @@
       <section class="card status-card">
         <div id="statusCard"></div>
         <div class="status-foot">
-          <button class="text-btn" id="reportBtn">Send report to Earth</button>
+          <button class="soft-btn" id="reportBtn">Send report to Earth</button>
           <span class="muted small" id="reportNote"></span>
         </div>
       </section>
@@ -67,24 +68,27 @@
       <!-- ===================== 3. TODAY (input) ===================== -->
       <section class="card today" id="today" aria-labelledby="todayTitle">
         <h2 id="todayTitle">Today</h2>
+        <p class="today-note mate-only" id="mateNote"></p>
         <div class="today-grid">
-          <label class="field">
+          <label class="field self-only">
             <span>Sleep last night</span>
             <span class="input-unit"><input type="number" id="ciSleep" min="0" max="14" step="0.1" inputmode="decimal"><em>h</em></span>
           </label>
-          <div class="field">
-            <span id="moodSelfLabel">Mood, you</span>
+          <div class="field self-only">
+            <span id="moodSelfLabel">Your mood</span>
             <div class="scale" id="moodSelf" role="group" aria-labelledby="moodSelfLabel"></div>
+            <span class="scale-ends" aria-hidden="true"><span>1 low</span><span>5 great</span></span>
           </div>
-          <div class="field">
-            <span id="moodMateLabel">Mood, as a crewmate sees you</span>
+          <div class="field mate-only">
+            <span id="moodMateLabel">Their mood, as you see it</span>
             <div class="scale" id="moodMate" role="group" aria-labelledby="moodMateLabel"></div>
+            <span class="scale-ends" aria-hidden="true"><span>1 low</span><span>5 great</span></span>
           </div>
-          <div class="field">
+          <div class="field self-only">
             <span>Water today</span>
             <div class="counter"><button id="waterMinus" aria-label="One glass less">−</button><b id="waterCount"></b><button id="waterPlus" aria-label="One glass more">+</button></div>
           </div>
-          <div class="field">
+          <div class="field self-only">
             <span>Exercise this week</span>
             <div class="counter"><button id="exMinus" aria-label="One session less">−</button><b id="exCount"></b><button id="exPlus" aria-label="One session more">+</button></div>
           </div>
@@ -110,6 +114,7 @@
   <footer class="foot">
     <span>Astrodoc · Dombit Education · NASA Space Apps Challenge 2026</span>
     <span>Prototype. Not a medical device. Simulated data.</span>
+    <button class="text-btn small" id="changeUser">Change user</button>
   </footer>
 
   <script src="core.js"></script>

@@ -41,22 +41,45 @@ const partOfDay = () => { const h = new Date().getHours(); return h < 5 ? "eveni
 let bestVoice = null;
 let muted = localStorage.getItem("astrodoc-mute") === "1";
 
+// Voice settings: female or male voice, and speed. Saved on this device.
+const VOICE_PREFS = "astrodoc-voice";
+const prefs = { gender: "female", rate: 1 };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem(VOICE_PREFS)) || {}); } catch { }
+let voiceExact = true;          // false = this device has no voice of that kind, so the pitch is shifted instead
+
+// Browsers don't say if a voice is female or male, so we know them by name
+const FEMALE_V = /\bFemale\b|Samantha|\bAva\b|Allison|Susan|\bZoe\b|Karen|Serena|Victoria|Tessa|Moira|Fiona|Veena|\bKate\b|Nicky|Joelle|Aria|Jenny|Zira|Michelle|Sonia|Libby|Natasha|\bEmma\b|\bAna\b|Hazel|Heera|Catherine|Martha|Ashley|Amber|Cora|Elizabeth|\bJane\b|Monica|Nancy|Google US English/i;
+const MALE_V = /\bMale\b|\bAlex\b|Daniel|\bTom\b|Aaron|Arthur|\bEvan\b|Nathan|Oliver|Rishi|Gordon|\bLee\b|David|\bMark\b|\bGuy\b|\bRyan\b|Christopher|\bEric\b|Andrew|Brian|Roger|Steffan|William|Thomas|\bLiam\b|George|James|Jacob|Brandon|Davis|\bTony\b|Jason|\bNoah\b|Prabhat|Connor|Mitchell/i;
+const genderOf = v => FEMALE_V.test(v.name) ? "female" : MALE_V.test(v.name) ? "male" : null;
+
 function chooseVoice() {
   if (!("speechSynthesis" in window)) return;
+  const want = prefs.gender;
   const score = v => {
     const n = v.name;
     let s = 0;
     if (/natural|neural/i.test(n)) s += 100;                 // e.g. Microsoft "Aria Online (Natural)"
     if (/premium|enhanced/i.test(n)) s += 80;                // e.g. macOS "Ava (Premium)"
-    if (/Google US English/i.test(n)) s += 60;               // Chrome's online voice
-    if (/Samantha|Ava|Allison|Susan|Zoe|Karen|Serena|Aria|Jenny|Google UK English Female/i.test(n)) s += 40;
-    if (/en[-_]US/i.test(v.lang)) s += 10;
+    if (/^Google/i.test(n)) s += 60;                         // Chrome's online voices
+    if (/Samantha|Ava|Daniel|Alex|Aria|Jenny|Guy|Andrew/i.test(n)) s += 30;
+    if (/en[-_]US/i.test(v.lang)) s += 10; else if (/en[-_]GB/i.test(v.lang)) s += 6;
+    const g = genderOf(v);
+    if (g === want) s += 300; else if (g) s -= 300;
     // macOS novelty voices sound robotic: never use them
-    if (/Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandpa|Grandma|Eddy|Flo|Reed|Rocko|Sandy|Shelley/i.test(n)) s -= 200;
+    if (/Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandpa|Grandma|Eddy|Flo|Reed|Rocko|Sandy|Shelley/i.test(n)) s -= 1000;
     return s;
   };
   const english = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
   bestVoice = english.sort((a, b) => score(b) - score(a))[0] || null;
+  voiceExact = !bestVoice || genderOf(bestVoice) === want;
+  if (typeof updateVoiceMenu === "function") updateVoiceMenu();
+}
+// Pitch: a touch higher or lower for each kind; more if we had to fake it
+const voicePitch = () => prefs.gender === "male" ? (voiceExact ? 0.95 : 0.7) : (voiceExact ? 1.05 : 1.25);
+function setVoicePrefs(change) {
+  Object.assign(prefs, change);
+  localStorage.setItem(VOICE_PREFS, JSON.stringify(prefs));
+  chooseVoice();
 }
 if ("speechSynthesis" in window) {
   chooseVoice();
@@ -77,7 +100,8 @@ function speakable(text) {
 }
 
 let speakToken = 0;
-function speak(text, { rate = 0.97, pitch = 1.05, onDone } = {}) {
+function speak(text, { rate = 0.97, pitch = voicePitch(), onDone } = {}) {
+  rate *= prefs.rate;
   const token = ++speakToken;
   if (!text) { if (onDone) onDone(); return; }
   if (muted || !("speechSynthesis" in window)) {     // no sound: the mouth still moves a little
@@ -125,12 +149,13 @@ const VOCAB = ["commander", "captain", "pilot", "specialist", "mission", "everyo
   "temperature", "fever", "pressure", "blood", "sleep", "slept", "tired", "exhausted", "radiation", "solar", "storm",
   "exercise", "workout", "water", "drank", "mood", "report", "emergency", "breathe", "breathing", "calm", "anxious",
   "nervous", "stressed", "lonely", "homesick", "checklist", "vitamin", "reaction", "oxygen", "explain", "repeat",
-  "thanks", "hello", "status", "crewmate", "glasses", "steps", "clot", "dashboard"];
+  "thanks", "hello", "status", "crewmate", "glasses", "steps", "clot", "dashboard", "drink", "headache", "dizzy",
+  "swollen", "briefing", "reminder", "remind", "timer", "voice", "female"];
 const COMMON = new Set(("about after again also back been before being could does doing done during every feel feeling fine " +
   "from going good great have here into just know last like long make many more most much need next night only other " +
   "over please really right said should some still sure tell than thank that their them then there these they thing " +
   "think this those three today under until very want well were what when where which while will with would your " +
-  "hours glass morning later").split(" "));
+  "hours glass morning later times father mother drinks timed").split(" "));
 
 function editDistance(a, b) {
   const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
@@ -263,6 +288,7 @@ function stepFor(w, id) {
 
 // Why is something flagged? Plain reasons from the same limits the dashboard uses.
 function whyText(key, id) {
+  if (key.startsWith("sym:")) return SYMPTOMS.find(s => "sym:" + s.key === key)?.why || null;
   const c = MOCK.crew[id], S = check(id), n = who(id);
   const lvl = s => s === "normal" ? "so that's fine" : s === "watch" ? "so it's one to watch" : "so it needs care now";
   return ({
@@ -295,9 +321,9 @@ const READINGS = [
   { key: "sleep",    re: /\b(sleep|slept|sleeping|rest|rested)\b/ },
   { key: "mood",     re: /\b(mood|spirits|mental)\b/ },
   { key: "dose",     re: /\b(radiation|dose|dosimeter|msv|sievert)\b/ },
-  { key: "exercise", re: /\b(exercise|workout|training|bones?|muscles?)\b/ },
-  { key: "water",    re: /\b(water|hydration|hydrated|drink|drinking)\b/ },
-  { key: "blood",    re: /\b(blood tests?|labs?|lab results|d ?dimer|platelets?|fibrinogen|clotting)\b/ },
+  { key: "exercise", re: /\b(exercise|exercised|workouts?|worked out|training|bones?|muscles?)\b/ },
+  { key: "water",    re: /\b(water|hydration|hydrated|drink|drinking|drank)\b/ },
+  { key: "blood",    re: /\b(blood tests?|labs?|lab results|d[ -]?dimer|platelets?|fibrinogen|clotting)\b/ },
   { key: "vitd",     re: /\bvitamin d\b/ },
   { key: "reaction", re: /\b(reaction|reflexes)\b/ }
 ];
@@ -324,6 +350,108 @@ function readingText(id, key) {
   }
 }
 
+// --- Symptoms: space-specific first aid advice (not a diagnosis) ---
+// level "act" = could be serious; then I offer the emergency or the clot checklist.
+const SYMPTOMS = [
+  { key: "limb", level: "act", re: /\b(swollen|swelling|swells?|tender|warm|red)\b.*\b(legs?|calf|arms?|neck)\b|\b(legs?|calf|arms?|neck)\b.*\b(swollen|swelling|swells?|tender|warm|red)\b|\b(pain|painful|hurts?|aching|ache)\b.*\b(leg|calf|neck)\b|\b(leg|calf|neck)\b.*\b(pain|painful|hurts?|aching|aches)\b/,
+    name: "pain or swelling in a limb or the neck",
+    say: "Pain or swelling in one leg, arm, or the neck can be a sign of a blood clot, which is a known risk in space. Please stop work and stay still. Don't rub or massage it. I can read you the clot checklist, and I'd send a report to Earth.",
+    why: "In weightlessness, blood flows differently, and clots have been found in the neck veins of astronauts before. A clot in a limb can travel, so we treat this carefully.",
+    acts: [["Read me the clot checklist", "read the clot checklist"], ["Send report to Earth", "send a report"]] },
+  { key: "headache", re: /\b(headache|head hurts|head ache|migraine|head is pounding|pressure in my head)\b/,
+    name: "a headache",
+    say: "Headaches are common up here. Drink a glass of water, check the CO2 reading in the cabin, and rest your eyes for fifteen minutes. If it's sudden and very strong, or comes with vision changes, weakness, or confusion, say emergency.",
+    why: "In weightlessness, fluid moves up toward the head, and the cabin's carbon dioxide is higher than on Earth. Both can cause headaches.",
+    acts: [["I drank a glass of water", "i drank a glass of water"]] },
+  { key: "nausea", re: /\b(nausea|nauseous|sick to my stomach|feel sick|feeling sick|vomit|vomiting|threw up|throw up|dizzy|dizziness|motion sick|space sick|spinning)\b/,
+    name: "nausea or dizziness",
+    say: "That sounds like space motion sickness. Keep your head as still as you can, fix your eyes on one point, and sip some water slowly. It usually gets better in a day or two. If you can't keep water down, tell the flight surgeon.",
+    why: "Your inner ear senses balance with gravity. Without it, what your eyes see and what your ear feels don't match, and the brain reacts with nausea.",
+    acts: [["Send report to Earth", "send a report"]] },
+  { key: "vision", re: /\b(blurry|blurred|vision|cannot see|can not see|eyes? (hurt|hurts|are bad)|seeing double|double vision)\b/,
+    name: "a change in vision",
+    say: "Vision changes on long missions are worth checking. Write down when it started, and whether it's one eye or both. I'll send a report so the flight surgeon can plan an eye check. If it came on suddenly with a strong headache or weakness, say emergency.",
+    why: "On long missions, fluid pressure behind the eyes can change their shape. It's called SANS, and it affects many astronauts. Catching it early matters.",
+    acts: [["Send report to Earth", "send a report"]] },
+  { key: "back", re: /\b(back (pain|hurts|ache|is sore)|backache|my back|spine)\b/,
+    name: "back pain",
+    say: "Back pain is very common in space. Try gently pulling your knees to your chest for thirty seconds, a few times. Don't skip the exercise sessions, they help the most.",
+    why: "Without gravity, the spine stretches out, and astronauts grow up to five centimetres. That stretches the muscles and nerves around it." },
+  { key: "congestion", re: /\b(stuffy|blocked nose|congested|congestion|puffy face|runny nose|cannot smell|can not smell)\b/,
+    name: "a stuffy nose",
+    say: "A stuffy nose and a puffy face are normal in weightlessness. It isn't usually a cold. Drinking enough water helps. If you also have a fever or sore throat, let's check your temperature.",
+    why: "Fluid that gravity normally pulls down to your legs moves up into your head and face." },
+  { key: "cold", re: /\b(cough|coughing|sore throat|(a|the) cold|flu|chills|shivering)\b/,
+    name: "cold symptoms",
+    say: "Let's check for a fever. Please measure your temperature and tell me the number. Wash your hands often and keep some distance from the crew for now.",
+    why: "The immune system is weaker in space, and in a small cabin, an infection can spread to the whole crew fast.",
+    acts: [["Log my temperature", "log my temperature"]] },
+  { key: "cut", re: /\b(cut myself|i cut|bleeding|bruise|bruised|burn(ed|t)? (myself|my)|scratch|wound|injured|hurt myself|bumped)\b/,
+    name: "an injury",
+    say: "Press a clean pad on it firmly for a few minutes, then clean it and cover it. Wounds heal a bit more slowly in space, so keep an eye on it. If the bleeding won't stop, say emergency.",
+    why: "Weightlessness and radiation slow down how the skin repairs itself, so small wounds need more care." },
+  { key: "muscle", re: /\b(sore muscles?|muscles? (hurt|hurts|ache|are sore)|cramp|cramps|stiff|(arm|shoulder|knee|hand|foot|wrist|elbow)s? (hurts?|is sore|are sore|aches?))\b/,
+    name: "sore muscles",
+    say: "Sore muscles after exercise are normal. Stretch gently, drink water, and keep the next session lighter. If one leg is swollen or warm, tell me, because that's different.",
+    why: "Muscles weaken fast in space, so the daily exercise works them hard." }
+];
+
+// --- Words people ask about ---
+const GLOSSARY = [
+  { re: /\bd[ -]?dimer\b/, say: "D-dimer is a blood test. It goes up when the body is breaking down blood clots. A high value is a sign there may be a clot somewhere." },
+  { re: /\bplatelets?\b/, say: "Platelets are tiny blood cells that plug wounds and help blood clot. When a clot is forming, they can get used up, so the count drops." },
+  { re: /\bfibrinogen\b/, say: "Fibrinogen is a protein the body uses to build clots. A low value can mean it's being used up by a clot." },
+  { re: /\b(sievert|millisievert|msv)\b/, say: "A millisievert is a unit of radiation dose. A chest X-ray is about 0.1. NASA's career limit is 600, and in deep space you get roughly 1 to 2 a day." },
+  { re: /\bdosimeter\b/, say: "A dosimeter is a small badge that measures how much radiation you've received. Keep it on you, especially in a solar storm." },
+  { re: /\bsans\b|\bspaceflight associated\b/, say: "SANS is Spaceflight Associated Neuro-ocular Syndrome: fluid pressure changes the shape of the eye on long missions. It can blur vision, so eye checks are part of the routine." },
+  { re: /\b(microgravity|weightlessness|zero g)\b/, say: "Microgravity means you're in free fall all the time, so you float. It's why bones, muscles, the heart, and even your eyes change on long missions." },
+  { re: /\bsleep debt\b/, say: "Sleep debt is how many hours you're short of eight a night, added up over the week. Four hours short is one to watch, ten or more needs care." },
+  { re: /\b(solar storm|particle event|solar flare|space weather)\b/, say: "A solar storm is a burst of fast particles from the Sun. Radiation can rise quickly, so the crew goes to the shielded area, behind the water storage, until it's over." },
+  { re: /\b(flight surgeon)\b/, say: "The flight surgeon is the crew's doctor on Earth. Messages take time to arrive, so I tell you what to do right away, and keep them informed." },
+  { re: /\b(reaction test|reaction time)\b/, say: "The reaction test measures how fast you respond, compared with your own usual. Slower reactions are an early sign of tiredness." },
+  { re: /\bvitamin d\b/, say: "Vitamin D keeps bones strong. Your skin makes it from sunlight, which you don't get in a spacecraft, so we check it with blood tests." },
+  { re: /\b(blood clot|clot|thrombosis|dvt)\b/, say: "A blood clot is a lump of blood that blocks a vein. In weightlessness blood flows differently, so it's a real risk. Signs are swelling or pain in one limb or the neck." }
+];
+
+// --- Trends over time ---
+function trendReply(id, key) {
+  const c = MOCK.crew[id];
+  if (key === "sleep") {
+    const n = c.sleep.nights, avg = n.reduce((a, b) => a + b, 0) / n.length;
+    const first = (n[0] + n[1] + n[2]) / 3, last = (n[n.length - 1] + n[n.length - 2] + n[n.length - 3]) / 3;
+    const dir = last - first > 0.4 ? "getting better" : first - last > 0.4 ? "getting worse" : "about steady";
+    const lo = Math.min(...n), hi = Math.max(...n);
+    const say = `Over the last ${num(n.length)} nights, ${who(id)} slept ${avg.toFixed(1)} hours on average, between ${lo} and ${hi}. It's ${dir}. ${avg < 7 ? "That's below the seven hours that's healthy." : "That's in the healthy range."}`;
+    const bars = n.map(h => `<span class="bar ${h < 6 ? "lo" : ""}" style="--h:${Math.round(h / 10 * 100)}%" title="${h} h"><i>${h}</i></span>`).join("");
+    return { say, html: `${escapeHtml(say)}<div class="m-bars" aria-hidden="true">${bars}</div><div class="m-bars-cap"><span>7 nights ago</span><span>Last night</span></div>`,
+      chips: ["What should I do?", "Log my sleep", "Who slept the least?"] };
+  }
+  if (key === "blood") {
+    const L = c.labs, a = L[0], b = L[L.length - 1];
+    const ch = (k, name, unit) => `${name} went from ${a[k]} to ${b[k]}${unit}`;
+    const say = `Across ${num(L.length)} tests from day ${a.day} to day ${b.day}: ${ch("ddimer", "D-dimer", "")}, ${ch("platelets", "platelets", "")}, and ${ch("fibrinogen", "fibrinogen", "")}. ` +
+      (check(id).clotPattern ? "D-dimer is rising while platelets and fibrinogen fall. That pattern is why it needs care now." : check(id).labTrend.length ? "Some values are drifting, so a repeat test is a good idea." : "Those are steady. Nothing to worry about.");
+    return { say, chips: ["Why?", "What should I do?"] };
+  }
+  if (key === "dose") {
+    const r = doseRatePerDay();
+    return { say: `${Who(id)} is at ${check(id).dose.toFixed(0)} millisieverts. At today's rate of about ${r.toFixed(1)} a day, ${who(id)} would reach the 600 limit in roughly ${Math.round((600 - check(id).dose) / r)} days.`, chips: ["What is a millisievert?", "How is everyone?"] };
+  }
+  return null;
+}
+
+// --- Compare the crew ("who slept the least?") ---
+const METRICS = {
+  sleep:    { name: "sleep last night", get: id => check(id).lastNight, unit: " hours", higherBetter: true },
+  hr:       { name: "heart rate", get: id => MOCK.crew[id].vitals.hr, unit: " beats per minute" },
+  temp:     { name: "temperature", get: id => MOCK.crew[id].vitals.temp, unit: " degrees" },
+  water:    { name: "water today", get: id => MOCK.crew[id].water.glasses, unit: " glasses", higherBetter: true },
+  exercise: { name: "exercise this week", get: id => MOCK.crew[id].exercise, unit: " sessions", higherBetter: true },
+  dose:     { name: "radiation dose", get: id => Math.round(check(id).dose), unit: " millisieverts" },
+  mood:     { name: "mood", get: id => check(id).moodValue, unit: " out of five", higherBetter: true },
+  reaction: { name: "reaction slow-down", get: id => check(id).reactionPct ?? 0, unit: " percent" }
+};
+
 
 // =========================================================================
 // 5. INTENTS — each returns a reply: { say, html, actions, chips, face, then }
@@ -338,7 +466,10 @@ const ctx = {
   expect: null,        // waiting for a value, e.g. hours of sleep
   undo: null,          // how to undo the last change
   last: "",            // last thing said, for "repeat"
-  misses: 0            // how often I didn't understand in a row
+  misses: 0,           // how often I didn't understand in a row
+  note: null,          // a symptom mentioned, added to the next report
+  flow: null,          // daily check-in in progress { queue, id }
+  lastReminder: null   // for "remind me again"
 };
 
 const YES = /^(yes|yeah|yep|yup|sure|ok|okay|alright|do it|please do|please|go ahead|confirm|declare|send it|affirmative|correct|right|start|let us do it)\b/;
@@ -346,6 +477,10 @@ const NO = /^(no|nope|nah|cancel|never mind|nevermind|do not|not now|not yet|ski
 const act = (label, say, kind = "") => ({ label, say, kind });
 const link = (label, href) => ({ label, href, kind: "link" });
 const crewChip = id => `How is the ${ROLE[id]}?`;
+
+// Most urgent first (a possible clot comes before short sleep, even in the same color)
+const bySeverityIds = ids => ids.slice().sort(typeof bySeverity === "function" ? bySeverity
+  : (a, b) => RANK[check(b).overall] - RANK[check(a).overall]);
 
 // --- How someone is doing ---
 function assess(id, { intro = "" } = {}) {
@@ -384,7 +519,7 @@ function assess(id, { intro = "" } = {}) {
 }
 
 function allCrew() {
-  const ids = Object.keys(MOCK.crew).sort((a, b) => RANK[check(b).overall] - RANK[check(a).overall]);
+  const ids = bySeverityIds(Object.keys(MOCK.crew));
   const line = id => {
     const S = check(id);
     if (S.overall === "normal") return `${Who(id)} is doing fine.`;
@@ -464,6 +599,10 @@ const LOG = {
            get: c => c.water.glasses, set: (c, v) => { c.water.glasses = v; },
            said: (v, id) => `${plural(v, "glass", "glasses")} of water for ${who(id)}`,
            quick: [act("1 glass", "1"), act("2 glasses", "2")] },
+  waterToday: { ask: "How many glasses of water have you had today, in total?", min: 0, max: 20, int: true, reading: "water",
+           get: c => c.water.glasses, set: (c, v) => { c.water.glasses = v; },
+           said: (v, id) => `${plural(v, "glass", "glasses")} of water today for ${who(id)}`,
+           quick: [2, 4, 6, 8].map(v => act(String(v), String(v))) },
   exercise: { ask: "", min: 1, max: 1, int: true, add: true, reading: "exercise",
            get: c => c.exercise, set: (c, v) => { c.exercise = Math.min(7, v); },
            said: (v, id) => `one exercise session for ${who(id)}` },
@@ -519,8 +658,9 @@ function logValue(kind, value, id) {
 
 // --- Reports and messages to Earth ---
 function sendReport(id) {
-  const last = mutate(() => { sendToEarth(`${id}: health report (companion)`); return MOCK.earthLog[MOCK.earthLog.length - 1]; });
-  return { say: `Done. ${Who(id)}'s report is on its way to Earth. It arrives around ${time(last.arrive)}, so the earliest reply is about ${time(last.reply)}. Keep going with the steps in the meantime.`,
+  const note = ctx.note; ctx.note = null;
+  const last = mutate(() => { sendToEarth(`${id}: health report (companion)${note ? `, symptom: ${note}` : ""}`); return MOCK.earthLog[MOCK.earthLog.length - 1]; });
+  return { say: `Done. ${Who(id)}'s report${note ? `, including ${note},` : ""} is on its way to Earth. It arrives around ${time(last.arrive)}, so the earliest reply is about ${time(last.reply)}. Keep going with the steps in the meantime.`,
     chips: ["What should I do?", "How is everyone?"] };
 }
 function sendHome(message, id) {
@@ -581,8 +721,8 @@ function feeling(kind, id) {
       return { say: "That sounds like a lot to carry. You're not alone in this: I'm here, and so is your crew. Shall we breathe together for a minute?",
         face: "caring", actions: [act("Breathe with me", "yes")], chips: ["Yes", "No", "What should I do?"] };
     case "tired":
-      if (S.tired || bad(S.sleep)) return { say: `Your numbers agree. Only ${S.lastNight} hours of sleep last night${S.tired ? ", slower reactions, and a higher heart rate" : ""}. A twenty-minute nap would really help, and keep today's workload light if you can.`,
-        face: "caring", chips: ["Log my sleep", "What should I do?", "Good night"] };
+      if (S.tired || bad(S.sleep)) return { say: `Your numbers agree. ${S.lastNight < 7 ? `Only ${S.lastNight} hours of sleep last night` : `You're about ${Math.round(S.debt)} hours short on sleep this week`}${S.tired ? ", slower reactions, and a higher heart rate" : ""}. A twenty-minute nap would really help, and keep today's workload light if you can.`,
+        face: "caring", chips: ["Set a 20 minute nap timer", "Log my sleep", "What should I do?"] };
       return { say: "Your sleep numbers actually look okay, so it might be workload or stress. A short break, some water, and a few slow breaths can help. Want to log how you slept?",
         chips: ["Log my sleep", "Breathe with me", "Log my mood"] };
     case "cantSleep":
@@ -611,16 +751,253 @@ const JOKES = [
 ];
 
 function capabilities() {
-  return { say: "I can tell you how anyone on the crew is doing, and why. I can guide you through what to do, one step at a time, and read the clot checklist. You can log things just by telling me, like: I slept six hours, or I drank a glass of water. I can send a report to Earth or a message home, explain the colors, and breathe with you when things feel heavy. And if it's an emergency, just say so.",
+  return { say: "I can tell you how anyone on the crew is doing, and why, compare the crew, and show trends. I can guide you through what to do, one step at a time. Tell me about symptoms, like a headache, and I'll help. You can log things just by talking, even several at once: I slept six hours and drank two glasses of water. I can do your daily check-in, give a briefing, set reminders and nap timers, send a report to Earth or a message home, and breathe with you. You can also change my voice. And if it's an emergency, just say so.",
     html: `Here's what I can do:<ul class="m-list plain">
       <li><b>Check on anyone</b>: “How is the pilot?”, “How's everyone?”, “Why?”</li>
+      <li><b>Compare &amp; trends</b>: “Who slept the least?”, “How did I sleep this week?”</li>
+      <li><b>Symptoms</b>: “I have a headache”, “I feel dizzy”, “My leg is swollen”</li>
       <li><b>Guide you</b>: “What should I do?”, then “next”</li>
-      <li><b>Log by talking</b>: “I slept 6 hours”, “I drank 2 glasses of water”, “My mood is 4”</li>
+      <li><b>Log by talking</b>: “I slept 6 hours and drank 2 glasses of water”, “Do my check-in”</li>
+      <li><b>Time</b>: “Give me a briefing”, “Set a 20 minute nap timer”, “Remind me to drink water in 1 hour”</li>
       <li><b>Earth</b>: “Send a report”, “Send a message home”</li>
-      <li><b>Explain</b>: “What does needs care mean?”</li>
+      <li><b>Explain</b>: “What is D-dimer?”, “What does needs care mean?”</li>
       <li><b>Support</b>: “Calm me down”, “I feel lonely”, “Talk to me”</li>
+      <li><b>Voice</b>: “Use a male voice”, “Speak slower”, “Call me Sam”</li>
       <li><b>Emergency</b>: just say “emergency”</li></ul>`,
-    chips: ["How is everyone?", "What should I do?", "Log my sleep", "Calm me down"] };
+    chips: ["Give me a briefing", "Do my check-in", "Who needs the most help?", "Use a male voice"] };
+}
+
+// --- Compare the crew ---
+function compareCrew(t, key) {
+  const ids = Object.keys(MOCK.crew);
+  if (!key || !METRICS[key]) {
+    const sorted = bySeverityIds(ids);
+    const best = /\b(healthiest|best|fittest|least (help|care|worried)|doing (the )?best|fine)\b/.test(t);
+    const id = best ? sorted[sorted.length - 1] : sorted[0], S = check(id);
+    ctx.crew = id; ctx.topic = S.warnings[0]?.key || null; ctx.more = []; ctx.level = S.overall; updateAbout();
+    const gist = S.warnings.slice(0, 2).map(w => GIST[w.key] || w.title.toLowerCase()).join(" and ");
+    return { say: best ? `${Who(id)} is doing best right now${S.warnings.length ? `, with just ${gist} to watch` : ", every reading is healthy"}.`
+                       : S.overall === "normal" ? "Nobody needs help right now. The whole crew is healthy." : `${Who(id)} needs the most attention right now: ${gist}.`,
+      face: best ? "joy" : S.overall === "act" ? "caring" : null,
+      chips: best ? ["Who needs the most help?", "How is everyone?"] : ["Why?", "What should I do?", "How is everyone?"] };
+  }
+  const M = METRICS[key];
+  const rows = ids.map(id => ({ id, v: M.get(id), s: readingText(id, key)[1] })).sort((a, b) => b.v - a.v);   // highest first
+  let low = /\b(least|lowest|fewest|less|minimum|shortest|smallest)\b/.test(t), high = /\b(most|highest|more|max|longest|biggest|largest)\b/.test(t);
+  if (/\bworst\b/.test(t)) M.higherBetter ? (low = true) : (high = true);
+  if (/\bbest\b/.test(t)) M.higherBetter ? (high = true) : (low = true);
+  const fmt = r => `${who(r.id)}, ${r.v}${M.unit}`;
+  const list = `<ul class="m-list">${rows.map(r => `<li>${badge(r.s)}<span>${escapeHtml(Who(r.id))}: <b>${r.v}${escapeHtml(M.unit)}</b></span></li>`).join("")}</ul>`;
+  if (!low && !high) {
+    return { say: `${Cap(M.name)}: ${rows.map(fmt).join("; ")}.`, html: `${escapeHtml(Cap(M.name))}:${list}`, chips: ["Why?", "Who needs the most help?"] };
+  }
+  const top = low ? rows[rows.length - 1] : rows[0];
+  ctx.crew = top.id; ctx.topic = key; ctx.level = top.s; updateAbout();
+  const say = `${Who(top.id)} has the ${low ? "lowest" : "highest"} ${M.name}: ${top.v}${M.unit}. ` +
+    `The others: ${rows.filter(r => r !== top).map(fmt).join(", and ")}.` + (bad(top.s) ? ` For ${who(top.id)}, that's ${top.s === "act" ? "something that needs care now" : "one to watch"}.` : "");
+  return { say, html: `${escapeHtml(say.split(". The others")[0])}.${list}`, face: top.s === "act" ? "caring" : null,
+    chips: ["Why?", "What should I do?", `How is the ${ROLE[top.id]}?`] };
+}
+
+// --- Symptoms ---
+function symptomReply(sym, id) {
+  ctx.crew = id; ctx.topic = "sym:" + sym.key; ctx.note = sym.name; ctx.more = []; updateAbout();
+  return { say: sym.say, face: "caring", urgent: sym.level === "act",
+    actions: (sym.acts || []).map(([l, s]) => act(l, s, sym.level === "act" && /clot/.test(s) ? "danger" : "")),
+    chips: ["Why?", "Send report to Earth", "Something else hurts"] };
+}
+function unwell() {
+  return { say: "I'm sorry you're not feeling well. Is it your body, or more your mood? Tell me what you feel, for example: a headache, feeling sick, back pain, or feeling low.",
+    face: "caring", chips: ["Headache", "I feel sick", "I feel low", "My leg is swollen"] };
+}
+
+// --- Reminders and timers (they ring while this page is open) ---
+const REMIND = "astrodoc-reminders";
+let reminders = [];
+const timers = new Map();
+function parseDuration(t) {
+  if (/\bhalf an hour\b/.test(t)) return 30 * 60000;
+  if (/\b(an|one) hour and a half\b/.test(t)) return 90 * 60000;
+  if (/\ban hour\b/.test(t)) return 60 * 60000;
+  const m = t.match(/(\d+(?:\.\d+)?) ?(seconds?|secs?|minutes?|mins?|min|m|hours?|hrs?|h)\b/);
+  if (!m) return null;
+  const n = parseFloat(m[1]), u = m[2];
+  return n * (/^s/.test(u) ? 1000 : /^h/.test(u) ? 3600000 : 60000);
+}
+const durationWords = ms => ms < 60000 ? plural(Math.round(ms / 1000), "second", "seconds")
+  : ms < 3600000 ? plural(Math.round(ms / 60000), "minute", "minutes")
+  : ms % 3600000 === 0 ? plural(ms / 3600000, "hour", "hours") : `${(ms / 3600000).toFixed(1)} hours`;
+function saveReminders() { try { sessionStorage.setItem(REMIND, JSON.stringify(reminders)); } catch { } }
+function armReminder(r) { timers.set(r.id, setTimeout(() => fireReminder(r), Math.max(0, r.due - Date.now()))); }
+function addReminder(what, ms) {
+  const r = { id: Date.now() + Math.random(), what, due: Date.now() + ms, ms };
+  reminders.push(r); saveReminders(); armReminder(r);
+  ctx.lastReminder = what;
+  const at = time(new Date(r.due));
+  return { say: what === "nap" ? `Okay. Sleep well. I'll wake you in ${durationWords(ms)}, at ${at}.` : `Okay. I'll remind you to ${what} in ${durationWords(ms)}, at ${at}.`,
+    face: "joy", chips: ["What reminders do I have?", "Cancel reminders"] };
+}
+function fireReminder(r) {
+  reminders = reminders.filter(x => x.id !== r.id); saveReminders(); timers.delete(r.id);
+  chime();
+  ctx.lastReminder = r.what;
+  deliver({ say: r.what === "nap" ? `Time to wake up. ${pick(["Take it slowly.", "I hope that helped."])} A glass of water and some bright light will help you feel awake.`
+                                  : r.what === "timer" ? "Your timer is done." : `Reminder: time to ${r.what}.`,
+    face: "joy", chips: ["Thanks", "Remind me again in 10 minutes", "How is everyone?"] });
+}
+function reminderIntent(t) {
+  if (/\b(cancel|clear|delete|stop|remove)\b.*\b(reminders?|timers?|alarms?)\b/.test(t)) {
+    reminders.forEach(r => clearTimeout(timers.get(r.id))); timers.clear();
+    const n = reminders.length; reminders = []; saveReminders();
+    return { say: n ? `Done, I've cancelled ${plural(n, "reminder", "reminders")}.` : "You don't have any reminders." };
+  }
+  if (/\b(what|which|any|list|show|my)\b.*\b(reminders?|timers?|alarms?)\b/.test(t) && !/\bset\b/.test(t)) {
+    if (!reminders.length) return { say: "You don't have any reminders. Try: remind me to drink water in one hour.", chips: ["Set a 20 minute nap timer"] };
+    const line = r => `${r.what === "nap" ? "wake you from your nap" : r.what === "timer" ? "the timer" : r.what} at ${time(new Date(r.due))}`;
+    return { say: `You have ${plural(reminders.length, "reminder", "reminders")}: ${reminders.map(line).join(", and ")}.`, chips: ["Cancel reminders"] };
+  }
+  const ms = parseDuration(t);
+  let what = "timer";
+  if (/\bremind me again\b/.test(t)) what = ctx.lastReminder || "check in";
+  else if (/\b(nap|wake me)\b/.test(t)) what = "nap";
+  else {
+    const m = t.match(/\bremind me (?:to |about |that )?(.+?)(?: in \d.*| in (?:an|half|a).*| after .*)?$/);
+    if (m && m[1] && !/^in\b/.test(m[1])) what = m[1].replace(/\b(my|i)\b/g, w => w === "my" ? "your" : "you").trim();
+  }
+  if (!ms) { ctx.expect = { kind: "reminderTime", what, id: ctx.crew };
+    return { say: what === "nap" ? "Sure. How long do you want to nap? Twenty minutes is ideal." : "Sure. In how many minutes?",
+      actions: [5, 10, 20, 30].map(v => act(`${v} min`, `${v} minutes`)), chips: ["Never mind"] }; }
+  if (ms > 24 * 3600000) return { say: "I can only set reminders for the next day. Try a shorter time." };
+  return addReminder(what, ms);
+}
+// A soft two-note chime for reminders
+function chime() {
+  try {
+    const A = new (window.AudioContext || window.webkitAudioContext)();
+    [[880, 0], [1320, 0.18]].forEach(([f, at]) => {
+      const o = A.createOscillator(), g = A.createGain();
+      o.frequency.value = f; o.type = "sine";
+      g.gain.setValueAtTime(0, A.currentTime + at);
+      g.gain.linearRampToValueAtTime(0.18, A.currentTime + at + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, A.currentTime + at + 0.6);
+      o.connect(g).connect(A.destination); o.start(A.currentTime + at); o.stop(A.currentTime + at + 0.65);
+    });
+  } catch { }
+}
+
+// --- Daily check-in: three quick questions in a row ---
+const OVERALL_PHRASE = { normal: "all good", watch: "mostly okay, with a few things to watch", act: "in need of care now" };
+function startCheckIn(id) {
+  ctx.flow = { queue: ["sleep", "mood", "waterToday"], id };
+  ctx.crew = id; ctx.steps = null; updateAbout();
+  const a = askFor(ctx.flow.queue.shift(), id);
+  return { ...a, say: `Let's do the daily check-in for ${who(id)}. Three quick questions. First: ${a.say}`, chips: ["Skip", "Stop check-in"] };
+}
+function continueFlow(r) {
+  const f = ctx.flow;
+  if (!f || ctx.expect) return r;                     // no flow, or the answer needs asking again
+  const next = f.queue.shift();
+  if (next) {
+    const a = askFor(next, f.id);
+    return { ...r, html: undefined, say: `${r.say} Next: ${a.say}`, actions: a.actions, chips: ["Skip", "Stop check-in"] };
+  }
+  ctx.flow = null;
+  const S = check(f.id);
+  return { ...r, html: undefined, say: `${r.say} That's the check-in done, thank you. Overall, ${who(f.id)} is ${OVERALL_PHRASE[S.overall]}.`,
+    face: S.overall === "normal" ? "joy" : r.face, chips: ["What should I do?", "How is everyone?", "Give me a briefing"] };
+}
+
+// --- Several things at once: "I slept 6 hours and drank 2 glasses of water" ---
+function detectLog(t) {
+  const n = firstNumber(t);
+  if (/\b(slept|got|had|managed|sleep was)\b/.test(t) && /\b(hours?|hrs?|h|sleep|slept)\b/.test(t) && n !== null && !/\b(water|glass|glasses)\b/.test(t)) return ["sleep", n];
+  if (/\b(drank|drunk|had|finished|drinking)\b/.test(t) && /\b(water|glass|glasses|cup|cups|bottle)\b/.test(t)) return ["water", n ?? 1];
+  if (/\b(worked out|exercised|did (my |the |a )?(workout|exercise|training|session)|finished (my |the )?(workout|exercise|training))\b/.test(t)) return ["exercise", 1];
+  if (/\bmood\b/.test(t) && n !== null) return [/\b(crewmate|mate)\b/.test(t) ? "mate" : "mood", n];
+  if (/\b(rate|feel|feeling|i am)\b.*\b[1-5] (out of|of|\/) ?5\b/.test(t)) return ["mood", n];
+  if (/\b(heart ?rate|pulse)\b/.test(t) && n !== null) return ["hr", n];
+  if (/\b(temperature|temp)\b/.test(t) && n !== null) return ["temp", n];
+  return null;
+}
+function logMany(items, id) {
+  const replies = [], undos = [];
+  for (const [kind, v] of items) {
+    logValue(kind, v, id);
+    if (ctx.expect) { ctx.expect = null; continue; }         // a value didn't make sense: skip it
+    replies.push({ kind, v }); undos.push(ctx.undo);
+  }
+  if (!replies.length) return null;
+  ctx.undo = () => { undos.slice().reverse().forEach(u => u()); return { say: "Okay, I've undone all of that.", chips: ["How is everyone?"] }; };
+  const S = check(id);
+  const parts = replies.map(x => LOG[x.kind].said(LOG[x.kind].int ? Math.round(x.v) : x.v, id).replace(` for ${who(id)}`, ""));
+  const notes = replies.map(x => { const s = readingText(id, LOG[x.kind].reading)[1]; return bad(s) ? `${LOG[x.kind].reading === "sleep" ? "Sleep" : Cap(METRICS[LOG[x.kind].reading]?.name || x.kind)} is still ${s === "act" ? "something that needs care" : "one to watch"}.` : ""; }).filter(Boolean);
+  return { say: `Got it. I've saved ${parts.length > 2 ? parts.slice(0, -1).join(", ") + ", and " + parts[parts.length - 1] : parts.join(" and ")} for ${who(id)}. ${notes.join(" ") || "Those all look healthy."} Overall, ${who(id)} is ${OVERALL_PHRASE[S.overall]}.`,
+    face: S.overall === "normal" ? "joy" : null, chips: ["Undo", "What should I do?", "How is everyone?"] };
+}
+
+// --- Briefing ---
+function briefing() {
+  const m = MOCK.mission, ids = bySeverityIds(Object.keys(MOCK.crew));
+  const storm = check(ids[0]).storm;
+  const crewLine = id => { const S = check(id); return S.overall === "normal" ? `${Who(id)}: all good.` : `${Who(id)}: ${S.warnings.slice(0, 2).map(w => GIST[w.key] || w.title.toLowerCase()).join(" and ")}.`; };
+  const last = MOCK.earthLog[MOCK.earthLog.length - 1];
+  const name = userName();
+  const lines = [
+    `It's day ${m.day} of ${m.lengthDays}, ${m.phase.toLowerCase().replace("mars", "Mars")}.`,
+    storm ? "There's a solar storm right now. Everyone should be in the shielded area." : "No solar storm.",
+    ...ids.map(crewLine),
+    last ? `The last report to Earth went at ${time(last.sent)}, reply expected around ${time(last.reply)}.` : "Nothing has been sent to Earth today.",
+    reminders.length ? `You have ${plural(reminders.length, "reminder", "reminders")} set.` : ""
+  ].filter(Boolean);
+  const worstId = ids[0];
+  if (check(worstId).overall !== "normal") { ctx.crew = worstId; ctx.topic = check(worstId).warnings[0].key; ctx.more = []; updateAbout(); }
+  return { say: `Here's your briefing${name ? ", " + name : ""}. ${lines.join(" ")}`,
+    html: `Here's your briefing${name ? ", " + escapeHtml(name) : ""}.<ul class="m-list plain">${lines.map(l => `<li>${escapeHtml(l)}</li>`).join("")}</ul>`,
+    face: storm || check(worstId).overall === "act" ? "caring" : null,
+    chips: check(worstId).overall !== "normal" ? [`How is the ${ROLE[worstId]}?`, "What should I do?", "Do my check-in"] : ["Do my check-in", "Talk to me"] };
+}
+
+// --- Your name (kept only on this device) ---
+const NAME_KEY = "astrodoc-name";
+const userName = () => localStorage.getItem(NAME_KEY) || "";
+
+// --- Voice: change it by asking ---
+function changeVoice(change) {
+  if (muted && (change.gender || change.rate)) { muted = false; localStorage.setItem("astrodoc-mute", "0"); updateMute(); }
+  setVoicePrefs(change);
+  if (change.gender) {
+    const g = change.gender;
+    return { say: voiceExact ? pick([`Okay. This is my ${g} voice. How does it sound?`, `Sure. Here's my ${g} voice. Better?`])
+                            : `This device doesn't have a ${g} English voice, so I've changed my pitch instead. You can add more voices in your system's speech settings.`,
+      face: "joy", chips: [g === "male" ? "Use a female voice" : "Use a male voice", "Speak slower", "Thanks"] };
+  }
+  return { say: prefs.rate < 1 ? "Okay, I'll speak more slowly." : prefs.rate > 1 ? "Okay, I'll speak a bit faster." : "Okay, back to my normal speed.",
+    chips: [prefs.rate < 1 ? "Normal speed" : "Speak slower", "Use a male voice", "Thanks"] };
+}
+
+// --- "Did you mean…?" when I don't understand ---
+const SUGGEST = [
+  ["How is everyone?", "everyone crew all team people status health others"],
+  ["What should I do?", "do fix help plan steps advice todo next should"],
+  ["Log my sleep", "sleep slept night bed hours rest nap"],
+  ["Log my mood", "mood feel feeling happy sad emotion emotions"],
+  ["I drank a glass of water", "water drink drank glass thirsty hydrate"],
+  ["Send report to Earth", "earth report send nasa ground houston doctor surgeon"],
+  ["Calm me down", "calm breathe relax panic anxious meditate"],
+  ["Do my check-in", "check checkin daily questions survey"],
+  ["Give me a briefing", "brief briefing summary news update today overview"],
+  ["Set a 20 minute nap timer", "timer remind reminder alarm minutes later nap wake"],
+  ["Use a male voice", "voice male female sound speak slower faster accent man woman"],
+  ["Who needs the most help?", "who most least worst best compare ranking"],
+  ["Talk to me", "talk chat bored company story fact joke fun"],
+  ["I don't feel well", "sick hurt pain ill unwell ache symptom symptoms"]
+];
+function suggestFor(t) {
+  const words = t.split(" ").filter(w => w.length > 2);
+  return SUGGEST.map(([say, keys]) => {
+    const k = keys.split(" ");
+    return { say, score: words.filter(w => k.some(x => x === w || (w.length > 3 && x.length > 3 && (x.startsWith(w) || w.startsWith(x))))).length };
+  }).filter(s => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 2).map(s => s.say);
 }
 
 
@@ -633,7 +1010,10 @@ function understand(raw) {
   const q = isQuestion(t, raw);
   const named = findCrew(t);
   const one = named && named !== "ALL" ? named : null;
-  const subj = one || ctx.crew;              // "he / she / they / I" all mean the person we're talking about
+  const subj = one || ctx.crew;              // "he / she / they" mean the person we're talking about
+  // "I / my" mean the user, if they told the dashboard who they are
+  const selfId = typeof me !== "undefined" && me && MOCK.crew[me] && /\b(i|me|my|myself|mine)\b/.test(t) ? me : null;
+  const mine = one || selfId || ctx.crew;    // for logging, feelings and symptoms
 
   // --- 1. Emergency words always win ---
   if (/\b(emergency|help me|cannot breathe|can not breathe|not breathing|chest pain|passed out|fainted|unconscious|not responding|seizure|bleeding badly|stroke|heart attack)\b/.test(t))
@@ -650,14 +1030,21 @@ function understand(raw) {
   // --- 3. Waiting for a value ("How many hours did you sleep?") ---
   if (ctx.expect) {
     const e = ctx.expect;
-    if (/^(never ?mind|cancel|forget it|no)\b/.test(t)) { ctx.expect = null; return { say: pick(["Okay, never mind.", "No problem."]), chips: ["How is everyone?", "What should I do?"] }; }
+    if (ctx.flow && /^(stop|end|quit|cancel)( the)?( check ?-?in)?\b|^stop check/.test(t)) { ctx.expect = ctx.flow = null; return { say: "Okay, we'll stop the check-in here. What you've answered is saved.", chips: defaultChips() }; }
+    if (ctx.flow && /^(skip|pass|next|i do not know|not sure|no idea)\b/.test(t)) { ctx.expect = null; return continueFlow({ say: "Okay, skipped." }); }
+    if (/^(never ?mind|cancel|forget it|no)\b/.test(t)) { ctx.expect = ctx.flow = null; return { say: pick(["Okay, never mind.", "No problem."]), chips: ["How is everyone?", "What should I do?"] }; }
     ctx.expect = null;
     if (e.kind === "message") {
       if (!/^(talk to me|breathe|how|what|why|calm)\b/.test(t)) return sendHome(raw.trim(), e.id);
+    } else if (e.kind === "reminderTime") {
+      const ms = parseDuration(t) ?? (firstNumber(t) !== null ? firstNumber(t) * 60000 : null);
+      if (ms) return addReminder(e.what, ms);
     } else {
-      const n = firstNumber(t);
-      if (n !== null) return logValue(e.kind, n, e.id);
+      let n = firstNumber(t);
+      if (n === null && /^(none|nothing|zero|not any)\b/.test(t)) n = 0;
+      if (n !== null) return continueFlow(logValue(e.kind, n, e.id));
     }
+    ctx.flow = null;                                           // they moved on
   }
 
   // --- 4. Conversation control ---
@@ -668,6 +1055,33 @@ function understand(raw) {
     if (!ctx.undo) return { say: "There's nothing to undo right now." };
     const u = ctx.undo; ctx.undo = null; return u();
   }
+
+  // --- 4b. Voice settings by asking ---
+  if (/\b(female|woman|girl|lady|feminine)( s)? voice\b|\b(sound|speak|talk) like a (woman|girl|lady)\b|\bvoice (to )?female\b/.test(t)) return changeVoice({ gender: "female" });
+  if (/\b(male|man|guy|boy|masculine|deeper)( s)? voice\b|\b(sound|speak|talk) like a (man|guy|boy)\b|\bvoice (to )?male\b/.test(t)) return changeVoice({ gender: "male" });
+  if (/\b(change|switch|different|other|another|new) (your )?voice\b|\bswitch voices?\b/.test(t)) return changeVoice({ gender: prefs.gender === "male" ? "female" : "male" });
+  if (/\b(speak|talk|go|read|say it)( a bit| a little| much)? (slower|more slowly)\b|^slow down\b|\btoo fast\b/.test(t)) return changeVoice({ rate: Math.max(0.7, +(prefs.rate - 0.15).toFixed(2)) });
+  if (/\b(speak|talk|go|read)( a bit| a little| much)? (faster|quicker)\b|^speed up\b|\btoo slow\b/.test(t)) return changeVoice({ rate: Math.min(1.4, +(prefs.rate + 0.15).toFixed(2)) });
+  if (/\bnormal (speed|pace)\b/.test(t)) return changeVoice({ rate: 1 });
+  if (/^(mute|be silent)\b|\b(turn|switch) (off|down) (your |the )?(voice|sound)\b|\bvoice off\b/.test(t)) {
+    muted = true; localStorage.setItem("astrodoc-mute", "1"); stopSpeaking(); updateMute();
+    return { say: "Okay, I'll stay quiet and just write. Say unmute to hear me again.", chips: ["Unmute"] };
+  }
+  if (/^unmute\b|\b(turn|switch) on (your |the )?(voice|sound)\b|\bvoice on\b/.test(t)) {
+    muted = false; localStorage.setItem("astrodoc-mute", "0"); updateMute();
+    return { say: "I'm back. You can hear me again.", face: "joy" };
+  }
+
+  // --- 4c. Your name ---
+  const nm = raw.match(/\b(?:my name is|call me|i'?m called|you can call me)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'-]{1,20})/i);
+  if (nm && !/^(back|later|when|if|now|please|an?|the)$/i.test(nm[1])) {
+    const name = Cap(nm[1].toLowerCase());
+    localStorage.setItem(NAME_KEY, name);
+    return { say: pick([`Nice to meet you, ${name}. I'll remember that.`, `Got it, ${name}. Lovely name.`]), face: "joy", chips: ["Give me a briefing", "Do my check-in"] };
+  }
+  if (/\b(what is|do you know|say) my name\b|\bwho am i\b/.test(t))
+    return userName() ? { say: `You're ${userName()}. I remember.`, face: "joy" } : { say: "You haven't told me yet. Just say: call me, and then your name." };
+  if (/\bforget my name\b/.test(t)) { localStorage.removeItem(NAME_KEY); return { say: "Done, I've forgotten it." }; }
 
   // --- 5. Guided steps in progress ---
   if (ctx.steps) {
@@ -682,14 +1096,32 @@ function understand(raw) {
     }
   }
 
+  // --- 5b. Several things at once ("I slept 6 hours and drank 2 glasses of water") ---
+  if (!q || /\b(log|record)\b/.test(t)) {
+    const items = t.split(/ (?:and then|and also|and|also|then|plus) /).map(detectLog).filter(Boolean);
+    if (items.length > 1) { const r = logMany(items, mine); if (r) return r; }
+  }
+
+  // --- 5c. Symptoms and feeling unwell ---
+  if (/\b(do not|not) (feel|feeling)( so| very| too)? (well|good|great|okay|ok|right|myself)\b|\bnot feeling (well|good|great|okay|myself)\b|\b(feel|feeling|i am) (unwell|ill|off|weird|strange|poorly)\b|\bsomething (else )?hurts\b|\bi am sick\b|\bdo not feel well\b/.test(t)) {
+    const sym = SYMPTOMS.find(s => s.re.test(t));
+    return sym ? symptomReply(sym, mine) : unwell();
+  }
+  if (!/^(what is|what are|define)\b/.test(t)) {
+    const sym = SYMPTOMS.find(s => s.re.test(t));
+    if (sym) return symptomReply(sym, mine);
+  }
+  const neg = t.match(/\b(not|no longer|never) (feeling |that |so |too |very )?(tired|stressed|sad|lonely|sick|anxious|worried|scared|down)\b/);
+  if (neg) return { say: pick([`Good, I'm glad you're not ${neg[3]}.`, `That's good to hear.`]) + " Is there anything I can help with?", face: "joy", chips: defaultChips() };
+
   // --- 6. Calm, feelings, company ---
   if (/\b(calm me|calm down|breathe|breathing|breath|panic|panicking|anxious|anxiety|relax)\b/.test(t)) return { say: "", then: calmMode };
-  if (/\b(lonely|alone|homesick|miss (home|earth|my|everyone|them|family)|isolated)\b/.test(t)) return feeling("lonely", subj);
-  if (/\b(stressed|stress|overwhelmed|nervous|scared|afraid|worried|freaking out|too much)\b/.test(t)) return feeling("stressed", subj);
-  if (/\b(cannot sleep|can not sleep|trouble sleeping|insomnia|not sleeping well|keep waking|wake up at night)\b/.test(t)) return feeling("cantSleep", subj);
-  if (/\bi( am)?( feeling| feel)?( so| really| very| a bit| kind of| pretty| quite| a little)? (sad|down|low|unhappy|depressed|blue|awful|terrible|bad)\b|\b(bad day|crying)\b/.test(t)) return feeling("sad", subj);
-  if (/\bi( am)?( feeling| feel)?( so| really| very| a bit| kind of| pretty| quite| a little)? (tired|exhausted|sleepy|drained|worn out|fatigued)\b/.test(t)) return feeling("tired", subj);
-  if (/\bi( am)?( feeling| feel)?( so| really| very| a bit| kind of| pretty| quite| a little)? (good|great|fine|okay|ok|better|well|awesome|happy)\b/.test(t)) return feeling("good", subj);
+  if (/\b(lonely|alone|homesick|miss (home|earth|my|everyone|them|family)|isolated)\b/.test(t)) return feeling("lonely", mine);
+  if (/\b(stressed|stress|overwhelmed|nervous|scared|afraid|worried|freaking out|too much)\b/.test(t)) return feeling("stressed", mine);
+  if (/\b(cannot sleep|can not sleep|trouble sleeping|insomnia|not sleeping well|keep waking|wake up at night)\b/.test(t)) return feeling("cantSleep", mine);
+  if (/\bi( am)?( feeling| feel)?( so| really| very| a bit| kind of| pretty| quite| a little)? (sad|down|low|unhappy|depressed|blue|awful|terrible|bad)\b|\b(bad day|crying)\b/.test(t)) return feeling("sad", mine);
+  if (/\bi( am)?( feeling| feel)?( so| really| very| a bit| kind of| pretty| quite| a little)? (tired|exhausted|sleepy|drained|worn out|fatigued)\b/.test(t)) return feeling("tired", mine);
+  if (/\bi( am)?( feeling| feel)?( so| really| very| a bit| kind of| pretty| quite| a little)? (good|great|fine|okay|ok|better|well|awesome|happy)\b/.test(t)) return feeling("good", mine);
   if (/\b(talk to me|keep me company|chat with me|tell me something|i am bored|bored)\b/.test(t))
     return { say: pick(TALK_LINES()), face: "joy", chips: ["Another one", "Tell me a joke", "How is everyone?"] };
   if (/^another( one)?\b/.test(t)) return { say: pick([...TALK_LINES(), ...JOKES]), face: "joy", chips: ["Another one", "How is everyone?"] };
@@ -705,25 +1137,30 @@ function understand(raw) {
     return explainLevel(null);
   }
 
+  // --- 7b. What a word means ("what is D-dimer?") ---
+  if (/^(what is|what are|what does|what s|define|meaning of|explain|tell me about)\b|\bwhat (is|are) (a |an |the )?\w+$/.test(t)) {
+    const g = !/\bchecklist\b/.test(t) && GLOSSARY.find(x => x.re.test(t));
+    if (g) return { say: g.say, chips: ["How is everyone?", "What can you do?"] };
+  }
+
+  // --- 7c. Reminders, timers, check-in, briefing ---
+  if (/\b(remind me|reminders?|timers?|alarms?|wake me( up)?|nap for)\b/.test(t)) return reminderIntent(t);
+  if (/\b(check ?-?in|daily questions|morning questions|daily log)\b/.test(t) && !/\bwhat is\b/.test(t)) return startCheckIn(mine);
+  if (/\b(briefing|brief me|catch me up|what did i miss|daily report|morning report|sitrep|summary|summari[sz]e|overview|the news)\b/.test(t)) return briefing();
+
   // --- 8. Logging by talking ---
   if (/\b(log|record|enter|update|add|save)\b/.test(t) && !/\d/.test(t)) {
-    if (/\b(sleep|slept)\b/.test(t)) return askFor("sleep", subj);
-    if (/\bmood\b/.test(t)) return askFor(/\b(crewmate|mate)\b/.test(t) ? "mate" : "mood", subj);
-    if (/\b(water|glass|glasses)\b/.test(t)) return askFor("water", subj);
-    if (/\b(exercise|workout|session)\b/.test(t)) return logValue("exercise", 1, subj);
-    if (/\b(heart|pulse)\b/.test(t)) return askFor("hr", subj);
-    if (/\btemp/.test(t)) return askFor("temp", subj);
+    if (/\b(sleep|slept)\b/.test(t)) return askFor("sleep", mine);
+    if (/\bmood\b/.test(t)) return askFor(/\b(crewmate|mate)\b/.test(t) ? "mate" : "mood", mine);
+    if (/\b(water|glass|glasses)\b/.test(t)) return askFor("water", mine);
+    if (/\b(exercise|workout|session)\b/.test(t)) return logValue("exercise", 1, mine);
+    if (/\b(heart|pulse)\b/.test(t)) return askFor("hr", mine);
+    if (/\btemp/.test(t)) return askFor("temp", mine);
   }
   if (!q || /\b(log|record)\b/.test(t)) {
-    const n = firstNumber(t);
-    if (/\b(slept|got|had|managed|sleep was)\b/.test(t) && /\b(hours?|hrs?|h|sleep|slept)\b/.test(t) && n !== null) return logValue("sleep", n, subj);
-    if (/\b(slept|sleep was)\b/.test(t) && /\b(bad|badly|poorly|terrible|not much|little)\b/.test(t)) return { ...askFor("sleep", subj), say: "Sorry to hear that. About how many hours did you get?" };
-    if (/\b(drank|drunk|had|finished|drinking)\b/.test(t) && /\b(water|glass|glasses|cup|cups|bottle)\b/.test(t)) return logValue("water", n ?? 1, subj);
-    if (/\b(worked out|exercised|did (my |the |a )?(workout|exercise|training|session)|finished (my |the )?(workout|exercise|training))\b/.test(t)) return logValue("exercise", 1, subj);
-    if (/\bmood\b/.test(t) && n !== null) return logValue(/\b(crewmate|mate)\b/.test(t) ? "mate" : "mood", n, subj);
-    if (/\b(rate|feel|feeling|i am)\b.*\b[1-5] (out of|of|\/) ?5\b/.test(t)) return logValue("mood", n, subj);
-    if (/\b(heart ?rate|pulse)\b/.test(t) && n !== null) return logValue("hr", n, subj);
-    if (/\b(temperature|temp)\b/.test(t) && n !== null) return logValue("temp", n, subj);
+    if (/\b(slept|sleep was)\b/.test(t) && /\b(bad|badly|poorly|terrible|not much|little)\b/.test(t) && firstNumber(t) === null) return { ...askFor("sleep", mine), say: "Sorry to hear that. About how many hours did you get?" };
+    const d = detectLog(t);
+    if (d) return logValue(d[0], d[1], mine);
   }
 
   // --- 9. Messages home and reports ---
@@ -737,7 +1174,7 @@ function understand(raw) {
       && !/\b(when|reply|answer|heard)\b/.test(t)) return sendReport(subj);
 
   // --- 10. Checklists and what to do ---
-  if (/\b(clot|checklist)\b/.test(t) && !/\b(what is|why)\b/.test(t)) return startClotSteps(subj);
+  if (/\b(clot|checklist)\b/.test(t) && !/\b(what is (a )?clot|why)\b/.test(t)) return startClotSteps(subj);
   if (/\b(what (should|do|can|must|shall) (i|we|he|she|they)( \w+)? do|what now|what next|next steps?|how do (i|we) (fix|help)|what to do|help (him|her|them|us)|action plan|plan|the steps)\b/.test(t))
     return startSteps(subj);
 
@@ -777,16 +1214,27 @@ function understand(raw) {
                    : { say: `No storm right now. Solar activity is ${MOCK.radiation.solarActivity} out of 100, and a storm starts at 70. I'll warn you straight away if that changes.`, face: "joy" };
   }
 
+  // --- 12b. Compare the crew ("who slept the least?") ---
+  const rk = READINGS.find(x => x.re.test(t))?.key;
+  if ((/\b(who|which (one|crew ?member|person|of (us|them)))\b/.test(t) && /\b(most|least|highest|lowest|fewest|worst|best|healthiest|fittest|less|more|longest|shortest|needs? (the most )?(help|care|attention))\b/.test(t))
+      || /\bcompare\b|\b(rank|ranking)\b/.test(t)) return compareCrew(t, rk);
+
+  // --- 12c. Trends ("how did I sleep this week?") ---
+  if (rk && /\b(this week|trend|over time|getting (better|worse)|history|lately|past (week|days|few days)|last (week|7 days|few days|tests)|every night|each night|improving|when will)\b/.test(t)) {
+    const r = trendReply(mine, rk);
+    if (r) { ctx.crew = mine; ctx.topic = rk; updateAbout(); return r; }
+  }
+
   // --- 13. The whole crew ---
   if (named === "ALL" || /\b(how is everyone|everyone okay|is everyone)\b/.test(t)) return allCrew();
 
   // --- 14. One reading ("heart rate?", then "and the pilot?") ---
   const r = READINGS.find(x => x.re.test(t));
   if (r) {
-    const [say, status] = readingText(subj, r.key);
-    ctx.crew = subj; ctx.topic = r.key; ctx.level = status; updateAbout();
+    const [say, status] = readingText(mine, r.key);
+    ctx.crew = mine; ctx.topic = r.key; ctx.level = status; updateAbout();
     return { say, face: status === "act" ? "caring" : status === "normal" ? "joy" : null,
-      chips: ["Why?", "What should I do?", ...Object.keys(MOCK.crew).filter(x => x !== subj).map(x => `And the ${ROLE[x]}?`)] };
+      chips: ["Why?", "What should I do?", ...Object.keys(MOCK.crew).filter(x => x !== mine).map(x => `And the ${ROLE[x]}?`)] };
   }
   if (one && ctx.topic && READINGS.some(x => x.key === ctx.topic) && /^(and|what about|how about|and the|for the|same for)\b/.test(t)) {
     const [say, status] = readingText(one, ctx.topic);
@@ -796,7 +1244,8 @@ function understand(raw) {
 
   // --- 15. Someone's status ---
   if (/\b(switch to|talk about|let us talk about|focus on|change to)\b/.test(t) && one) return assess(one, { intro: `Okay, let's talk about ${who(one)}. ` });
-  if (one || /\b(how is|how are|how am i|status|assess|condition|health|check on|check|doing|update)\b/.test(t)) return assess(subj);
+  if (/\bhow am i\b|\bam i (ok|okay|alright|fine|healthy)\b/.test(t) && !one) return assess(selfId || subj);
+  if (one || /\b(how is|how are|status|assess|condition|health|check on|check|doing|update)\b/.test(t)) return assess(subj);
 
   // --- 16. Small talk ---
   if (/^(hi|hello|hey|hiya|yo|good (morning|afternoon|evening))\b/.test(t)) return greeting();
@@ -810,13 +1259,18 @@ function understand(raw) {
 
   // --- 17. Didn't understand ---
   ctx.misses++;
-  if (ctx.misses >= 2) { ctx.misses = 0; return { ...capabilities(), say: "Sorry, I still didn't get that. Here's what I can help with." }; }
-  return { say: pick(["Sorry, I didn't quite catch that. You could ask: how is the pilot?", "Hmm, I'm not sure what you mean. Try: what should I do?"]), chips: defaultChips(), missed: true };
+  if (ctx.misses >= 3) { ctx.misses = 0; return { ...capabilities(), say: "Sorry, I still didn't get that. Here's what I can help with." }; }
+  const guess = suggestFor(t);
+  if (guess.length) {
+    ctx.confirm = { yes: () => understand(guess[0]), no: () => ({ say: "Okay. Try saying it another way, or ask: what can you do?", chips: ["What can you do?"] }) };
+    return { say: `${pick(["I'm not completely sure.", "Hmm, let me check I understood."])} Did you mean: ${guess[0]}`, chips: [...guess, "What can you do?"], missed: true };
+  }
+  return { say: pick(["Sorry, I didn't quite catch that. You could ask: how is the pilot?", "Hmm, I'm not sure what you mean. Try: what should I do?"]), chips: [...defaultChips().slice(0, 3), "What can you do?"], missed: true };
 }
 
 function greeting() {
   const S = check(ctx.crew);
-  const start = `Good ${partOfDay()}. `;
+  const start = `Good ${partOfDay()}${userName() ? ", " + userName() : ""}. `;
   if (S.overall === "act") {
     ctx.confirm = { yes: () => assess(ctx.crew), no: () => ({ say: "Okay. Ask me anything, any time.", chips: defaultChips() }) };
     return { say: `${start}${Who(ctx.crew)} needs care now. Want me to walk you through it?`, face: "caring", chips: ["Yes", "How is everyone?", "What can you do?"] };
@@ -956,7 +1410,7 @@ async function calmMode() {
     txt.textContent = words;
     face.classList.remove("in", "hold", "out");
     if (breath) face.classList.add(breath);
-    if (spoken) speak(spoken, { rate: 0.82, pitch: 1 });     // slower, softer voice
+    if (spoken) speak(spoken, { rate: 0.82, pitch: voicePitch() - 0.05 });     // slower, softer voice
     await wait(ms);
     return run === calmRun;
   };
@@ -1080,17 +1534,47 @@ $("crewMenu").addEventListener("click", e => {
 });
 
 function updateMute() {
-  $("muteBtn").setAttribute("aria-pressed", String(muted));
-  $("muteBtn").setAttribute("aria-label", muted ? "Turn voice on" : "Mute voice");
-  $("muteBtn").title = muted ? "Voice is off" : "Voice is on";
+  $("muteBtn").setAttribute("aria-label", muted ? "Voice settings, voice is off" : "Voice settings");
+  $("muteBtn").title = muted ? "Voice is off" : "Voice settings";
   document.body.classList.toggle("voice-off", muted);   // not "muted": that is also a text style
+  updateVoiceMenu();
 }
-$("muteBtn").onclick = () => {
-  muted = !muted;
-  localStorage.setItem("astrodoc-mute", muted ? "1" : "0");
-  if (muted) stopSpeaking();
-  updateMute();
-};
+// The voice menu: Female / Male / Off, speed, and a preview
+function updateVoiceMenu() {
+  const menu = $("voiceMenu");
+  if (!menu) return;
+  const g = muted ? "off" : prefs.gender;
+  menu.querySelectorAll("[data-gender]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.gender === g)));
+  menu.querySelectorAll("[data-rate]").forEach(b => {
+    const r = parseFloat(b.dataset.rate);
+    b.setAttribute("aria-pressed", String(r === 1 ? prefs.rate > 0.92 && prefs.rate < 1.08 : r < 1 ? prefs.rate <= 0.92 : prefs.rate >= 1.08));
+    b.disabled = muted;
+  });
+  $("voicePreview").disabled = muted || !("speechSynthesis" in window);
+  $("voiceNote").textContent = !("speechSynthesis" in window) ? "This browser can't speak. Replies are written only."
+    : muted ? "I'll only write my replies."
+    : !bestVoice ? "Loading voices…"
+    : voiceExact ? `Voice: ${bestVoice.name.replace(/\s*\(.*\)\s*$/, "").replace(/^Microsoft\s+/, "")}`
+    : `This device has no ${prefs.gender} English voice, so I change my pitch instead.`;
+}
+const SAMPLE = () => pick([
+  `Hi${userName() ? " " + userName() : ""}, I'm Astrodoc. This is how I sound.`,
+  "Hello. I'm here to look after the crew. Does this voice feel right?"]);
+$("voiceMenu").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.gender) {
+    const off = b.dataset.gender === "off";
+    muted = off; localStorage.setItem("astrodoc-mute", off ? "1" : "0");
+    if (off) stopSpeaking(); else setVoicePrefs({ gender: b.dataset.gender });
+    updateMute();
+    if (!off) speak(SAMPLE());
+  } else if (b.dataset.rate) {
+    setVoicePrefs({ rate: parseFloat(b.dataset.rate) });
+    updateVoiceMenu();
+    speak(SAMPLE());
+  } else if (b.id === "voicePreview") speak(SAMPLE());
+});
 
 $("micBtn").onclick = () => startListening();
 $("voiceForm").onsubmit = e => {

@@ -90,6 +90,7 @@ const MOCK = {
 
 const DEFAULT_MOCK = JSON.stringify(MOCK);       // for "Reset demo data"
 let currentCrew = "CDR";
+let me = null;                                     // who is using this app (chosen once)
 const emergency = { active: false, signs: {} };   // for the selected crew member
 const autoReported = {};                           // automatic reports are sent once
 const checklistDone = {};
@@ -248,16 +249,38 @@ function buildWarnings(id, c, S) {
     add("hr", S.hr, `Heart rate ${c.vitals.hr > 100 ? "high" : "low"}: ${c.vitals.hr} bpm`, ADVICE.hr);
   }
   add("temp", S.temp, `Temperature ${c.vitals.temp >= 37.3 ? "high" : "low"}: ${c.vitals.temp} °C`, ADVICE.temp);
-  add("bp", S.bp, `Blood pressure high: ${c.vitals.bpSys}/${c.vitals.bpDia}`, ADVICE.bp);
+  add("bp", S.bp, `Blood pressure ${S.bp === "act" ? "high" : "slightly high"}: ${c.vitals.bpSys}/${c.vitals.bpDia}`, ADVICE.bp);
   add("mood", S.mood, `Low mood: ${S.moodValue} of 5`, S.mood === "act" ? ADVICE.moodAct : ADVICE.moodWatch);
   const g = S.biggestGap;
   add("gap", g.status, `Crewmate sees you differently (${g.m}: you ${g.self}, crewmate ${g.mate})`, ADVICE.gap);
-  if (!S.storm) add("dose", S.radiation, `Radiation dose high: ${S.dose.toFixed(0)} of 600 mSv`, ADVICE.dose);
+  if (!S.storm) add("dose", S.radiation, S.radiation === "act" ? `Radiation dose high: ${S.dose.toFixed(0)} of 600 mSv` : `Radiation: over half the career limit (${S.dose.toFixed(0)} of 600 mSv)`, ADVICE.dose);
   add("exercise", S.exercise, `Too little exercise: ${c.exercise} of 6 sessions this week`, ADVICE.exercise);
   add("water", S.water, `Drink more water: ${c.water.glasses} of ${c.water.goal} glasses`, ADVICE.water);
   add("vitd", S.vitD, `Vitamin D out of range: ${c.vitD} ng/mL`, ADVICE.vitD);
 
-  return W.sort((a, b) => RANK[b.status] - RANK[a.status]);
+  return W.sort(byUrgency);
+}
+
+// Inside the same color, some problems are more urgent than others.
+// A possible blood clot must never sit below "short on sleep".
+const PRIORITY = { emergency: 0, storm: 1, clot: 2, labs: 3, trend: 4, tired: 5, hr: 6, temp: 7, mood: 8, sleep: 9,
+  reaction: 10, bp: 11, gap: 12, dose: 13, exercise: 14, water: 15, vitd: 16 };
+const byUrgency = (a, b) => (RANK[b.status] - RANK[a.status]) || ((PRIORITY[a.key] ?? 99) - (PRIORITY[b.key] ?? 99));
+
+// The few words that say WHY someone has their color
+const REASON = { emergency: "Medical emergency", storm: "Solar storm", clot: "Possible blood clot", labs: "Blood test outside normal",
+  trend: "Blood test getting worse", tired: "Very tired", sleep: "Short on sleep", reaction: "Slow reactions", hr: "Heart rate",
+  temp: "Temperature", bp: "Blood pressure", mood: "Low mood", gap: "Crewmate sees a difference", dose: "Radiation dose",
+  exercise: "Missed exercise", water: "Drink more water", vitd: "Vitamin D" };
+function reasonFor(id) {
+  const S = check(id);
+  return S.warnings.length ? REASON[S.warnings[0].key] || S.warnings[0].title : "All good";
+}
+// Most urgent crew member first
+function bySeverity(a, b) {
+  const A = check(a), B = check(b);
+  return (RANK[B.overall] - RANK[A.overall]) ||
+    ((A.warnings[0] ? PRIORITY[A.warnings[0].key] ?? 99 : 99) - (B.warnings[0] ? PRIORITY[B.warnings[0].key] ?? 99 : 99));
 }
 
 
@@ -295,6 +318,11 @@ function autoReport(id = currentCrew) {
   triggers.forEach(t => { const k = id + t; if (!autoReported[k]) { autoReported[k] = true; sendToEarth(`${id}: ${t} (automatic)`); sent = true; } });
   return sent;
 }
+function autoReportAll() { return Object.keys(MOCK.crew).map(id => autoReport(id)).some(Boolean); }
+// The newest report about one crew member (automatic or not)
+function lastReport(id, { automatic = false } = {}) {
+  return [...MOCK.earthLog].reverse().find(e => e.title.startsWith(id + ":") && (!automatic || /\(automatic\)/.test(e.title)));
+}
 
 const CLOT_STEPS = [
   "Stop work. Sit or lie still.",
@@ -317,7 +345,7 @@ function saveState() {
   try {
     localStorage.setItem(STORE, JSON.stringify({
       crew: MOCK.crew, location: MOCK.mission.location, solar: MOCK.radiation.solarActivity,
-      earthLog: MOCK.earthLog, currentCrew, emergency, autoReported, checklistDone
+      earthLog: MOCK.earthLog, currentCrew, me, emergency, autoReported, checklistDone
     }));
   } catch { /* storage full or blocked: the page still works, just not shared */ }
 }
@@ -331,6 +359,7 @@ function loadState() {
   if (Array.isArray(s.earthLog)) MOCK.earthLog.splice(0, MOCK.earthLog.length,
     ...s.earthLog.map(e => ({ ...e, sent: new Date(e.sent), arrive: new Date(e.arrive), reply: new Date(e.reply) })));
   if (s.currentCrew && MOCK.crew[s.currentCrew]) currentCrew = s.currentCrew;
+  if (s.me && MOCK.crew[s.me]) me = s.me;
   if (s.emergency) Object.assign(emergency, s.emergency);
   Object.assign(autoReported, s.autoReported || {});
   Object.assign(checklistDone, s.checklistDone || {});

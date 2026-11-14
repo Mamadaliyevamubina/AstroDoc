@@ -25,10 +25,30 @@
     </button>
     <div class="c-menu" id="crewMenu" popover aria-label="Choose who to talk about"></div>
 
-    <button class="c-icon" id="muteBtn" aria-pressed="false" aria-label="Mute voice" title="Mute voice">
+    <button class="c-icon" id="muteBtn" popovertarget="voiceMenu" aria-haspopup="true" aria-label="Voice settings" title="Voice settings">
       <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
       <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
     </button>
+    <!-- Voice settings: who speaks, how fast -->
+    <div class="c-menu c-voice" id="voiceMenu" popover aria-label="Voice settings">
+      <p class="c-menu-title" id="vGenderLabel">Voice</p>
+      <div class="seg" role="group" aria-labelledby="vGenderLabel">
+        <button type="button" data-gender="female">Female</button>
+        <button type="button" data-gender="male">Male</button>
+        <button type="button" data-gender="off">Off</button>
+      </div>
+      <p class="c-menu-title" id="vRateLabel">Speed</p>
+      <div class="seg" role="group" aria-labelledby="vRateLabel">
+        <button type="button" data-rate="0.85">Slower</button>
+        <button type="button" data-rate="1">Normal</button>
+        <button type="button" data-rate="1.15">Faster</button>
+      </div>
+      <p class="c-menu-note" id="voiceNote"></p>
+      <button type="button" class="soft-btn c-preview" id="voicePreview">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        Hear it
+      </button>
+    </div>
   </header>
 
   <!-- ===================== THE COMPANION ===================== -->
