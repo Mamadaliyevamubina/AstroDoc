@@ -116,3 +116,34 @@
   .k-final .text-btn { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .k-progress span, .region > * { transition: none; } }
+
+/* 3D astronaut on step 1 (falls back to the flat figure) */
+.k-where.has-3d { grid-template-columns: minmax(0, 340px) minmax(0, 1fr); align-items: start; }
+.b3d-slot { position: relative; }
+.b3d {
+  position: relative; height: min(56vh, 480px); border-radius: var(--r-xl); overflow: hidden;
+  background: radial-gradient(ellipse 60% 45% at 50% 58%, rgba(91, 225, 200, .16), transparent 70%), var(--glass);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+.b3d canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }
+.b3d canvas:active { cursor: grabbing; }
+.b3d-loading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15px; color: var(--muted); }
+.b3d.loaded .b3d-loading { display: none; }
+.b3d-tip {
+  position: absolute; z-index: 2; pointer-events: none; translate: 12px -32px;
+  padding: 4px 10px; border-radius: var(--r-pill); white-space: nowrap;
+  background: var(--ink); color: var(--space); font-size: 14px; font-weight: 700;
+}
+.b3d-turn {
+  position: absolute; z-index: 2; right: 12px; bottom: 12px;
+  min-height: 40px; padding: 8px 14px; border: none; border-radius: var(--r-pill); cursor: pointer;
+  background: var(--glass-2); box-shadow: inset 0 0 0 1px var(--edge); color: var(--ink); font-size: 14px; font-weight: 700;
+}
+.b3d-turn:hover { background: var(--glass-3); }
+.k-chips.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.k-chips.grid .k-chip[data-place="general"] { grid-column: 1 / -1; }
+.foot a { color: inherit; }
+@media (max-width: 640px) {
+  .k-where.has-3d { grid-template-columns: 1fr; }
+  .b3d { height: 52vh; }
+}

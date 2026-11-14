@@ -134,22 +134,54 @@ const BODY = `
     <path d="M148 254 Q130 262 114 260 L118 392 Q120 406 132 406 Q144 406 144 392 Z"/></g>
 </svg>`;
 const EXTRA = ["eyes", "back", "skin", "general"];
+// With the 3D astronaut, every place is also a button (keyboard, screen readers, gloves)
+const ALL_PLACES = ["head", "eyes", "neck", "chest", "belly", "back", "arms", "legs", "skin", "general"];
+
+// 3D astronaut (assets/js/body3d.js + assets/models/astronaut.glb). Made once, reused.
+// If WebGL or the model can't load (for example when the page is opened as a file),
+// the flat body figure is used instead.
+let body3d = null, body3dHost = null, body3dFailed = !window.Body3D;
+function getBody3d() {
+  if (body3dFailed) return null;
+  if (body3d) return body3d;
+  try {
+    body3dHost = document.createElement("div");
+    body3dHost.className = "b3d";
+    body3dHost.innerHTML = `<span class="b3d-loading">Loading the astronaut…</span>`;
+    body3d = window.Body3D.mount(body3dHost, {
+      url: "assets/models/astronaut.glb",
+      label: p => PLACES[p],
+      onToggle: (p, on) => { on ? st.places.add(p) : st.places.delete(p); syncWhere(); }
+    });
+    body3d.ready.then(() => { body3dHost.classList.add("loaded"); st.places.forEach(p => body3d.set(p, true)); })
+      .catch(() => { body3dFailed = true; body3d = null; if (st.step === "where") drawWhere(); });
+    return body3d;
+  } catch { body3dFailed = true; return null; }
+}
 
 function drawWhere() {
+  const b3 = getBody3d();
+  const chips = b3 ? ALL_PLACES : EXTRA;
   $("stage").innerHTML = `
     <h1>Where do you feel something?</h1>
-    <p class="k-lead">Tap one or more places. They light up. Nothing hurts but you don't feel right? Choose “Whole body”.</p>
-    <div class="k-where">
-      ${BODY}
+    <p class="k-lead">${b3 ? "Tap the astronaut where you feel something, or choose from the list. Drag to turn them around." : "Tap one or more places. They light up."} Nothing hurts but you don't feel right? Choose “Whole body”.</p>
+    <div class="k-where ${b3 ? "has-3d" : ""}">
+      ${b3 ? `<div class="b3d-slot" id="b3dSlot"><button type="button" class="b3d-turn" id="turnBtn">Turn around</button></div>` : BODY}
       <div class="k-side">
-        <div class="k-chips" role="group" aria-label="More places">
-          ${EXTRA.map(p => `<button type="button" class="k-chip" data-place="${p}" aria-pressed="false">${PLACES[p]}</button>`).join("")}
+        <div class="k-chips ${b3 ? "grid" : ""}" role="group" aria-label="${b3 ? "Places" : "More places"}">
+          ${chips.map(p => `<button type="button" class="k-chip" data-place="${p}" aria-pressed="false">${PLACES[p]}</button>`).join("")}
         </div>
         <p class="k-picked" id="picked" aria-live="polite"></p>
       </div>
     </div>
     <div class="k-actions"><span></span><button class="primary-btn" id="nextBtn" disabled>Next</button></div>`;
-  const toggle = p => { st.places.has(p) ? st.places.delete(p) : st.places.add(p); syncWhere(); };
+  if (b3) { $("b3dSlot").prepend(body3dHost); $("turnBtn").onclick = () => body3d.turn(); }
+  const toggle = p => {
+    const on = !st.places.has(p);
+    on ? st.places.add(p) : st.places.delete(p);
+    if (body3d) body3d.set(p, on);
+    syncWhere();
+  };
   document.querySelectorAll("[data-place]").forEach(el => {
     el.addEventListener("click", () => toggle(el.dataset.place));
     el.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && el.tagName !== "BUTTON") { e.preventDefault(); toggle(el.dataset.place); } });
@@ -158,6 +190,7 @@ function drawWhere() {
   syncWhere();
 }
 function syncWhere() {
+  if (!$("picked")) return;
   document.querySelectorAll("[data-place]").forEach(el => {
     const on = st.places.has(el.dataset.place);
     el.classList.toggle("on", on);
@@ -358,7 +391,7 @@ function drawResult() {
     $("reportBtn").disabled = true;
     $("reportNote").textContent = `Sent ${time(last.sent)}. Earliest reply ~${time(last.reply)}. Don't wait for it: follow the steps above.`;
   };
-  $("againBtn").onclick = () => { st.places.clear(); st.flags.clear(); st.answers = {}; st.qs = []; st.qi = 0; go("where"); };
+  $("againBtn").onclick = () => { if (body3d) st.places.forEach(p => body3d.set(p, false)); st.places.clear(); st.flags.clear(); st.answers = {}; st.qs = []; st.qi = 0; go("where"); };
 }
 
 
