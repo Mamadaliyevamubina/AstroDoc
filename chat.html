@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#f3f6fa">
   <meta name="description" content="Talk to Astrodoc, the crew's health companion.">
   <link rel="icon" href="assets/astrodoc-favicon.png">
-  <link rel="stylesheet" href="style.css?v=ai3">
+  <link rel="stylesheet" href="style.css?v=voice3">
   <link rel="stylesheet" href="type.css">
 </head>
 <body class="chat-page">
@@ -60,6 +60,14 @@
       </form>
       <p class="c-menu-note" id="aiNote"></p>
       <button type="button" class="soft-btn c-preview" id="aiOff" hidden>Disconnect AI</button>
+      <!-- Natural voice: an ElevenLabs API key saved only in this browser -->
+      <p class="c-menu-title" id="voiceKeyLabel">Natural voice</p>
+      <form class="c-ai" id="voiceKeyForm" aria-labelledby="voiceKeyLabel">
+        <input type="password" id="voiceKey" placeholder="Paste ElevenLabs API key" autocomplete="off" spellcheck="false" aria-label="ElevenLabs API key">
+        <button type="submit" class="soft-btn">Connect</button>
+      </form>
+      <p class="c-menu-note" id="voiceKeyNote"></p>
+      <button type="button" class="soft-btn c-preview" id="voiceKeyOff" hidden>Disconnect voice</button>
     </div>
   </header>
 
@@ -131,6 +139,6 @@
   <script src="core.js"></script>
   <script src="sidebar.js"></script>
   <script src="data/space-medicine-cases.js?v=1"></script>
-  <script src="voice.js?v=ai2"></script>
+  <script src="voice.js?v=voice3"></script>
 </body>
 </html>
