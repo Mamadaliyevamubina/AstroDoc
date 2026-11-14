@@ -1134,7 +1134,7 @@ function tellCase(list, i = 0) {
   const c = list[i % list.length];
   ctx.cases = { list, i: i + 1 };
   const lower = w => /^[A-Z][a-z]/.test(w) ? w[0].toLowerCase() + w.slice(1) : w;       // "Long-duration" → "long-duration", keeps "ISS", "U.S."
-  const whom = /^(an?|all|\d|u\.s\.|long|shuttle|iss)\b/i.test(c.who) ? lower(c.who.replace(/\s*\(not named\)/, "")) : "the " + c.who.toLowerCase();
+  const whom = /^((an?|all|long|shuttle|iss)\b|\d|u\.s\.)/i.test(c.who) ? lower(c.who.replace(/\s*\(not named\)/, "")) : "the " + c.who.toLowerCase();
   const where = /^Apollo/.test(c.mission) ? c.mission : /^International|^Space/.test(c.mission) ? "the " + c.mission : lower(c.mission);
   const say = `Here's a real case from ${where}, ${c.year}, about ${whom}. ${c.felt} ${c.response} ${c.outcome}`;
   return { say, face: "caring",
