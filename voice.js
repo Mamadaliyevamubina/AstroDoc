@@ -1123,7 +1123,7 @@ function casesFor(text, id = ctx.crew) {
   const tags = new Set(CASE_WORDS.filter(([re]) => re.test(text)).map(([, tag]) => tag));
   if (!tags.size && ctx.topic) tags.add(ctx.topic);
   if (!tags.size && id && MOCK.crew[id]) check(id).warnings.forEach(w => tags.add(w.key));
-  const hits = c => c.tags.filter(t => tags.has(t)).length;
+  const hits = c => c.tags.filter(t => tags.has(t)).length + (tags.has(c.tags[0]) ? 1 : 0);   // a case's first tag is its main topic
   return CASES.filter(c => hits(c)).sort((a, b) => hits(b) - hits(a));   // best match first
 }
 function tellCase(list, i = 0) {
