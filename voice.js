@@ -46,11 +46,12 @@ function chooseVoice() {
   const score = v => {
     const n = v.name;
     let s = 0;
-    if (/natural|neural/i.test(n)) s += 100;                 // e.g. Microsoft "Aria Online (Natural)"
-    if (/premium|enhanced/i.test(n)) s += 80;                // e.g. macOS "Ava (Premium)"
-    if (/Google US English/i.test(n)) s += 60;               // Chrome's online voice
-    if (/Samantha|Ava|Allison|Susan|Zoe|Karen|Serena|Aria|Jenny|Google UK English Female/i.test(n)) s += 40;
-    if (/en[-_]US/i.test(v.lang)) s += 10;
+    // JARVIS-style: a calm, polished British male voice
+    if (/en[-_]GB/i.test(v.lang)) s += 120;
+    if (/Daniel|Arthur|Oliver|Ryan|George|Thomas|Alfie|Elliot|Google UK English Male/i.test(n)) s += 100;
+    if (/natural|neural/i.test(n)) s += 60;                  // e.g. Microsoft "Ryan Online (Natural)"
+    if (/premium|enhanced/i.test(n)) s += 50;                // e.g. macOS "Daniel (Enhanced)"
+    if (/female|Samantha|Ava|Allison|Susan|Zoe|Karen|Serena|Aria|Jenny|Kate|Stephanie|Sonia|Libby|Hazel|Moira|Tessa|Fiona/i.test(n)) s -= 80;
     // macOS novelty voices sound robotic: never use them
     if (/Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandpa|Grandma|Eddy|Flo|Reed|Rocko|Sandy|Shelley/i.test(n)) s -= 200;
     return s;
@@ -77,7 +78,7 @@ function speakable(text) {
 }
 
 let speakToken = 0;
-function speak(text, { rate = 0.97, pitch = 1.05, onDone } = {}) {
+function speak(text, { rate = 1.0, pitch = 0.9, onDone } = {}) {   // composed, slightly deep
   const token = ++speakToken;
   if (!text) { if (onDone) onDone(); return; }
   if (muted || !("speechSynthesis" in window)) {     // no sound: the mouth still moves a little
@@ -956,7 +957,7 @@ async function calmMode() {
     txt.textContent = words;
     face.classList.remove("in", "hold", "out");
     if (breath) face.classList.add(breath);
-    if (spoken) speak(spoken, { rate: 0.82, pitch: 1 });     // slower, softer voice
+    if (spoken) speak(spoken, { rate: 0.82, pitch: 0.85 });     // slower, softer voice
     await wait(ms);
     return run === calmRun;
   };
