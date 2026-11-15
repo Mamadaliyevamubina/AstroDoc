@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- First visit: the introduction comes first (landing.html). Opening the app from it marks it seen. -->
+  <script>try { if (!localStorage.getItem("astrodoc-intro-seen") && !/[?&](app|story)\b/.test(location.search)) location.replace("landing.html"); } catch (e) {}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astrodoc</title>
   <meta name="theme-color" content="#f3f6fa">
@@ -150,12 +152,12 @@
   <script src="sidebar.js?v=patch1"></script>
   <script src="mood.js?v=r8"></script>
   <script src="dose.js?v=r8"></script>
-  <script src="history.js?v=r11"></script>
+  <script src="history.js?v=r14"></script>
   <script src="app.js?v=r8"></script>
   <script src="sensor.js?v=r8"></script>
   <script src="assets/js/body3d.js" defer></script>
   <script src="bodymap.js?v=r8" defer></script>
   <script src="mission.js?v=r11" defer></script>
-  <script src="story.js?v=r11" defer></script>
+  <script src="story.js?v=r14" defer></script>
 </body>
 </html>

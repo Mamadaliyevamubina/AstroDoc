@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Astrodoc · Health care when the doctor is 18 minutes away</title>
+  <meta name="description" content="Astrodoc watches a Mars crew's health, says what to do now, and reports to Earth by itself. NASA Space Apps Challenge 2026.">
+  <meta name="theme-color" content="#1b2550">
+  <link rel="icon" href="assets/astrodoc-favicon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="type.css">
+  <link rel="stylesheet" href="patch.css?v=1">
+  <link rel="stylesheet" href="landing.css?v=3">
+</head>
+<body class="landing">
+
+  <header class="ld-top">
+    <a class="ld-brand" href="landing.html" aria-label="Astrodoc">
+      <img src="assets/astrodoc-logo-mark.png" alt="">
+      <span>Astrodoc</span>
+    </a>
+    <nav class="ld-nav" aria-label="On this page">
+      <a href="#tour">What it watches</a>
+      <a href="#how">How to use it</a>
+      <a href="#proof">Real NASA data</a>
+    </nav>
+    <a class="ld-open small" href="index.html" data-open>Open Astrodoc</a>
+  </header>
+
+  <main>
+    <!-- ===================== THE TOUR: the astronaut stays, the words scroll ===================== -->
+    <section class="ld-tour" id="tour" aria-labelledby="ldTitle">
+      <div class="ld-stage" aria-hidden="true">
+        <div class="ld-3d" id="ld3d"><span class="ld-loading">Loading the astronaut…</span></div>
+        <p class="ld-stage-label" id="ldStageLabel">Head</p>
+      </div>
+
+      <div class="ld-stops">
+      <div class="ld-hero-copy" data-place="" data-label="">
+          <h1 id="ldTitle">When the doctor is <span class="ld-delay">18 minutes</span> away</h1>
+          <p class="ld-lead">On the way to Mars, a message to Earth takes up to 22 minutes, and a reply twice as long. Astrodoc watches the crew's health, says what to do now, and reports to Earth by itself.</p>
+          <div class="ld-actions">
+            <a class="ld-open" href="index.html" data-open>Open Astrodoc</a>
+            <a class="ld-story" href="index.html?story=1" data-open>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>
+              Watch the 60-second story
+            </a>
+          </div>
+          <p class="ld-note">Works with no internet. Free to try: nothing to install.</p>
+        </div>
+
+        <h2 id="tourTitle" class="ld-tour-title">What Astrodoc watches</h2>
+
+        <article class="ld-stop" data-place="head" data-label="Head · sleep, mood, reactions">
+          <h3>Tiredness you can't feel</h3>
+          <p>Astronauts sleep about 6 hours a night in space, though NASA schedules 8.5. Tired people rarely notice it. Astrodoc puts sleep, slower reactions and heart rate together and says so plainly.</p>
+          <p class="ld-use"><b>In the app:</b> the card at the top of the dashboard always shows the most urgent problem and one thing to do now.</p>
+        </article>
+
+        <article class="ld-stop" data-place="neck" data-level="act" data-label="Neck · blood clots">
+          <h3>A clot nobody felt</h3>
+          <p>On the ISS, 6 of 11 crew members had slow or reversed blood flow in a neck vein, and one had a clot. It was found by ultrasound, not by symptoms. Astrodoc watches the blood tests for the same pattern.</p>
+          <p class="ld-use"><b>In the app:</b> when D-dimer rises while platelets fall, it says "possible blood clot", opens the checklist and sends the report itself.</p>
+        </article>
+
+        <article class="ld-stop" data-place="chest" data-level="act" data-label="Chest · emergencies first">
+          <h3>Emergency signs, always first</h3>
+          <p>Hard to breathe, chest pain, weakness on one side: any one of them comes before every other question.</p>
+          <p class="ld-use"><b>In the app:</b> press <i>Check how I feel</i>, tap the astronaut where it hurts, tick any emergency sign, and Astrodoc gives the steps and reports at top priority.</p>
+        </article>
+
+        <article class="ld-stop" data-place="whole" data-level="watch" data-label="Whole body · radiation">
+          <h3>Radiation for the whole trip</h3>
+          <p>NASA's Curiosity rover measured 1.8 mSv a day in deep space and 0.67 on Mars. Added up, a crew passes NASA's 600 mSv career limit while on Mars.</p>
+          <p class="ld-use"><b>In the app:</b> the radiation chart shows each person's line, today's dose and the day they pass the limit.</p>
+        </article>
+
+        <article class="ld-stop" data-place="back" data-level="watch" data-label="Back and legs · bones and muscles">
+          <h3>Bones that quietly thin</h3>
+          <p>Bones lose 1 to 1.5% of their density each month on long missions. Astrodoc tracks six months of trends against NASA's numbers.</p>
+          <p class="ld-use"><b>In the app:</b> "The last 6 months" shows sleep, mood, bone and body mass, and says which need attention.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== HOW TO USE ===================== -->
+    <section class="ld-how" id="how" aria-labelledby="howTitle">
+      <h2 id="howTitle">How to use Astrodoc</h2>
+      <p class="ld-how-lead">Four things, in the order you'll need them.</p>
+      <ol class="ld-steps">
+        <li>
+          <h3>Say who you are</h3>
+          <p>Choose Commander, Pilot or Mission Specialist once. Astrodoc opens on your own health, with your crewmates one tap away.</p>
+        </li>
+        <li>
+          <h3>Read the top card</h3>
+          <p>Every reading has one of three levels, always shown with a shape and a word:</p>
+          <p class="ld-levels"><span class="ld-lv normal">All good</span> <span class="ld-lv watch">Watch</span> <span class="ld-lv act">Needs care now</span></p>
+          <p>Do the "Do now" step first.</p>
+        </li>
+        <li>
+          <h3>Feel something? Check it</h3>
+          <p>Press <i>Check how I feel</i>, tap the 3D astronaut, answer a few yes-or-no questions, and see what it could be, what to do and why.</p>
+        </li>
+        <li>
+          <h3>Ask, or just talk</h3>
+          <p>Type or speak to Astrodoc: "How is everyone?", "My leg is swollen", "Calm me down". Reports go to Earth by themselves, and wait on board when the link is down.</p>
+        </li>
+      </ol>
+      <p class="ld-demo"><b>Showing it to someone?</b> Open <i>Demo controls</i> at the bottom of the dashboard to start a solar storm, cut the Earth link, or connect the Arduino pulse sensor.</p>
+    </section>
+
+    <!-- ===================== PROOF ===================== -->
+    <section class="ld-proof" id="proof" aria-labelledby="proofTitle">
+      <h2 id="proofTitle">Built on what NASA measured</h2>
+      <ul class="ld-facts">
+        <li><b>Radiation</b> Dose rates measured by NASA's Curiosity rover on the way to Mars and on its surface.</li>
+        <li><b>Blood clots</b> The ISS study of neck-vein flow in 11 crew members.</li>
+        <li><b>Sleep and bones</b> NASA's sleep study of 85 astronauts and its bone-loss rates.</li>
+        <li><b>22 real cases</b> What happened to real astronauts, from Apollo to the ISS, and what their doctors did.</li>
+      </ul>
+      <p class="ld-honest">The three crew members and their readings are simulated, because real astronaut health records are private. With the Arduino sensor connected, the heart rate is real. <a href="science.html">Where every number comes from</a></p>
+    </section>
+
+    <!-- ===================== CLOSE ===================== -->
+    <section class="ld-close" aria-labelledby="closeTitle">
+      <h2 id="closeTitle">Earth can't answer in time. Astrodoc can.</h2>
+      <div class="ld-actions">
+        <a class="ld-open" href="index.html" data-open>Open Astrodoc</a>
+        <a class="ld-story" href="index.html?story=1" data-open>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>
+          Watch the 60-second story
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="ld-foot">
+    <span>Astrodoc · Dombit Education team, Tashkent · NASA Space Apps Challenge 2026</span>
+    <span>Prototype, not a medical device.</span>
+    <span>3D astronaut: “<a href="https://sketchfab.com/3d-models/astronaut-482bf87662fd4b378bcb3a2931d59ca3">astronaut</a>” by <a href="https://sketchfab.com/Antropik">Antropik</a>, <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</span>
+  </footer>
+
+  <script src="core.js?v=r13"></script>
+  <script src="assets/js/body3d.js" defer></script>
+  <script src="landing.js?v=2" defer></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+/* =========================================================
+   ASTRODOC — LANDING (landing.html)
+   The mission-patch world (patch.css): navy twill for the tour and the close,
+   flight-suit white for how-to and proof, thread blue only for actions.
+   The 3D astronaut is the spine of the page: it stays while the words scroll.
+   ========================================================= */
+body.landing { display: block; background: var(--suit); padding: 0 !important; }
+body.landing::before, body.landing::after { display: none; }
+.landing a { color: inherit; }
+.landing :focus-visible { outline: 2px solid var(--thread); outline-offset: 3px; border-radius: 6px; }
+
+/* ---------- Top bar ---------- */
+.ld-top {
+  position: fixed; inset: 0 0 auto 0; z-index: 20; display: flex; align-items: center; gap: var(--s5);
+  padding: 14px clamp(16px, 4vw, 48px); color: #fff;
+  background-color: rgba(17, 24, 56, .96); box-shadow: 0 1px 0 rgba(255, 255, 255, .08);
+}
+.ld-brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; }
+.ld-brand img { width: 30px; height: 30px; border-radius: 8px; background: #fff; padding: 3px; }
+.ld-brand span { font-family: var(--font-display); font-stretch: 125%; font-weight: 800; font-size: 15px; letter-spacing: .16em; text-transform: uppercase; }
+.ld-nav { display: flex; gap: var(--s5); margin-left: auto; }
+.ld-nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; color: rgba(255, 255, 255, .85); }
+.ld-nav a:hover { color: #fff; }
+
+/* ---------- Buttons: the one action in thread blue ---------- */
+.ld-open {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 28px; border-radius: 999px;
+  background: var(--thread); color: #fff !important; text-decoration: none;
+  font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 17px; letter-spacing: .01em;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .22); transition: transform .2s cubic-bezier(.16, 1, .3, 1), background-color .2s;
+}
+.ld-open:hover { background: #2a63bd; transform: translateY(-1px); }
+.ld-open.small { min-height: 44px; padding: 0 18px; font-size: 15px; box-shadow: none; }
+.ld-story {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 22px 0 18px; border-radius: 999px; text-decoration: none;
+  color: #fff; font-weight: 700; font-size: 16px; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .45);
+}
+.ld-story svg { width: 15px; height: 15px; }
+.ld-story:hover { background: rgba(255, 255, 255, .1); }
+.ld-actions { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
+
+/* ---------- The tour: navy twill, astronaut on the right, words on the left ---------- */
+.ld-tour {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); color: #fff;
+  background-color: var(--twill);
+  background-image: radial-gradient(ellipse 60% 50% at 75% 40%, rgba(47, 111, 208, .28), rgba(27, 37, 80, 0) 70%);
+}
+.ld-stage { position: sticky; top: 0; height: 100vh; grid-column: 2; grid-row: 1; display: grid; place-items: center; }
+.ld-3d { position: relative; width: min(100%, 560px); height: min(86vh, 760px); }
+.ld-3d canvas { display: block; }
+.ld-loading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15px; color: rgba(255, 255, 255, .6); }
+.ld-3d.loaded .ld-loading { display: none; }
+.ld-3d.no-3d .ld-loading { display: none; }
+.ld-3d.no-3d::after {
+  content: ""; position: absolute; inset: 15% 30%; border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, .22), rgba(255, 255, 255, .04) 70%);
+}
+.ld-stage-label {
+  position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); margin: 0; padding: 8px 16px; border-radius: 999px;
+  background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+  font-family: var(--font-display); font-stretch: 118%; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+}
+.ld-stage-label[hidden] { display: none; }
+
+.ld-stops { grid-column: 1; grid-row: 1; padding: 0 clamp(20px, 5vw, 72px) 20vh; }
+.ld-hero-copy { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-top: 80px; max-width: 34rem; }
+.ld-hero-copy h1 {
+  font-family: var(--font-display); font-stretch: 125%; font-weight: 800; font-size: clamp(40px, 5.6vw, 76px); line-height: 1.02; letter-spacing: -.02em;
+  text-wrap: balance; color: #fff;
+}
+.ld-delay { color: #9cc3ff; white-space: nowrap; }
+.ld-lead { margin-top: var(--s5); font-size: clamp(17px, 1.5vw, 20px); line-height: 1.55; color: rgba(255, 255, 255, .88); max-width: 36ch; text-wrap: pretty; }
+.ld-note { margin-top: var(--s4); font-size: 14.5px; color: rgba(255, 255, 255, .7); }
+
+.ld-tour-title {
+  margin: 0; padding-top: 12vh; font-family: var(--font-display); font-stretch: 125%; font-weight: 800; font-size: clamp(26px, 2.8vw, 36px); letter-spacing: -.01em; color: #fff;
+}
+.ld-stop {
+  min-height: 72vh; display: flex; flex-direction: column; justify-content: center; max-width: 30rem;
+  opacity: .66; transition: opacity .5s cubic-bezier(.16, 1, .3, 1);
+}
+.ld-stop.is-active { opacity: 1; }
+.ld-stop h3 { font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.15; letter-spacing: -.01em; color: #fff; }
+.ld-stop p { margin-top: var(--s3); font-size: 17.5px; line-height: 1.6; color: rgba(255, 255, 255, .86); text-wrap: pretty; }
+.ld-use { padding: var(--s3) var(--s4); border-radius: 12px; background: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.ld-use b { color: #cfe0ff; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .ld-stop { transition: none; } }
+
+/* ---------- How to use: flight-suit white, numbered because order matters ---------- */
+.ld-how, .ld-proof { padding: clamp(64px, 9vw, 120px) clamp(20px, 6vw, 96px); max-width: 1180px; margin: 0 auto; }
+.ld-how h2, .ld-proof h2, .ld-close h2 {
+  font-family: var(--font-display); font-stretch: 125%; font-weight: 800; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.08; letter-spacing: -.02em; color: var(--ink); text-wrap: balance;
+}
+.ld-how-lead { margin-top: var(--s3); font-size: 18px; color: var(--ink-soft); }
+.ld-steps { list-style: none; counter-reset: s; margin: var(--s6) 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s5); }
+.ld-steps li { counter-increment: s; padding-top: var(--s4); border-top: 3px solid var(--twill); }
+.ld-steps li::before {
+  content: counter(s); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; margin-bottom: var(--s3);
+  background: var(--twill); color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 17px;
+  box-shadow: inset 0 0 0 3px var(--twill), inset 0 0 0 4px rgba(255, 255, 255, .5);
+}
+.ld-steps h3 { font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 20px; color: var(--ink); }
+.ld-steps p { margin-top: var(--s2); font-size: 16px; line-height: 1.55; color: var(--ink-soft); }
+.ld-steps .status { vertical-align: 1px; margin: 2px 0; }
+.ld-demo { margin-top: var(--s6); padding-top: var(--s4); border-top: 1px solid var(--edge); font-size: 16px; color: var(--ink-soft); max-width: 70ch; }
+
+/* ---------- Proof ---------- */
+.ld-proof { padding-top: 0; }
+.ld-facts { list-style: none; margin: var(--s5) 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s6); }
+.ld-facts li { padding: var(--s4) 0; border-bottom: 1px solid var(--edge); font-size: 17px; line-height: 1.5; color: var(--ink-soft); }
+.ld-facts b { display: block; margin-bottom: 2px; font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 19px; color: var(--ink); }
+.ld-honest { margin-top: var(--s5); font-size: 15.5px; color: var(--muted); max-width: 70ch; }
+.ld-honest a { color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
+
+/* ---------- Close ---------- */
+.ld-close { padding: clamp(72px, 10vw, 128px) clamp(24px, 6vw, 96px); text-align: center; background-color: var(--twill); }
+.ld-close h2 { color: #fff; max-width: 18ch; margin: 0 auto; }
+.ld-close .ld-actions { justify-content: center; }
+.ld-foot { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); justify-content: center; padding: var(--s5); font-size: 13.5px; color: var(--muted); }
+.ld-foot a { font-weight: 600; }
+
+/* ---------- Phones: the astronaut stays on top, the words scroll under it ---------- */
+@media (max-width: 860px) {
+  .ld-nav { display: none; }
+  .ld-tour { display: block; }
+  .ld-stage { position: sticky; top: 0; height: 48vh; padding-top: 56px; z-index: 1; background: var(--twill); box-shadow: 0 10px 18px rgba(0, 0, 0, .25); }
+  .ld-3d { height: calc(48vh - 64px); width: 100%; }
+  .ld-stage-label { bottom: 6px; font-size: 12px; }
+  .ld-stops { padding: 0 20px 12vh; }
+  .ld-hero-copy { min-height: auto; padding-top: var(--s5); padding-bottom: var(--s6); }
+  .ld-stop { min-height: 60vh; justify-content: flex-start; padding-top: var(--s5); }
+  .ld-steps { grid-template-columns: 1fr; }
+  .ld-facts { grid-template-columns: 1fr; }
+  .ld-top { padding: 8px 14px; }
+}
+@media (min-width: 861px) and (max-width: 1100px) { .ld-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.ld-levels { display: flex; flex-wrap: wrap; gap: 6px; }

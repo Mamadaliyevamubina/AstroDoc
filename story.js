@@ -131,4 +131,6 @@
   let saved = null; try { saved = JSON.parse(sessionStorage.getItem(KEY)); } catch { }
   if (saved && SCENES[saved.i] && SCENES[saved.i].page === page) setTimeout(() => go2(saved.i), page === "check" ? 900 : 400);
   window.startStory = start;
+  // index.html?story=1 (from the landing page) starts the story straight away
+  if (page === "index" && /[?&]story\b/.test(location.search) && !saved) { history.replaceState(null, "", location.pathname); setTimeout(start, 600); }
 })();
