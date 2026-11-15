@@ -60,8 +60,7 @@ function renderSide() {
 
   el.innerHTML = `
     <a class="brand side-brand" href="index.html">
-      <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
-      <span class="brand-name">Astrodoc</span>
+      <img class="brand-logo" src="assets/astrodoc-logo-name.png" alt="Astrodoc">
     </a>
 
     <nav class="side-group" aria-label="Pages">
