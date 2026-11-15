@@ -59,7 +59,7 @@ function analyse(id, W) {
   const months = (W[W.length - 1].day - W[0].day) / 30.4 + 0.25;
   const r = [];
 
-  const sl0 = first("sleep"), sl1 = last("sleep");
+  const sl0 = first("sleep"), sl1 = +last("sleep").toFixed(1);   // judged on the number shown
   r.push({ key: "sleep", name: "Sleep", status: sl1 < 6 ? "act" : sl1 < 7 ? "watch" : "normal",
     head: `${sl1.toFixed(1)} h a night lately (was ${sl0.toFixed(1)} h)`,
     text: sl1 < NASA_REF.sleepIss
@@ -103,7 +103,7 @@ function miniChart(W, key, opt) {
   const x = i => L + i / (W.length - 1) * (Wd - L - R);
   const y = v => T + (1 - (v - lo) / (hi - lo || 1)) * (H - T - B);
   const pts = W.map((w, i) => `${x(i).toFixed(1)},${y(w[key]).toFixed(1)}`).join(" ");
-  const ref = opt.ref != null ? `<line class="h-ref" x1="${L}" x2="${Wd - R}" y1="${y(opt.ref)}" y2="${y(opt.ref)}"/><text class="h-ref-label" x="${Wd - R}" y="${y(opt.ref) - 5}" text-anchor="end">${opt.refLabel}</text>` : "";
+  const ref = opt.ref != null ? `<line class="h-ref" x1="${L}" x2="${Wd - R}" y1="${y(opt.ref)}" y2="${y(opt.ref)}"/><text class="h-ref-label" x="${L + 4}" y="${y(opt.ref) + 14}">${opt.refLabel}</text>` : "";
   // A widening band: NASA's range for the time since launch at each week
   const band = opt.cone ? (() => {
     const top = W.map((w, i) => `${x(i).toFixed(1)},${y(opt.cone(w)[1]).toFixed(1)}`);
