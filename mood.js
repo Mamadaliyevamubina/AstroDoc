@@ -25,7 +25,7 @@ const MOODS = [
     ],
     todo: ["Drink a full pouch of water", "Eat a meal with the crew", "Talk openly with someone you trust"],
     prompt: "What feels heaviest right now, and what is one gentle thing you need today?" },
-  { v: 2, name: "Low orbit", short: "Down, low energy",
+  { v: 2, name: "Low orbit", short: "Low",
     title: "Low orbit happens. Let's gently lift your trajectory.",
     message: "Feeling drained, homesick or flat is natural on long missions. You don't need to force a smile: give your mind a change of scene, a little movement, or warm company.",
     ideas: [
@@ -87,9 +87,9 @@ function moodCards(selected) {
     ${MOODS.map(m => `
       <button type="button" class="mood-card" role="radio" aria-checked="${selected === m.v}" data-mood="${m.v}">
         ${moonSvg((m.v - 1) / 4)}
-        <span class="mood-num">${m.v}</span>
         <span class="mood-short">${m.short}</span>
         <span class="mood-name">${m.name}</span>
+        <kbd class="mood-key" aria-hidden="true">${m.v}</kbd>
       </button>`).join("")}
   </div>`;
 }
@@ -198,7 +198,10 @@ function bindMoodHelp(root, v) {
 
 // --- At the end of the check's result ---
 function moodResult() {
-  return mood.picked ? `<section class="k-mood" id="moodResult" aria-label="Your mood">${moodHelp(mood.picked)}</section>` : "";
+  const m = MOODS.find(x => x.v === mood.picked);
+  return m ? `<details class="k-mood" id="moodResult">
+    <summary>${moonSvg((m.v - 1) / 4)}<span><b>Something for your mood</b><small>You feel “${m.short.toLowerCase()}” · ideas, a short list and a private journal</small></span></summary>
+    ${moodHelp(mood.picked, { head: false })}</details>` : "";
 }
 function bindMoodResult() { if ($("moodResult")) bindMoodHelp($("moodResult"), mood.picked); }
 
@@ -213,21 +216,16 @@ function showMoodCard() {
   if (moodDrawn && moodDrawn.split(":")[1] !== String(v)) { mood.idea = 0; mood.done.clear(); }
   moodDrawn = key;
   const hadFocus = el.contains(document.activeElement);
+  const m = MOODS.find(x => x.v === v);
   el.innerHTML = `
-    <div class="mood-top">
-      <div>
-        <h2 id="moodCardTitle">How is your inner orbit today?</h2>
-        <p class="muted">Pick what fits how you feel right now. It counts as your mood.</p>
-      </div>
-    </div>
+    <span class="field-label" id="moodCardTitle">Your mood right now</span>
     ${moodCards(v)}
-    <div class="mood-help">${moodHelp(v, { head: false })}</div>`;
+    ${m ? `<p class="mood-line">${m.title}${v <= 2 ? ` <a href="chat.html#mode=chat">Talk it through with Astrodoc</a>` : ""}</p>` : ""}`;
   bindMoodCards(el, pick => {
     mutate(() => { MOCK.crew[me].checkin.self.mood = pick; autoReport(me); });
     if (typeof showAll === "function") showAll(); else showMoodCard();
     const b = el.querySelector(`[data-mood="${pick}"]`); if (b) b.focus();
   });
-  bindMoodHelp(el.querySelector(".mood-help"), v);
   if (hadFocus) { const b = el.querySelector('[aria-checked="true"]'); if (b) b.focus(); }
 }
 

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="check.css">
   <link rel="stylesheet" href="type.css">
   <link rel="stylesheet" href="bodymap.css">
+  <link rel="stylesheet" href="polish.css?v=r7">
 </head>
 <body class="choosing">
 
@@ -70,19 +71,22 @@
         </div>
       </section>
 
-      <!-- ===================== 2. FOUR READINGS ===================== -->
+      <!-- ===================== 2. FOUR READINGS + live sensor ===================== -->
       <section class="vitals" id="vitals" aria-label="Readings"></section>
+      <div class="sensor-row" id="sensorRow" aria-live="polite"></div>
 
       <!-- ===================== BODY MAP (3D) — built in bodymap.js ===================== -->
       <section class="card bodymap" id="bodyMap" aria-labelledby="bmTitle"></section>
 
-      <!-- ===================== MOOD: how is your inner orbit today? (mood.js) ===================== -->
-      <section class="card mood-sec self-only" id="moodCard" aria-labelledby="moodCardTitle"></section>
+      <!-- ===================== RADIATION over the whole mission (dose.js, real NASA data) ===================== -->
+      <section class="card dose-card" id="doseCard" aria-labelledby="doseTitle"></section>
 
-      <!-- ===================== 3. TODAY (input) ===================== -->
+      <!-- ===================== 3. YOUR DAY: mood + sleep, water, exercise ===================== -->
       <section class="card today" id="today" aria-labelledby="todayTitle">
         <h2 id="todayTitle">Today</h2>
         <p class="today-note mate-only" id="mateNote"></p>
+        <!-- Your mood: five moons (mood.js) -->
+        <div class="mood-sec self-only" id="moodCard"></div>
         <div class="today-grid">
           <label class="field self-only">
             <span>Sleep last night</span>
@@ -104,7 +108,7 @@
         </div>
       </section>
 
-      <!-- Demo controls (for the presentation; Arduino stand-ins) -->
+      <!-- Demo controls (for the presentation) -->
       <details class="demo">
         <summary>Demo controls</summary>
         <div class="demo-grid">
@@ -122,15 +126,17 @@
 
   <footer class="foot">
     <span>Astrodoc · Dombit Education · NASA Space Apps Challenge 2026</span>
-    <span>Prototype. Not a medical device. Simulated data.</span>
+    <span>Prototype, not a medical device. Crew readings are simulated; radiation rates and astronaut cases are real NASA data. <a href="science.html">Where the numbers come from</a></span>
     <button class="text-btn small" id="changeUser">Change user</button>
   </footer>
 
-  <script src="core.js"></script>
-  <script src="sidebar.js"></script>
-  <script src="mood.js"></script>
-  <script src="app.js"></script>
+  <script src="core.js?v=r7"></script>
+  <script src="sidebar.js?v=r7"></script>
+  <script src="mood.js?v=r7"></script>
+  <script src="dose.js?v=r7"></script>
+  <script src="app.js?v=r7"></script>
+  <script src="sensor.js?v=r7"></script>
   <script src="assets/js/body3d.js" defer></script>
-  <script src="bodymap.js" defer></script>
+  <script src="bodymap.js?v=r7" defer></script>
 </body>
 </html>

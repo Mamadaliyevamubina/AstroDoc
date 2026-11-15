@@ -360,8 +360,28 @@ function assessCheck() {
       const C0 = CAUSES[key];
       return { ...C0, todo: level === "watch" && C0.todoWatch ? C0.todoWatch : C0.todo, key, level, evidence: ev[key] };
     })
-    .sort((a, b) => (RANK[b.level] - RANK[a.level]) || ((PRIORITY[a.key] ?? 99) - (PRIORITY[b.key] ?? 99)))
+    .sort((a, b) => (RANK[b.level] - RANK[a.level]) || ((CAUSE_ORDER[a.key] ?? 99) - (CAUSE_ORDER[b.key] ?? 99)))
     .slice(0, 3);
+}
+
+// Same level: the body comes first (a clot outranks low mood)
+const CAUSE_ORDER = { clot: 0, radiation: 1, fever: 2, sans: 3, kidney: 4, fatigue: 5, strain: 6, mood: 7 };
+
+function causeCard(c, n, open) {
+  const inner = `
+        <p class="k-why">${c.why}</p>
+        <div class="k-cols">
+          <div><h3>Do now</h3><ol class="k-do">${c.todo.map(t => `<li>${t}</li>`).join("")}</ol></div>
+          <div><h3>Because</h3><ul class="k-ev">${c.evidence.map(e => `<li>${e}</li>`).join("")}</ul></div>
+        </div>`;
+  return open
+    ? `<article class="k-cause ${c.level}">
+        <header><span class="k-rank">Most likely</span>${badge(c.level)}</header>
+        <h2>${c.name}</h2>${inner}
+      </article>`
+    : `<details class="k-cause k-more ${c.level}">
+        <summary><span class="k-rank">Also possible</span><span class="k-more-name">${c.name}</span>${badge(c.level)}</summary>${inner}
+      </details>`;
 }
 
 function drawResult() {
@@ -373,24 +393,15 @@ function drawResult() {
     <p class="k-lead">${list.length
       ? `A first indication from your answers and your latest readings. ${overall === "act" ? "Do the first steps now." : "No rush, but act today."}`
       : "Your answers and readings look fine. If it doesn't get better, check again tomorrow or talk to Astrodoc."}</p>
-    ${list.map((c, n) => `
-      <article class="k-cause ${c.level}">
-        <header><span class="k-rank">${n === 0 ? "Most likely" : "Also possible"}</span>${badge(c.level)}</header>
-        <h2>${c.name}</h2>
-        <p class="k-why">${c.why}</p>
-        <div class="k-cols">
-          <div><h3>Do now</h3><ol class="k-do">${c.todo.map(t => `<li>${t}</li>`).join("")}</ol></div>
-          <div><h3>Because</h3><ul class="k-ev">${c.evidence.map(e => `<li>${e}</li>`).join("")}</ul></div>
-        </div>
-      </article>`).join("")}
-    ${moodResult()}
+    ${list.map((c, n) => causeCard(c, n, n === 0)).join("")}
     <div class="k-final">
-      <button class="${overall === "act" ? "primary-btn" : "soft-btn"}" id="reportBtn">Send this to the flight surgeon</button>
-      <a class="soft-btn" href="chat.html">Talk to Astrodoc</a>
-      <a class="soft-btn" href="index.html">Back to my dashboard</a>
+      <button class="primary-btn" id="reportBtn">Send this to the flight surgeon</button>
+      <a class="text-btn" href="index.html">Back to my dashboard</a>
       <button class="text-btn" id="againBtn">Start again</button>
     </div>
-    <p class="k-note" id="reportNote" aria-live="polite"></p>`;
+    <p class="k-note" id="reportNote" aria-live="polite"></p>
+    ${moodResult()}
+`;
   bindMoodResult();
   $("reportBtn").onclick = () => {
     const summary = (list.length ? list.map(c => c.name).join("; ") : "nothing worrying") + (mood.picked ? `; mood ${mood.picked} of 5` : "");
@@ -402,5 +413,7 @@ function drawResult() {
 }
 
 
-// START
+// START (check.html#place=neck: coming from the dashboard's body map)
+const fromPlace = (location.hash.match(/place=(\w+)/) || [])[1];
+if (fromPlace && PLACES[fromPlace]) st.places.add(fromPlace);
 if (me) draw();

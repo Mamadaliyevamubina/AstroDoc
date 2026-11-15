@@ -60,11 +60,11 @@ body {
   display: flex; flex-direction: column;
   position: relative; isolation: isolate;
   -webkit-font-smoothing: antialiased;
-  --photo: url("assets/bg/orbit.jpg"); --photo-pos: center 30%;
+  --photo: url("assets/bg/space.svg"); --photo-pos: center;
 }
-body.choosing   { --photo: url("assets/bg/crew.jpg");     --photo-pos: center; }
-body.chat-page  { --photo: url("assets/bg/portrait.jpg"); --photo-pos: 30% 30%; }
-body.check-page { --photo: url("assets/bg/helmet.jpg");   --photo-pos: center 20%; }
+body.choosing   { --photo: url("assets/bg/space.svg");     --photo-pos: 30% center; }
+body.chat-page  { --photo: url("assets/bg/companion.svg"); --photo-pos: center; }
+body.check-page { --photo: url("assets/bg/check.svg");     --photo-pos: center; }
 
 /* ---------- Background: the photo, then a light veil over it ---------- */
 body::before {

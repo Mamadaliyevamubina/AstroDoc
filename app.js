@@ -69,7 +69,8 @@ function view(id) {
 // =========================================================================
 function showMission() {
   const m = MOCK.mission;
-  $("missionStrip").innerHTML = `<span>Day ${m.day} · ${m.phase}</span><span>Earth delay ${m.signalDelayMin} min</span>`;
+  const p = phaseAt(m.day), left = p.start + p.days - m.day;
+  $("missionStrip").innerHTML = `<span>Day ${m.day} · ${m.phase}</span><span>${left} days to ${p.name === "To Mars" ? "Mars" : p.name === "On Mars" ? "launch home" : "Earth"}</span><span>Earth delay ${m.signalDelayMin} min</span>`;
 }
 
 // Status: the most urgent thing and what to do now; the rest as short lines.
@@ -153,7 +154,7 @@ function dimerChart(c, S) {
 function showVitals(S) {
   const c = MOCK.crew[currentCrew];
   const items = [
-    { name: "Heart rate", value: c.vitals.hr, unit: "bpm", status: S.hr },
+    { name: c.vitals.source === "live" ? "Heart rate · live" : "Heart rate", value: c.vitals.hr, unit: "bpm", status: S.hr },
     { name: "Sleep",      value: S.lastNight, unit: "h", status: S.sleep },
     { name: "Mood",       value: S.moodValue, unit: "/ 5", status: worst(S.mood, S.biggestGap.status) },
     { name: "Radiation",  value: `<span id="doseValue">${S.dose.toFixed(0)}</span>`, unit: "of 600 mSv", status: S.radiation }
@@ -175,6 +176,7 @@ function showAll() {
   showMission();
   showStatus(S);
   showVitals(S);
+  if (typeof showDose === "function") showDose(S);
   showEmergency();
   fillToday(MOCK.crew[currentCrew]);
   showMoodCard();
@@ -200,7 +202,7 @@ function fillToday(c) {
   if (document.activeElement !== $("ciSleep")) $("ciSleep").value = c.sleep.nights[c.sleep.nights.length - 1];
   scaleButtons($("moodMate"), c.checkin.mate.mood);
   $("waterCount").textContent = `${c.water.glasses} / ${c.water.goal}`;
-  $("exCount").textContent = `${c.exercise} / 7`;
+  $("exCount").textContent = `${c.exercise} / 6`;
   $("todayTitle").textContent = isMe(currentCrew) ? "Your day" : `How does the ${c.role.toLowerCase()} seem to you?`;
   $("mateNote").textContent = `Your rating is compared with how they rate themselves (${c.checkin.self.mood} of 5). Tired people rarely notice it themselves.`;
 }
@@ -217,7 +219,7 @@ $("ciSleep").onchange = () => {
 $("moodMate").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; const v = Number(b.dataset.v); update(c => { c.checkin.mate.mood = v; }); keepFocus("moodMate", v); };
 $("waterPlus").onclick  = () => { update(c => { c.water.glasses++; }); $("waterPlus").focus(); };
 $("waterMinus").onclick = () => { update(c => { if (c.water.glasses > 0) c.water.glasses--; }); $("waterMinus").focus(); };
-$("exPlus").onclick  = () => { update(c => { if (c.exercise < 7) c.exercise++; }); $("exPlus").focus(); };
+$("exPlus").onclick  = () => { update(c => { if (c.exercise < 6) c.exercise++; }); $("exPlus").focus(); };
 $("exMinus").onclick = () => { update(c => { if (c.exercise > 0) c.exercise--; }); $("exMinus").focus(); };
 
 // Report: the main button when someone needs care now, a quiet one otherwise
@@ -272,7 +274,7 @@ $("emergencyBtn").onclick = () => {
 $("solarSlider").value = MOCK.radiation.solarActivity;
 $("solarSlider").oninput = () => setSolarActivity(Number($("solarSlider").value));
 $("locationSelect").innerHTML = Object.entries(MOCK.locations).map(([k, L]) =>
-  `<option value="${k}" ${k === MOCK.mission.location ? "selected" : ""}>${L.label} (${L.multiplier}× ISS)</option>`).join("");
+  `<option value="${k}" ${k === MOCK.mission.location ? "selected" : ""}>${L.label} (${L.ratePerDay} mSv/day, measured)</option>`).join("");
 $("locationSelect").onchange = () => { mutate(() => { MOCK.mission.location = $("locationSelect").value; }); showAll(); };
 $("simApply").onclick = () => applySensorReading({ heartRate: parseFloat($("simHr").value), temperature: parseFloat($("simTemp").value) });
 $("resetDemo").onclick = resetDemo;

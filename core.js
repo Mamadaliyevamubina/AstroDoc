@@ -1,38 +1,47 @@
 // =========================================================================
 // Astrodoc — CORE (shared by the dashboard and the companion chat)
 // File layout:
-//   1. MOCK          all fake data (replace with real data later)
+//   1. MOCK          the crew's readings (simulated) + the mission's radiation (real NASA measurements)
 //   2. THRESHOLDS    turns numbers into normal / watch / act
 //   3. CHECK         looks at one crew member and builds the warning list
 //   4. SHARED        labels, icons, level help, reports, clot checklist
 //   5. SAVED STATE   both pages share data through localStorage
-//   6. DOSIMETER     simulated radiation clock
+//   6. DOSIMETER     radiation clock (real dose rates, 1 second on screen = 1 hour)
 // =========================================================================
 
 
 // =========================================================================
-// 1. MOCK — all fake data lives here. Replace with real data later.
+// 1. MOCK — the crew's readings are simulated for the demo.
+//    The mission's radiation is REAL: the dose rates Curiosity's RAD
+//    instrument measured on the way to Mars and on the surface.
+//    Sources: science.html ("Where the numbers come from").
 // =========================================================================
 const MOCK = {
   mission: {
     day: 214,
-    lengthDays: 1000,          // a ~3-year Mars mission
     phase: "Mars transit",
-    signalDelayMin: 18,        // one way. Round trip = 2x
-    location: "spacecraft"     // key of MOCK.locations
+    signalDelayMin: 18,        // one way (Mars is 3 to 22 light-minutes away). Round trip = 2x
+    location: "spacecraft",    // key of MOCK.locations
+    lengthDays: 1006,          // 253 + 500 + 253 days (the phases below)
+    // The mission's shape: Curiosity's own cruise took 253 days; NASA's reference plan stays about 500 days on Mars
+    phases: [
+      { name: "To Mars",       days: 253, where: "spacecraft" },
+      { name: "On Mars",       days: 500, where: "mars" },
+      { name: "Back to Earth", days: 253, where: "spacecraft" }
+    ]
   },
   radiation: {
-    issRatePerDay: 0.6,        // mSv/day, simulated ISS-like rate
-    careerLimit: 600,          // NASA-STD-3001 Vol. 1 Rev. B
-    solarActivity: 10,         // 0-100, the "knob". 70+ = solar storm
+    careerLimit: 600,          // mSv, NASA-STD-3001 Vol. 1 Rev. B (V1 4030), same for every age and sex
+    stormEventLimit: 250,      // mSv per solar particle event, NASA-STD-3001 (V1 4031)
+    solarActivity: 10,         // 0-100, the "knob". 70+ = solar storm (simulated)
     stormMultiplier: 5         // simulated: dose rate during a solar storm
   },
-  // Dose rate vs the ISS (team research)
+  // Measured dose rates (mSv per day, dose equivalent)
   locations: {
-    spacecraft: { label: "Spacecraft (deep space)", multiplier: 2.5 },
-    station:    { label: "Space station",           multiplier: 1 },
-    moon:       { label: "Moon base",               multiplier: 1.5 },
-    mars:       { label: "Mars base",               multiplier: 1 }
+    spacecraft: { label: "Spacecraft (deep space)", ratePerDay: 1.8,
+                  source: "Curiosity RAD inside its spacecraft, cruise to Mars 2011–12 (Zeitlin et al., Science 2013)" },
+    mars:       { label: "Mars surface",            ratePerDay: 0.67,
+                  source: "Curiosity RAD at Gale Crater, 2012–13 (Hassler et al., Science 2014)" }
   },
   earthLog: [],                // reports sent to Earth (filled while the app runs)
 
@@ -45,7 +54,7 @@ const MOCK = {
       vitals: { hr: 112, temp: 36.9, bpSys: 124, bpDia: 79, source: "simulated" },
       checkin: { self: { energy: 4, focus: 4, mood: 4 }, mate: { energy: 2, focus: 3, mood: 3 } },
       reaction: { baselineMs: 280, lastMs: 325 },
-      radiation: { careerDoseMSv: 310, accrued: 0 },
+      radiation: { priorMSv: 60, accrued: 0 },     // prior = earlier missions (simulated)
       exercise: 6, water: { glasses: 5, goal: 8 }, vitD: 48,
       labs: [
         { day: 150, ddimer: 0.30, platelets: 240, fibrinogen: 300, inr: 1.00, pt: 1.0, aptt: 30.0 },
@@ -61,7 +70,7 @@ const MOCK = {
       vitals: { hr: 78, temp: 36.7, bpSys: 116, bpDia: 76, source: "simulated" },
       checkin: { self: { energy: 4, focus: 4, mood: 4 }, mate: { energy: 4, focus: 4, mood: 4 } },
       reaction: { baselineMs: 265, lastMs: 270 },
-      radiation: { careerDoseMSv: 250, accrued: 0 },
+      radiation: { priorMSv: 30, accrued: 0 },
       exercise: 4, water: { glasses: 6, goal: 8 }, vitD: 52,
       labs: [
         { day: 150, ddimer: 0.40, platelets: 210, fibrinogen: 280, inr: 1.00, pt: 1.0, aptt: 30.0 },
@@ -77,8 +86,8 @@ const MOCK = {
       vitals: { hr: 66, temp: 36.6, bpSys: 112, bpDia: 72, source: "simulated" },
       checkin: { self: { energy: 3, focus: 4, mood: 4 }, mate: { energy: 3, focus: 4, mood: 4 } },
       reaction: { baselineMs: 290, lastMs: 288 },
-      radiation: { careerDoseMSv: 180, accrued: 0 },
-      exercise: 7, water: { glasses: 3, goal: 8 }, vitD: 31,
+      radiation: { priorMSv: 0, accrued: 0 },      // first flight
+      exercise: 6, water: { glasses: 3, goal: 8 }, vitD: 31,
       labs: [
         { day: 150, ddimer: 0.25, platelets: 260, fibrinogen: 320, inr: 0.98, pt: 0.8, aptt: 29.0 },
         { day: 212, ddimer: 0.28, platelets: 255, fibrinogen: 315, inr: 0.99, pt: 0.9, aptt: 29.5 }
@@ -156,9 +165,27 @@ const bad = s => RANK[s] >= 1;    // watch or act
 
 function doseRatePerDay() {
   const r = MOCK.radiation;
-  let rate = r.issRatePerDay * MOCK.locations[MOCK.mission.location].multiplier;
+  let rate = (MOCK.locations[MOCK.mission.location] || MOCK.locations.spacecraft).ratePerDay;
   if (r.solarActivity >= SOLAR_STORM_LEVEL) rate *= r.stormMultiplier;
   return rate;
+}
+// Mission length and the dose the mission itself adds up to a given day, at the measured rates
+const missionLength = () => MOCK.mission.phases.reduce((n, p) => n + p.days, 0);
+function missionDoseUntil(day) {
+  let left = day, dose = 0;
+  for (const p of MOCK.mission.phases) {
+    const d = Math.max(0, Math.min(left, p.days));
+    dose += d * MOCK.locations[p.where].ratePerDay;
+    left -= d;
+  }
+  return dose;
+}
+// The phase a day falls in
+function phaseAt(day) {
+  let start = 0;
+  for (const p of MOCK.mission.phases) { if (day < start + p.days) return { ...p, start }; start += p.days; }
+  const last = MOCK.mission.phases[MOCK.mission.phases.length - 1];
+  return { ...last, start: start - last.days };
 }
 
 function check(id) {
@@ -188,8 +215,13 @@ function check(id) {
 
   // Radiation
   S.storm = MOCK.radiation.solarActivity >= SOLAR_STORM_LEVEL;
-  S.dose = c.radiation.careerDoseMSv + c.radiation.accrued;
+  S.prior = c.radiation.priorMSv || 0;
+  S.dose = S.prior + missionDoseUntil(MOCK.mission.day) + c.radiation.accrued;
   S.radiation = T.radiation(S.dose, S.storm);
+  // Forecast to the end of the mission at the measured rates, and the day the career limit is passed
+  S.doseAtEnd = S.prior + missionDoseUntil(missionLength()) + c.radiation.accrued;
+  S.limitDay = null;
+  for (let d = 0; d <= missionLength(); d++) if (S.prior + missionDoseUntil(d) + c.radiation.accrued >= MOCK.radiation.careerLimit) { S.limitDay = d; break; }
 
   // Exercise, water, vitamin D
   S.exercise = T.exercise(c.exercise);
@@ -340,7 +372,7 @@ const CLOT_STEPS = [
 //    so they share everything through localStorage.
 //    Rule: load fresh state, change it, save it (see mutate()).
 // =========================================================================
-const STORE = "astrodoc-state-v1";
+const STORE = "astrodoc-state-v2";   // v2: real radiation model
 function saveState() {
   try {
     localStorage.setItem(STORE, JSON.stringify({

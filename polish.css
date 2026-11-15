@@ -1,0 +1,210 @@
+/* =========================================================
+   ASTRODOC — POLISH (loaded last on every page)
+   - Original backgrounds (no photos: no rights questions)
+   - Radiation over the mission (real NASA data), live sensor row
+   - Simpler mood, body map and check result
+   - "The science" page
+   - Browser surfaces: selection, caret, scrollbars
+   Status colors stay for health status only.
+   ========================================================= */
+
+/* ---------- Backgrounds: drawn for Astrodoc ---------- */
+body                 { --photo: url("assets/bg/space.svg");     --photo-pos: center; }
+body.choosing        { --photo: url("assets/bg/space.svg");     --photo-pos: 30% center; }
+body.chat-page       { --photo: url("assets/bg/companion.svg"); --photo-pos: center; }
+body.check-page      { --photo: url("assets/bg/check.svg");     --photo-pos: center; }
+body.chat-page[data-mode="briefing"] { --photo: url("assets/bg/space.svg"); --photo-pos: center; }
+body::before { inset: 0; filter: none; }
+body::after {
+  background: radial-gradient(ellipse 70% 60% at 55% 35%, rgba(246, 248, 252, .62), rgba(246, 248, 252, .18) 85%);
+}
+body.choosing::after { background: radial-gradient(ellipse 55% 60% at 50% 48%, rgba(246, 248, 252, .9), rgba(246, 248, 252, .35) 80%); }
+
+/* ---------- Browser surfaces ---------- */
+::selection { background: rgba(23, 122, 105, .18); color: var(--ink); }
+input, textarea { caret-color: var(--mint); }
+html { scrollbar-color: rgba(38, 44, 79, .28) transparent; scrollbar-width: thin; }
+a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* ---------- Header: with the sidebar on screen, its links are not repeated ---------- */
+body.has-side .top .talk-link { display: none; }   /* the sidebar (or the phone menu) has it */
+
+/* Phones: the crew is one swipeable row, so "Do now" stays near the top */
+@media (max-width: 760px) {
+  .crew-strip { display: flex; grid-template-columns: none; gap: var(--s2); overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 calc(-1 * var(--s4)); padding: 2px var(--s4) var(--s1); scrollbar-width: none; }
+  .crew-strip::-webkit-scrollbar { display: none; }
+  .crew-tab { flex: 0 0 auto; min-width: 0; max-width: 72%; scroll-snap-align: start; padding: var(--s2) var(--s3); }
+  .dose-card { padding: var(--s4); }
+  .dose-lead { font-size: 15.5px; }
+  .sensor-row { border-radius: var(--r-lg); }
+}
+
+/* ---------- Live sensor row (sensor.js) ---------- */
+.sensor-row {
+  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+  margin-top: calc(-1 * var(--s1)); padding: var(--s2) var(--s2) var(--s2) var(--s4);
+  border-radius: var(--r-pill); background: rgba(255, 255, 255, .6); box-shadow: inset 0 0 0 1px var(--edge);
+  font-size: 15px; color: var(--ink-soft);
+}
+.sensor-row:empty { display: none; }
+.sensor-text { flex: 1; min-width: 220px; }
+.sensor-text b { color: var(--ink); font-weight: 600; }
+.sensor-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(38, 44, 79, .25); flex: none; }
+.sensor-row.live .sensor-dot { background: var(--mint); box-shadow: 0 0 0 4px rgba(23, 122, 105, .15); animation: beat 1s ease-out infinite; }
+.sensor-row .soft-btn { padding: 6px var(--s4); }
+.sensor-note { font-size: 14px; color: var(--muted); }
+@keyframes beat { 0% { transform: scale(1); } 15% { transform: scale(1.35); } 40% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .sensor-row.live .sensor-dot { animation: none; } }
+
+/* ---------- Radiation over the whole mission (dose.js) ---------- */
+.dose-card { padding: var(--s5); }
+.dose-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s4) var(--s5); flex-wrap: wrap; }
+.dose-head > div { flex: 1 1 420px; }
+.dose-card h2 { font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
+.dose-lead { margin-top: var(--s2); font-size: 16.5px; line-height: 1.5; color: var(--ink-soft); max-width: 62ch; text-wrap: pretty; }
+.dose-lead b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.dose-src { flex: none; font-size: 15px; padding-top: 4px; }
+.dose-chart { position: relative; margin: var(--s4) 0 0; }
+.dose-chart svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font); touch-action: pan-y; }
+.dose-band.spacecraft { fill: rgba(38, 44, 79, .045); }
+.dose-band.mars { fill: rgba(207, 117, 80, .07); }
+.dose-phase { font-size: 12.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.dose-phase .n { fill: var(--ink); font-weight: 600; }
+.dose-grid { stroke: rgba(38, 44, 79, .08); stroke-width: 1; }
+.dose-tick, .dose-axis { font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.dose-limit { stroke: var(--act); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.dose-limit-label { font-size: 12.5px; font-weight: 600; fill: var(--act); }
+.dose-line { fill: none; stroke: var(--navy); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.dose-line.future { stroke-width: 2; stroke-dasharray: 2 6; opacity: .7; }
+.dose-now { stroke: var(--ink); stroke-width: 1; opacity: .25; }
+.dose-today { fill: var(--navy); stroke: #fff; stroke-width: 3; }
+.dose-today-label { font-size: 13px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: rgba(255, 255, 255, .9); stroke-width: 4px; }
+.dose-cross { fill: #fff; stroke: var(--act); stroke-width: 2.5; }
+.dose-cross-label { font-size: 12.5px; font-weight: 700; fill: var(--act); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: rgba(255, 255, 255, .9); stroke-width: 4px; }
+.dose-hit { fill: transparent; cursor: crosshair; }
+.dose-cursor { stroke: var(--ink); stroke-width: 1; opacity: .35; }
+.dose-cursor-dot { fill: var(--navy); stroke: #fff; stroke-width: 2; }
+.dose-tip {
+  position: absolute; z-index: 2; width: 180px; padding: var(--s2) var(--s3); pointer-events: none;
+  border-radius: var(--r-md); background: var(--navy); color: #fff; box-shadow: 0 8px 24px rgba(38, 44, 79, .25);
+  display: flex; flex-direction: column; gap: 1px; font-size: 14px; line-height: 1.35; font-variant-numeric: tabular-nums;
+}
+.dose-tip b { font-weight: 700; }
+.dose-tip span { color: rgba(255, 255, 255, .85); }
+.dose-foot { margin-top: var(--s3); font-size: 14.5px; color: var(--muted); max-width: 72ch; text-wrap: pretty; }
+
+/* ---------- Today: mood is one row of moons, not a mini-app ---------- */
+.today .mood-sec { padding: 0; margin-bottom: var(--s5); padding-bottom: var(--s5); border-bottom: 1px solid var(--edge); }
+.field-label { font-size: 14.5px; font-weight: 600; color: var(--ink-soft); }
+.today .mood-grid { margin-top: var(--s2); gap: var(--s2); }
+.today .mood-card { min-height: 0; padding: var(--s3); gap: 0; background: rgba(255, 255, 255, .62); box-shadow: inset 0 0 0 1px var(--edge); }
+.today .mood-card:hover { transform: none; background: #fff; }
+.today .mood-card[aria-checked="true"] { background: #fff; box-shadow: 0 2px 10px rgba(38, 44, 79, .1), inset 0 0 0 2px var(--navy); }
+.today .mood-card .moon { width: 30px; height: 30px; margin: 0 0 var(--s2); }
+.today .mood-name { display: none; }
+.mood-short { margin-top: 0; font-size: 15.5px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.mood-name { font-size: 13.5px; font-weight: 500; color: var(--muted); }
+.mood-card[aria-checked="true"] { box-shadow: var(--shadow), inset 0 0 0 2px var(--navy); }
+.mood-key {
+  position: absolute; top: var(--s2); right: var(--s2); min-width: 22px; padding: 0 6px; border-radius: 6px; text-align: center;
+  font: inherit; font-size: 12px; font-weight: 700; color: var(--muted); background: var(--sunk);
+}
+.today .mood-key { display: none; }
+@media (pointer: coarse) { .mood-key { display: none; } }
+.mood-line { margin-top: var(--s3); font-size: 15.5px; color: var(--ink-soft); }
+.mood-line a { margin-left: var(--s2); font-weight: 600; }
+@media (max-width: 760px) {
+  .today .mood-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .today .mood-card { flex-direction: column; align-items: center; padding: var(--s2) 4px; text-align: center; }
+  .today .mood-card .moon { margin: 0 0 4px; }
+  .today .mood-short { display: block; font-size: 13px; }
+}
+
+/* ---------- Body map: readings + one way into the check ---------- */
+.bm-why { margin-top: var(--s3); font-size: 15px; color: var(--ink-soft); }
+.bm-check { display: inline-flex; margin-top: var(--s4); text-decoration: none; }
+
+/* ---------- Check result: the top cause open, the rest folded ---------- */
+details.k-cause { padding: 0; }
+details.k-cause > summary {
+  display: flex; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); cursor: pointer; list-style: none; border-radius: var(--r-xl);
+}
+details.k-cause > summary::-webkit-details-marker { display: none; }
+details.k-cause > summary::after {
+  content: ""; width: 9px; height: 9px; margin-left: var(--s2); flex: none;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translateY(-2px); transition: transform .2s;
+}
+details.k-cause[open] > summary::after { transform: rotate(225deg) translateY(-2px); }
+.k-more-name { flex: 1; font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--ink); }
+details.k-cause > .k-why, details.k-cause > .k-cols { margin-left: var(--s5); margin-right: var(--s5); }
+details.k-cause[open] { padding-bottom: var(--s5); }
+.k-cause.k-more { margin-top: var(--s3); }
+.k-final { padding-top: var(--s2); }
+.k-final .text-btn { margin-left: 0; }
+.k-final .text-btn:first-of-type { margin-left: auto; }
+
+details.k-mood { padding: 0; margin-top: var(--s6); background: rgba(255, 255, 255, .55); }
+details.k-mood > summary { display: flex; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); cursor: pointer; list-style: none; }
+details.k-mood > summary::-webkit-details-marker { display: none; }
+details.k-mood > summary .moon { width: 34px; height: 34px; flex: none; }
+details.k-mood > summary span { display: flex; flex-direction: column; }
+details.k-mood > summary b { font-size: 16.5px; font-weight: 600; color: var(--ink); }
+details.k-mood > summary small { font-size: 14.5px; color: var(--muted); }
+details.k-mood[open] { padding-bottom: var(--s5); }
+details.k-mood > :not(summary) { margin-left: var(--s5); margin-right: var(--s5); }
+@media (max-width: 760px) {
+  details.k-cause > summary, details.k-mood > summary { padding: var(--s3) var(--s4); }
+  details.k-cause > .k-why, details.k-cause > .k-cols, details.k-mood > :not(summary) { margin-left: var(--s4); margin-right: var(--s4); }
+  .k-final .text-btn:first-of-type { margin-left: 0; }
+}
+
+/* ---------- Footer link ---------- */
+.foot a { color: inherit; font-weight: 600; }
+
+/* ---------- "The science" (science.html) ---------- */
+.science-page .page { max-width: 900px; }
+.sci-doc { padding: var(--s6) clamp(var(--s5), 5vw, 56px) var(--s6); }
+.sci-doc h1 { font-family: var(--font-display); font-size: clamp(30px, 4vw, 40px); font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+.sci-lead { margin-top: var(--s3); font-size: 18px; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; text-wrap: pretty; }
+.sci-lead b { color: var(--ink); }
+.sci-toc { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s5) 0 var(--s2); }
+.sci-toc a {
+  padding: 6px var(--s3); border-radius: var(--r-pill); background: rgba(255, 255, 255, .7); box-shadow: inset 0 0 0 1px var(--edge);
+  font-size: 14.5px; font-weight: 600; color: var(--ink-soft); text-decoration: none;
+}
+.sci-toc a:hover { background: #fff; color: var(--ink); }
+.sci-doc section { margin-top: var(--s6); padding-top: var(--s5); border-top: 1px solid var(--edge); scroll-margin-top: var(--s5); }
+.sci-doc h2 { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -.015em; margin-bottom: var(--s3); }
+.sci-doc section > p { font-size: 17px; line-height: 1.65; color: var(--ink-soft); max-width: 68ch; text-wrap: pretty; }
+.sci-doc section > p + p { margin-top: var(--s3); }
+.sci-doc section > p b { color: var(--ink); }
+.sci-doc em { font-style: normal; font-weight: 600; color: var(--ink); background: rgba(38, 44, 79, .06); padding: 0 4px; border-radius: 4px; }
+.sci-facts { margin: var(--s4) 0; display: grid; border-top: 1px solid var(--edge); }
+.sci-facts > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--edge); }
+.sci-facts dt { font-size: 15.5px; color: var(--ink-soft); }
+.sci-facts dd { margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.sci-facts dd b { font-family: var(--font-display); font-size: 19px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.sci-facts dd span { font-size: 14px; color: var(--muted); }
+.sci-table-wrap { margin-top: var(--s4); overflow-x: auto; }
+.sci-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.sci-table th, .sci-table td { padding: 10px var(--s3) 10px 0; text-align: left; border-bottom: 1px solid var(--edge); vertical-align: top; }
+.sci-table thead th { font-size: 14px; font-weight: 600; color: var(--muted); border-bottom: 1.5px solid rgba(38, 44, 79, .2); }
+.sci-table tbody th { font-weight: 600; color: var(--ink); }
+.sci-table td { color: var(--ink-soft); }
+.sci-table tr:last-child th, .sci-table tr:last-child td { border-bottom: none; }
+.sci-refs { margin: var(--s3) 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: var(--s2); font-size: 15.5px; line-height: 1.5; color: var(--ink-soft); max-width: 72ch; }
+.sci-refs a { font-weight: 600; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .sci-facts > div { grid-template-columns: 1fr; gap: 2px; }
+  .sci-doc { padding: var(--s5) var(--s4); }
+}
+
+/* SVG groups and the tooltip ignore the hidden attribute unless told */
+.dose-tip[hidden], .dose-hover[hidden] { display: none; }
+
+/* Folded causes on phones: label, then the name, then the badge */
+@media (max-width: 760px) {
+  details.k-cause > summary { flex-wrap: wrap; row-gap: 2px; }
+  details.k-cause > summary .k-rank { flex-basis: 100%; }
+  .k-more-name { font-size: 17px; }
+}

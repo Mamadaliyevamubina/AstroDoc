@@ -1,7 +1,7 @@
 // =========================================================================
 // Astrodoc — SIDEBAR (shared by the dashboard and the companion)
 // Left side on wide screens, a slide-out drawer on phones. Kept short:
-//   - Pages: Dashboard, Companion, Check how I feel
+//   - Pages: Dashboard, Check how I feel, Talk to Astrodoc, The science
 //   - Crew: you first, then your crewmates, each with a status icon and the reason
 // Each page can plug in:
 //   sideCurrent()   → who is shown now
@@ -10,11 +10,13 @@
 // =========================================================================
 
 const ON_CHAT = document.body.classList.contains("chat-page");
+const ON_SCIENCE = document.body.classList.contains("science-page");
 
 const SIDE_ICON = {
   dash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="8" rx="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2"/><rect x="3.5" y="14.5" width="7" height="6" rx="2"/></svg>`,
   chat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9 11h.01M15 11h.01M9.5 14.5a3.5 3.5 0 0 0 5 0"/></svg>`,
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>`,
+  science: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 3.5h5M10.5 3.5v5.2L5.2 18a1.6 1.6 0 0 0 1.4 2.5h10.8a1.6 1.6 0 0 0 1.4-2.5l-5.3-9.3V3.5"/><path d="M7.5 14.5h9"/></svg>`,
   menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>`
 };
 
@@ -45,9 +47,10 @@ function renderSide() {
     </a>
 
     <nav class="side-group" aria-label="Pages">
-      <a class="side-link" href="index.html" ${ON_CHAT ? "" : 'aria-current="page"'}>${SIDE_ICON.dash}<span>Dashboard</span></a>
-      <a class="side-link" href="chat.html" ${ON_CHAT ? 'aria-current="page"' : ""}>${SIDE_ICON.chat}<span>Companion</span></a>
+      <a class="side-link" href="index.html" ${ON_CHAT || ON_SCIENCE ? "" : 'aria-current="page"'}>${SIDE_ICON.dash}<span>Dashboard</span></a>
       <a class="side-link" href="check.html">${SIDE_ICON.check}<span>Check how I feel</span></a>
+      <a class="side-link" href="chat.html" ${ON_CHAT ? 'aria-current="page"' : ""}>${SIDE_ICON.chat}<span>Talk to Astrodoc</span></a>
+      <a class="side-link" href="science.html" ${ON_SCIENCE ? 'aria-current="page"' : ""}>${SIDE_ICON.science}<span>The science</span></a>
     </nav>
 
     <section class="side-group" aria-labelledby="sideCrewTitle">

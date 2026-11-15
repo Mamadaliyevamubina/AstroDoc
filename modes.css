@@ -21,7 +21,7 @@ body.chat-page[data-mode="checkin"], body.chat-page[data-mode="crew"], body.chat
 /* Chat: the companion's own room (mint) */
 body.chat-page[data-mode="chat"]     { --mode-wash: rgba(91, 225, 200, .22); --mode-wash-2: rgba(91, 225, 200, .06); --mode-ink: #177a69; --mode-soft: rgba(23, 122, 105, .1); }
 /* Briefing: morning over Earth (sky blue) */
-body.chat-page[data-mode="briefing"] { --photo: url("assets/bg/orbit.jpg"); --photo-pos: center 30%;
+body.chat-page[data-mode="briefing"] { --photo: url("assets/bg/space.svg"); --photo-pos: center;
   --mode-wash: rgba(96, 156, 255, .30); --mode-wash-2: rgba(130, 180, 255, .22); --mode-ink: #2f5fb3; --mode-soft: rgba(47, 95, 179, .1); }
 /* Check-in: a quiet personal moment (lilac) */
 body.chat-page[data-mode="checkin"]  { --photo: url("assets/bg/checkin.svg"); --photo-pos: center;

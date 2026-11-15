@@ -32,7 +32,9 @@
              items: (c, S) => [v("Career dose", `${S.dose.toFixed(0)} of 600 mSv`, S.radiation)] }
   };
   const ORDER = ["head", "neck", "chest", "belly", "back", "arms", "legs", "whole"];
-  const SHORT = { head: "Brain", neck: "Neck", chest: "Heart", belly: "Kidneys", back: "Spine", arms: "Arms", legs: "Legs", whole: "Radiation" };
+  // Same names as "Check how I feel", so the two body views speak one language
+  const SHORT = { head: "Head", neck: "Neck", chest: "Chest", belly: "Belly", back: "Back", arms: "Arms", legs: "Legs", whole: "Whole body" };
+  const CHECK_PLACE = { whole: "general" };
 
   function regionState(id, place) {
     const c = MOCK.crew[id], S = check(id), R = REGIONS[place];
@@ -51,7 +53,7 @@
   host.innerHTML = `
     <div class="bm-head">
       <h2 id="bmTitle">Body map</h2>
-      <p class="muted">Tap the astronaut, or a part below. Colored dots show where something needs attention.</p>
+      <p class="muted">Colored dots show where something needs attention. Tap a part to see its readings.</p>
     </div>
     <div class="bm-grid">
       <div class="bm-3d" id="bm3d">
@@ -65,7 +67,7 @@
     </div>`;
 
   let selected = null, shownFor = null, body = null;
-  const COLOR = s => getComputedStyle(document.documentElement).getPropertyValue(s === "act" ? "--act" : s === "watch" ? "--watch" : "--mint-soft").trim() || "#2fbfa6";
+  const COLOR = s => getComputedStyle(document.documentElement).getPropertyValue(s === "act" ? "--act" : s === "watch" ? "--watch" : "--navy").trim() || "#262c4f";
 
   function render() {
     if (!me || !MOCK.crew[currentCrew]) return;
@@ -83,8 +85,8 @@
     $("bmPanel").innerHTML = `
       <div class="bm-panel-top"><h3>${R.name}</h3>${badge(st.status)}</div>
       <ul class="bm-items">${st.items.map(i => `<li><span>${i.name}</span><b>${i.value}</b>${badge(i.status)}</li>`).join("")}</ul>
-      ${st.warns.length ? `<div class="bm-do">${st.warns.map(w => `<p><span class="do-label">Do now</span>${w.todo}</p>`).join("")}</div>`
-                        : `<p class="bm-ok">Nothing to do here right now.</p>`}`;
+      ${st.warns.length ? `<p class="bm-why">${st.warns.map(w => w.title).join(" · ")}</p>` : `<p class="bm-ok">Nothing to do here right now.</p>`}
+      ${id === me ? `<a class="soft-btn bm-check" href="check.html#place=${CHECK_PLACE[selected] || selected}">I feel something here</a>` : ""}`;
 
     // markers: every place with a problem, plus the chosen place
     if (body) {
