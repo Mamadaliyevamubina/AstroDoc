@@ -285,3 +285,6 @@ body.chat-page .m.you { background: var(--twill); color: #fff; box-shadow: none;
 .k-rad-src { margin-top: var(--s3); font-size: 14px; color: var(--muted); }
 .k-rad-src a { font-weight: 600; }
 @media (max-width: 640px) { .k-rad { padding: var(--s4); } .k-rad-facts { grid-template-columns: 1fr; gap: var(--s2); } }
+
+/* Welcome: the way back to the introduction */
+.welcome-intro { margin-top: var(--s5); font-size: 15.5px; font-weight: 600; color: var(--ink); text-underline-offset: 4px; }

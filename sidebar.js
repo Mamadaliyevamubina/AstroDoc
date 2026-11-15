@@ -13,6 +13,7 @@ const ON_CHAT = document.body.classList.contains("chat-page");
 const ON_SCIENCE = document.body.classList.contains("science-page");
 
 const SIDE_ICON = {
+  intro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.2"/></svg>`,
   dash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="8" rx="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2"/><rect x="3.5" y="14.5" width="7" height="6" rx="2"/></svg>`,
   chat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9 11h.01M15 11h.01M9.5 14.5a3.5 3.5 0 0 0 5 0"/></svg>`,
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>`,
@@ -68,6 +69,7 @@ function renderSide() {
       <a class="side-link" href="check.html">${SIDE_ICON.check}<span>Check how I feel</span></a>
       <a class="side-link" href="chat.html" ${ON_CHAT ? 'aria-current="page"' : ""}>${SIDE_ICON.chat}<span>Talk to Astrodoc</span></a>
       <a class="side-link" href="science.html" ${ON_SCIENCE ? 'aria-current="page"' : ""}>${SIDE_ICON.science}<span>The science</span></a>
+      <a class="side-link" href="landing.html">${SIDE_ICON.intro}<span>About Astrodoc</span></a>
     </nav>
 
     <section class="side-group side-crew-group" aria-labelledby="sideCrewTitle">
