@@ -263,3 +263,25 @@ body.chat-page .m.you { background: var(--twill); color: #fff; box-shadow: none;
   .bm-items li { grid-template-columns: auto auto; justify-content: start; row-gap: 4px; }
   .bm-items li > span:first-child { grid-column: 1 / -1; }
 }
+
+/* =========================================================
+   CHECK: the radiation panel (dosimeter on the measure step,
+   "Your radiation" on every result). The bar is navy, not a status
+   colour; the status sits in its badge.
+   ========================================================= */
+.k-rad { margin-top: var(--s5); padding: var(--s4) var(--s5); border-radius: var(--r-xl); background: #fff; box-shadow: var(--shadow), 0 0 0 1px var(--edge); }
+.k-rad-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.k-rad h2 { font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 19px; }
+.k-rad-num { margin-top: var(--s2); font-size: 15.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.k-rad-num b { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--ink); margin-right: 4px; letter-spacing: -.01em; }
+.k-rad-num span { color: var(--muted); }
+.k-rad-bar { position: relative; height: 12px; margin-top: var(--s3); border-radius: 999px; background: var(--sunk); box-shadow: inset 0 0 0 1px var(--edge); overflow: hidden; }
+.k-rad-bar span { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--twill); }
+.k-rad-bar i { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: .9; }
+.k-rad-line { margin-top: var(--s3); font-size: 16px; color: var(--ink); max-width: 64ch; }
+.k-rad-facts { margin: var(--s4) 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); border-top: 1px solid var(--edge); padding-top: var(--s3); }
+.k-rad-facts dt { font-size: 14px; color: var(--muted); }
+.k-rad-facts dd { margin: 2px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.k-rad-src { margin-top: var(--s3); font-size: 14px; color: var(--muted); }
+.k-rad-src a { font-weight: 600; }
+@media (max-width: 640px) { .k-rad { padding: var(--s4); } .k-rad-facts { grid-template-columns: 1fr; gap: var(--s2); } }

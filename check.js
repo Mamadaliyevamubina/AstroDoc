@@ -23,37 +23,93 @@ const PLACES = {
   skin:   "Skin",       general: "Whole body: tired, low or unwell"
 };
 
-// Any one of these = possible emergency. Checked before anything else.
+// Emergency signs, asked first, ONLY for the places you chose (choose the head: only head signs).
+// Any one = possible emergency.
 const RED_FLAGS = [
-  "Hard to breathe",
-  "Chest pain or pressure",
-  "Weakness or numbness on one side of the body",
-  "Sudden trouble speaking or seeing",
-  "Fainted, or nearly fainted",
-  "Very bad pain in the side or back, coming in waves",
-  "Coughing up blood"
+  { t: "A sudden, very bad headache, the worst you've ever had",                 places: ["head"] },
+  { t: "Weakness or numbness on one side of the face or body",                   places: ["head", "arms", "legs"] },
+  { t: "Sudden trouble speaking or understanding",                               places: ["head"] },
+  { t: "Confused, or very hard to stay awake",                                   places: ["head", "general"] },
+  { t: "Fainted, or nearly fainted",                                             places: ["head", "chest", "general"] },
+  { t: "Sudden loss of sight, or a dark curtain over part of what you see",      places: ["eyes"] },
+  { t: "Sudden double vision",                                                   places: ["eyes"] },
+  { t: "Hard to breathe",                                                        places: ["neck", "chest", "general"] },
+  { t: "Neck swelling that makes it hard to swallow",                            places: ["neck"] },
+  { t: "Stiff neck together with fever and a strong headache",                   places: ["neck"] },
+  { t: "Chest pain or pressure, maybe spreading to the arm, jaw or back",        places: ["chest", "arms"] },
+  { t: "Coughing up blood",                                                      places: ["chest"] },
+  { t: "Heart pounding or racing, with dizziness",                               places: ["chest"] },
+  { t: "Very bad pain in the side, belly or back, coming in waves",              places: ["belly", "back"] },
+  { t: "Vomiting blood, or black stools",                                        places: ["belly"] },
+  { t: "Vomiting again and again within hours of a solar storm",                 places: ["belly", "general"] },
+  { t: "Belly hard and swollen, very painful to touch",                          places: ["belly"] },
+  { t: "Numbness between the legs, or can't control bladder or bowels",          places: ["back"] },
+  { t: "An arm or leg suddenly cold, pale or blue",                              places: ["arms", "legs"] },
+  { t: "One leg suddenly swollen, and you're also short of breath",              places: ["legs"] },
+  { t: "A large blistering burn, or a burn on the face or hands",                places: ["skin"] },
+  { t: "Swollen lips, tongue or face, with a rash",                              places: ["skin"] },
+  { t: "Bleeding that won't stop with firm pressure",                            places: ["skin", "arms", "legs"] },
+  { t: "Very high fever, 39 °C or more, with shivering",                         places: ["general"] }
 ];
+const flagsFor = places => RED_FLAGS.map((f, i) => ({ ...f, i })).filter(f => f.places.some(p => places.has(p)));
 
-// Questions, asked only for the places you tapped. "adds" = points per possible cause.
+// Questions, ONLY for the places you tapped, in the order you chose them.
+// "adds" = points per possible cause. Radiation is asked wherever it can show.
 const QUESTIONS = [
+  // Whole body
   { place: "general", q: "Do you feel more tired than usual, or find it hard to focus?", adds: { fatigue: 3 }, said: "You feel more tired than usual" },
+  { place: "general", q: "Have you slept badly for several nights in a row?",             adds: { fatigue: 2 }, said: "You've slept badly for several nights" },
   { place: "general", q: "Have you felt low, lonely or irritable for a few days?",       adds: { mood: 3 },    said: "You've felt low or lonely for days" },
   { place: "general", q: "Do you feel hot, shivery or generally unwell?",                 adds: { fever: 3 },   said: "You feel hot or unwell" },
+  { place: "general", q: "Did you feel sick and very tired within a day of a solar storm?", adds: { radiation: 3 }, said: "Sick and tired after a solar storm" },
+  { place: "general", q: "Were you outside the shielded area during a recent solar storm?", adds: { radiation: 2 }, said: "Outside the shield during a solar storm" },
+  // Head
   { place: "head",    q: "Do you have a headache?",                                       adds: { fatigue: 1, sans: 1, fever: 1 }, said: "You have a headache" },
   { place: "head",    q: "Is it a pressure feeling behind the eyes, or worse when lying down?", adds: { sans: 2 }, said: "Pressure behind the eyes" },
+  { place: "head",    q: "Is it worse after short sleep or a long work shift?",           adds: { fatigue: 2 }, said: "Worse after short sleep or a long shift" },
+  { place: "head",    q: "Did the headache start within hours of a solar storm?",         adds: { radiation: 2 }, said: "Headache started after a solar storm" },
+  { place: "head",    q: "Do you also have a sore throat, or feel hot?",                  adds: { fever: 2 },   said: "Sore throat or feeling hot" },
+  // Eyes
   { place: "eyes",    q: "Has your near vision become blurry over the last days or weeks?", adds: { sans: 3 }, said: "Near vision is blurrier" },
+  { place: "eyes",    q: "Do straight lines look bent, or do you see a shadow or blind spot?", adds: { sans: 2 }, said: "Lines look bent, or a shadow in your vision" },
+  { place: "eyes",    q: "Do you see brief flashes of light, even with your eyes closed?", adds: { radiation: 1 }, said: "Light flashes: cosmic rays passing through the eye" },
+  { place: "eyes",    q: "Are your eyes tired and dry after a long day of screen work?",  adds: { fatigue: 1 }, said: "Eyes tired after screen work" },
+  // Neck
   { place: "neck",    q: "Is one side of your neck swollen, tender or painful?",          adds: { clot: 3 },    said: "One side of your neck hurts" },
+  { place: "neck",    q: "Did it start on its own, without a strain or awkward sleep?",   adds: { clot: 1 },    said: "It started without a strain" },
+  { place: "neck",    q: "Is your neck stiff after sleeping strapped in, or after a workout?", adds: { strain: 3 }, said: "Stiff after sleeping or a workout" },
+  { place: "neck",    q: "Is your throat sore, or are the glands under your jaw swollen?", adds: { fever: 3 }, said: "Sore throat or swollen glands" },
+  // Chest
   { place: "chest",   q: "Do you get out of breath more easily than usual?",              adds: { clot: 2, fatigue: 1 }, said: "You get out of breath easily" },
+  { place: "chest",   q: "Is the pain sharp, and worse when you breathe in?",             adds: { clot: 2 },    said: "Sharp pain when breathing in" },
   { place: "chest",   q: "Does your heart race even when you rest?",                       adds: { fatigue: 1, fever: 1 }, said: "Your heart races at rest" },
+  { place: "chest",   q: "Do you have a cough, or feel feverish?",                         adds: { fever: 3 },   said: "A cough or fever" },
+  // Belly or side
   { place: "belly",   q: "Is the pain on one side, and does it come in waves?",            adds: { kidney: 3 },  said: "Pain on one side, in waves" },
-  { place: "belly",   q: "Do you feel sick, or have you vomited?",                         adds: { radiation: 1, fever: 1, kidney: 1 }, said: "You feel sick" },
+  { place: "belly",   q: "Is your urine darker than usual, or pink or red?",               adds: { kidney: 3 },  said: "Dark or reddish urine" },
   { place: "belly",   q: "Have you drunk less water than usual today?",                    adds: { kidney: 2 },  said: "You drank less water" },
+  { place: "belly",   q: "Do you feel sick, or have you vomited?",                         adds: { radiation: 1, fever: 1, kidney: 1 }, said: "You feel sick" },
+  { place: "belly",   q: "Did the sickness start within a few hours of a solar storm?",    adds: { radiation: 3 }, said: "Sickness started hours after a solar storm" },
+  // Back
   { place: "back",    q: "Is it a dull ache in the lower back?",                           adds: { strain: 3 },  said: "Dull ache in the lower back" },
+  { place: "back",    q: "Is it worse when you bend or twist?",                            adds: { strain: 2 },  said: "Worse when bending or twisting" },
+  { place: "back",    q: "Did it start after exercise, lifting, or many hours strapped in?", adds: { strain: 2 }, said: "Started after exercise or long hours strapped in" },
   { place: "back",    q: "Does the pain spread toward your side or groin?",                adds: { kidney: 3 },  said: "Pain spreads to the side or groin" },
-  { place: "arms",    q: "Do your arm muscles or joints ache, especially after exercise?", adds: { strain: 2 },  said: "Arm muscles or joints ache" },
+  // Arms
+  { place: "arms",    q: "Do your arm muscles or joints ache, especially after exercise?", adds: { strain: 3 },  said: "Arm muscles or joints ache" },
+  { place: "arms",    q: "Is one arm swollen, warm or red?",                               adds: { clot: 3 },    said: "One arm is swollen, warm or red" },
+  { place: "arms",    q: "Do you have tingling or pins and needles in your hands?",        adds: { strain: 1 },  said: "Tingling in your hands" },
+  // Legs
   { place: "legs",    q: "Is one leg swollen, warm or painful, especially the calf?",      adds: { clot: 3 },    said: "One leg is swollen or painful" },
+  { place: "legs",    q: "Have your legs stayed still for many hours, strapped in or at a workstation?", adds: { clot: 1 }, said: "Legs still for many hours" },
   { place: "legs",    q: "Do your leg muscles or joints ache after exercise?",             adds: { strain: 2 },  said: "Leg muscles or joints ache" },
-  { place: "skin",    q: "Is your skin red or burning, like sunburn?",                     adds: { radiation: 3 }, said: "Skin red or burning" }
+  { place: "legs",    q: "Do you get cramps, especially at night?",                        adds: { strain: 1, kidney: 1 }, said: "Leg cramps at night" },
+  // Skin
+  { place: "skin",    q: "Is your skin red or burning, like sunburn?",                     adds: { radiation: 3 }, said: "Skin red or burning" },
+  { place: "skin",    q: "Were you outside the shielded area during recent solar activity?", adds: { radiation: 2 }, said: "Outside the shield during solar activity" },
+  { place: "skin",    q: "Is your hair coming out more than usual?",                       adds: { radiation: 2 }, said: "Hair coming out more than usual" },
+  { place: "skin",    q: "Is there a rash, together with fever or feeling unwell?",        adds: { fever: 3 },   said: "A rash with fever" },
+  { place: "skin",    q: "Is a cut or scrape healing slowly, or getting red and warm?",    adds: { fever: 2 },   said: "A wound healing slowly or getting red" }
 ];
 
 // Possible causes, in plain words, each with what to do now (team research)
@@ -75,8 +131,9 @@ const CAUSES = {
     why: "Without gravity the spine stretches and back muscles weaken, so back pain is common in space. Exercise protects bones and muscles.",
     todo: ["Gentle stretching: pull your knees to your chest.", "Keep your resistance exercise sessions.", "Check again tomorrow."] },
   radiation: { name: "Radiation effects", level: "watch",
-    why: "Solar storms can cause skin burns and nausea. They are fairly easy to shield against.",
-    todo: ["Go to the shielded area by the water storage.", "Take your dosimeter.", "Send a report to the flight surgeon."] },
+    why: "Space radiation adds up over the whole mission, and a solar storm can add a large dose in hours. A big dose shows as nausea, tiredness, skin burns or hair loss; over years it raises cancer risk. NASA's career limit is 600 mSv.",
+    todo: ["Go to the shielded area by the water storage, and stay until the all-clear.", "Read your dosimeter and log the dose.", "Send a report to the flight surgeon."],
+    todoWatch: ["Read your dosimeter and log the dose.", "Spend sleep and rest time in the best-shielded area.", "Review your exposure plan with the flight surgeon."] },
   fever: { name: "Infection or fever", level: "watch",
     why: "The immune system changes in space, so infections can start more easily.",
     todo: ["Rest and drink water.", "Measure your temperature again in 1 hour.", "38 °C or more: send a report."] },
@@ -207,11 +264,14 @@ function syncWhere() {
 // 2. SAFETY — emergency signs before anything else
 // =========================================================================
 function drawSafety() {
+  const shown = flagsFor(st.places);
+  [...st.flags].forEach(i => { if (!shown.some(f => f.i === i)) st.flags.delete(i); });   // signs for places no longer chosen
+  const names = [...st.places].map(p => PLACES[p].split(/:| or /)[0].toLowerCase()).join(", ").replace(/, ([^,]*)$/, " and $1");
   $("stage").innerHTML = `
     <h1>First, any of these right now?</h1>
-    <p class="k-lead">These can be an emergency. Tick every one you have.</p>
-    <ul class="k-flags">${RED_FLAGS.map((f, i) => `
-      <li><label><input type="checkbox" data-flag="${i}" ${st.flags.has(i) ? "checked" : ""}><span>${f}</span></label></li>`).join("")}</ul>
+    <p class="k-lead">For your ${names}, these can be an emergency. Tick every one you have.</p>
+    <ul class="k-flags">${shown.map(f => `
+      <li><label><input type="checkbox" data-flag="${f.i}" ${st.flags.has(f.i) ? "checked" : ""}><span>${f.t}</span></label></li>`).join("")}</ul>
     <div class="k-actions">
       <button class="soft-btn" id="backBtn">Back</button>
       <button class="primary-btn" id="nextBtn"></button>
@@ -221,7 +281,9 @@ function drawSafety() {
   $("backBtn").onclick = () => go("where");
   $("nextBtn").onclick = () => {
     if (st.flags.size) return go("emergency");
-    st.qs = QUESTIONS.map((q, i) => ({ ...q, i })).filter(q => st.places.has(q.place));
+    const order = [...st.places];                                            // the places in the order you chose them
+    st.qs = QUESTIONS.map((q, i) => ({ ...q, i })).filter(q => st.places.has(q.place))
+      .sort((a, b) => order.indexOf(a.place) - order.indexOf(b.place) || a.i - b.i);
     st.qi = 0;
     go(st.qs.length ? "questions" : "measure");
   };
@@ -229,7 +291,7 @@ function drawSafety() {
 }
 
 function drawEmergency() {
-  const flags = [...st.flags].map(i => RED_FLAGS[i]);
+  const flags = [...st.flags].map(i => RED_FLAGS[i].t);
   $("stage").innerHTML = `
     <div class="k-emergency">
       <h1>This may be an emergency</h1>
@@ -301,6 +363,7 @@ function drawMeasure() {
       <label class="field"><span>Temperature</span>
         <span class="input-unit"><input type="number" id="mTemp" min="34" max="42" step="0.1" inputmode="decimal" value="${st.temp}"><em>°C</em></span></label>
     </div>
+    ${radiationPanel(false)}
     <div class="k-actions">
       <button class="soft-btn" id="backBtn">Back</button>
       <button class="primary-btn" id="nextBtn">See my result</button>
@@ -347,6 +410,9 @@ function assessCheck() {
   if (S.biggestGap.status !== "normal") add("mood", 1, "Your crewmate sees you differently");
   if (bad(S.water)) add("kidney", 1, `Only ${C.water.glasses} of ${C.water.goal} glasses of water`);
   if (S.storm) add("radiation", 3, "Solar storm right now");
+  // The dose so far counts too: from 300 mSv it is one to watch, from 480 it needs care
+  if (S.dose >= 480) add("radiation", 2, `Career dose ${Math.round(S.dose)} of 600 mSv`);
+  else if (S.dose >= 300) add("radiation", 1, `Career dose ${Math.round(S.dose)} of 600 mSv`);
   const tStatus = T.temperature(st.temp);
   if (bad(tStatus)) add("fever", tStatus === "act" ? 4 : 2, `Temperature ${st.temp} °C`);
   if (bad(S.exercise)) add("strain", 1, `${C.exercise} of 6 exercise sessions this week`);
@@ -396,6 +462,7 @@ function drawResult() {
       ? `A first indication from your answers and your latest readings. ${overall === "act" ? "Do the first steps now." : "No rush, but act today."}`
       : "Your answers and readings look fine. If it doesn't get better, check again tomorrow or talk to Astrodoc."}</p>
     ${list.map((c, n) => causeCard(c, n, n === 0)).join("")}
+    ${radiationPanel(true)}
     <div class="k-final">
       <button class="primary-btn" id="reportBtn">Send this to the flight surgeon</button>
       <a class="text-btn" href="index.html">Back to my dashboard</a>
@@ -414,6 +481,36 @@ function drawResult() {
       : `Sent ${time(last.sent)}. Earliest reply ~${time(last.reply)}. Don't wait for it: follow the steps above.`;
   };
   $("againBtn").onclick = () => { if (body3d) st.places.forEach(p => body3d.set(p, false)); st.places.clear(); st.flags.clear(); st.answers = {}; st.qs = []; st.qi = 0; mood.picked = null; go("where"); };
+}
+
+
+// =========================================================================
+// RADIATION: the dosimeter on the measure step, and "Your radiation" on every result
+// =========================================================================
+function radiationPanel(full) {
+  const S = check(me), lim = MOCK.radiation.careerLimit, rate = doseRatePerDay();
+  const pct = Math.min(100, S.dose / lim * 100), lvl = S.radiation;
+  const where = (MOCK.locations[MOCK.mission.location] || {}).label || "the spacecraft";
+  const line = S.storm ? "A solar storm is on right now: radiation is rising fast. Go to the shielded area and stay until the all-clear."
+    : lvl === "act" ? "You are close to the career limit. Every extra day counts: the flight surgeon should review your exposure plan now."
+    : lvl === "watch" ? "You are past half of the career limit. Rest and sleep in the best-shielded area, and keep logging your dosimeter."
+    : "Well inside the limit. Keep your dosimeter on you.";
+  return `
+    <section class="k-rad ${full ? "full" : ""}" aria-labelledby="radTitle">
+      <div class="k-rad-head">
+        <h2 id="radTitle">${full ? "Your radiation" : "Dosimeter"}</h2>
+        ${badge(lvl)}
+      </div>
+      <p class="k-rad-num"><b>${Math.round(S.dose)}</b> of ${lim} mSv career limit <span>· ${Math.round(pct)}%</span></p>
+      <div class="k-rad-bar" role="img" aria-label="${Math.round(pct)} percent of the career limit"><span style="width:${pct.toFixed(1)}%"></span><i style="left:50%"></i><i style="left:80%"></i></div>
+      <p class="k-rad-line">${line}</p>
+      ${full ? `<dl class="k-rad-facts">
+        <div><dt>Today, in ${where.toLowerCase()}</dt><dd>${rate.toFixed(1)} mSv a day${S.storm ? " (storm)" : ""}</dd></div>
+        ${S.limitDay != null ? `<div><dt>At this rate you pass the limit</dt><dd>on day ${S.limitDay}</dd></div>` : ""}
+        ${S.doseAtEnd != null ? `<div><dt>By the end of the mission</dt><dd>about ${Math.round(S.doseAtEnd)} mSv</dd></div>` : ""}
+      </dl>
+      <p class="k-rad-src">Rates from NASA's Curiosity rover; limit from NASA-STD-3001. <a href="index.html#doseCard">See the whole mission</a></p>` : ""}
+    </section>`;
 }
 
 

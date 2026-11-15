@@ -1,0 +1,4 @@
+# Cloudflare Worker for Astrodoc (deploy: npx wrangler deploy, from this folder)
+name = "astrodoc"
+main = "worker.js"
+compatibility_date = "2026-11-01"

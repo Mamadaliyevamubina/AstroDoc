@@ -1466,7 +1466,10 @@ function defaultChips() {
 // Claude API key the user pasted into the voice menu (saved only on this device, never in the code).
 // Emergencies and yes/no or step-by-step flows stay on the built-in rules: instant and predictable.
 const aiHistory = [];
-const useAI = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
+const useAI = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.expect && !ctx.steps
+  && !(ctx.confirm && (YES.test(normalize(text)) || NO.test(normalize(text))));        // a yes/no answers the open question itself
+// Things the app does itself, answered at once without Claude
+const APP_ACTION = /^(yes|no|next|done|stop|undo|skip|back|repeat|mute|unmute|thanks?|ok|okay|\d+(\.\d+)?)\b|\b(remind me|timers?|alarms?|wake me|check ?-?in|briefing|brief me|calm me|breathe|breathing|male voice|female voice|change your voice|speak (slower|faster)|normal speed|log my|record my|call me|send (a |the |my )?(report|message)|clot checklist|what should i do)\b|\b(slept|drank|worked out|exercised|my mood is|heart rate is|temperature is)\b.*\d/;
 // After the built-in rules missed: the yes/no and step flows were already handled by them
 const useAIAfterMiss = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.expect && !ctx.steps;
 function crewSnapshot(text) {
@@ -1544,7 +1547,7 @@ async function askClaude(text) {
       fallbacks: "default",                            // if a safety check declines, retry on the recommended model
       output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } }   // low effort: short chat replies, less thinking, faster
     }),
-    signal: AbortSignal.timeout(8000)                  // too slow: the built-in reply answers instead
+    signal: AbortSignal.timeout(12000)                 // too slow: the built-in reply answers instead
   });
   if (res.status === 401 || res.status === 403) {          // a wrong key: forget it and ask again
     try { localStorage.removeItem(AI_KEY); } catch { }
@@ -1560,7 +1563,7 @@ async function askClaude(text) {
 async function askServer(text) {
   const res = await fetch(ASTRODOC_SERVER + "/chat", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, history: aiHistory.slice(-6), data: crewSnapshot(text) }), signal: AbortSignal.timeout(8000)
+    body: JSON.stringify({ message: text, history: aiHistory.slice(-6), data: crewSnapshot(text) }), signal: AbortSignal.timeout(12000)
   });
   if (!res.ok) throw new Error("chat " + res.status);
   return res.json();
@@ -1591,16 +1594,16 @@ async function respond(raw, { voice = false } = {}) {
   stopSpeaking();
   lastWasVoice = voice;
   const my = ++busy;
-  // Fast first: the built-in rules answer at once whenever they clearly understand.
-  // Claude is asked only when they don't (open questions, chat, unusual wording).
-  let r = understand(text);
-  if (r && r.missed && useAIAfterMiss(text)) {
-    ctx.misses = Math.max(0, ctx.misses - 1); ctx.confirm = null;      // forget the built-in "did you mean…?"
+  // With Claude connected, Claude writes the chat replies. App actions (logging, timers,
+  // check-in, voice settings, steps, yes/no) and emergencies stay on the built-in rules: instant.
+  // Without Claude, or when it is slow or unreachable, the built-in replies answer.
+  let r = null;
+  if (useAI(text) && !APP_ACTION.test(normalize(text))) {
     setThinking(true);
-    const ai = await askAI(text);
+    r = await askAI(text);
     if (my !== busy) return;
-    if (ai) r = ai; else ctx.misses++;
   }
+  if (!r) r = understand(text);
   if (r && !r.missed) ctx.misses = 0;
   if (!r || (!r.say && !r.then)) { setThinking(false); setChips(r?.chips || defaultChips()); return; }
   if (!r.say) { setThinking(false); r.then(); return; }
