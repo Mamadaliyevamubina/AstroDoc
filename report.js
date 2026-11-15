@@ -23,7 +23,7 @@
   const A = W ? analyse(id, W) : null;
   const labs = c.labs || [];
   const L = [
-    ["Heart rate at rest", `${c.vitals.hr} bpm`, S.hr, c.vitals.source === "live" ? "live sensor" : "simulated"],
+    ["Heart rate at rest", `${c.vitals.hr} bpm`, S.hr, "simulated"],
     ["Temperature", `${c.vitals.temp} °C`, S.temp, "simulated"],
     ["Blood pressure", `${c.vitals.bpSys}/${c.vitals.bpDia}`, S.bp, "simulated"],
     ["Sleep last night", `${S.lastNight} h (${S.debt.toFixed(1)} h short this week)`, S.sleep, "simulated"],

@@ -113,7 +113,7 @@ body.landing::before, body.landing::after { display: none; }
 .ld-honest a { color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
 
 /* ---------- Close ---------- */
-.ld-close { padding: clamp(72px, 10vw, 128px) clamp(24px, 6vw, 96px); text-align: center; background-color: var(--twill); }
+.ld-close { padding: clamp(72px, 10vw, 128px) clamp(24px, 6vw, 96px); text-align: center; background-color: var(--twill); color: #fff; }
 .ld-close h2 { color: #fff; max-width: 18ch; margin: 0 auto; }
 .ld-close .ld-actions { justify-content: center; }
 .ld-foot { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); justify-content: center; padding: var(--s5); font-size: 13.5px; color: var(--muted); }

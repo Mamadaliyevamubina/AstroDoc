@@ -3,7 +3,7 @@
 //   1. WHERE     tap where you feel something on the body
 //   2. SAFETY    emergency signs first
 //   3. QUESTIONS one at a time, only for the places you chose
-//   4. MEASURE   heart rate and temperature (Arduino sensor or typed)
+//   4. MEASURE   heart rate and temperature (typed)
 //   5. MOOD      how is your inner orbit today? (mood.js)
 //   6. RESULT    what it could be, why, what to do now, and your mood
 // The rules below are TEAM PROPOSALS from NASA HRP research.
@@ -350,13 +350,12 @@ document.addEventListener("keydown", e => {
 
 
 // =========================================================================
-// 4. MEASURE — the Arduino sensor (or type the numbers)
+// 4. MEASURE — type the numbers
 // =========================================================================
 function drawMeasure() {
-  const live = C.vitals.source === "live";
   $("stage").innerHTML = `
     <h1>Quick measurement</h1>
-    <p class="k-lead">Put your finger on the sensor for 30 seconds. ${live ? "The sensor reading is filled in." : "No live sensor right now: type the numbers, or keep the last reading."}</p>
+    <p class="k-lead">Count your pulse for 30 seconds and double it, and take your temperature. Type the numbers, or keep the last reading.</p>
     <div class="k-measure">
       <label class="field"><span>Heart rate at rest</span>
         <span class="input-unit"><input type="number" id="mHr" min="30" max="220" inputmode="numeric" value="${st.hr}"><em>bpm</em></span></label>
@@ -376,12 +375,6 @@ function drawMeasure() {
     mutate(() => { const c = MOCK.crew[me]; c.vitals.hr = st.hr; c.vitals.temp = st.temp; autoReport(me); });
     go("mood");
   };
-}
-// The Arduino code can call this while the check is open
-function applySensorReading({ heartRate, temperature }) {
-  if (!isNaN(heartRate)) st.hr = Math.round(heartRate);
-  if (!isNaN(temperature)) st.temp = temperature;
-  if (st.step === "measure") { $("mHr").value = st.hr; $("mTemp").value = st.temp; }
 }
 
 

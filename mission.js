@@ -109,7 +109,7 @@ function showGuide(force) {
       </li>
     </ol>
     <div class="g-foot">
-      <span>Showing Astrodoc to someone? <b>Demo controls</b> at the bottom start a solar storm, cut the Earth link or connect the pulse sensor.</span>
+      <span>Showing Astrodoc to someone? <b>Demo controls</b> at the bottom start a solar storm, cut the Earth link or change a heart rate.</span>
       <button type="button" class="primary-btn" id="guideDone">Got it</button>
     </div>`;
   $("guideDone").onclick = () => {

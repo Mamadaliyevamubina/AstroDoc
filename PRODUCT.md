@@ -28,7 +28,6 @@ Built around the signal delay to Earth: it acts on board immediately and treats 
 - Check how I feel: guided self-check (tap the 3D astronaut, emergency signs first, one question at a time, mood check-in, result with likely cause and steps).
 - Talk to Astrodoc: a companion with a face, voice, chat, briefing, check-in, breathing, real NASA astronaut cases.
 - Radiation over the whole mission using Curiosity rover dose rates; NASA's 600 mSv career limit.
-- Live pulse sensor: Arduino + MAX30102 over Web Serial (Chrome/Edge).
 - Science page listing where every number comes from and what is simulated.
 
 ## Capabilities and Constraints

@@ -160,7 +160,7 @@ function dimerChart(c, S) {
 function showVitals(S) {
   const c = MOCK.crew[currentCrew];
   const items = [
-    { name: c.vitals.source === "live" ? "Heart rate · live" : "Heart rate", value: c.vitals.hr, unit: "bpm", status: S.hr },
+    { name: "Heart rate", value: c.vitals.hr, unit: "bpm", status: S.hr },
     { name: "Sleep",      value: S.lastNight, unit: "h", status: S.sleep },
     { name: "Mood",       value: S.moodValue, unit: "/ 5", status: worst(S.mood, S.biggestGap.status) },
     { name: "Radiation",  value: `<span id="doseValue">${S.dose.toFixed(0)}</span>`, unit: "of 600 mSv", status: S.radiation }
@@ -313,7 +313,7 @@ $("emergencyBtn").onclick = () => {
 
 
 // =========================================================================
-// 4. DEMO CONTROLS + SENSOR HOOKS
+// 4. DEMO CONTROLS
 // =========================================================================
 $("solarSlider").value = MOCK.radiation.solarActivity;
 $("solarSlider").oninput = () => setSolarActivity(Number($("solarSlider").value));
@@ -325,13 +325,13 @@ $("linkDown").onchange = () => { mutate(() => setEarthLink(!$("linkDown").checke
 $("simApply").onclick = () => applySensorReading({ heartRate: parseFloat($("simHr").value), temperature: parseFloat($("simTemp").value) });
 $("resetDemo").onclick = resetDemo;
 
-// Call from Arduino / Web Serial code later, e.g. applySensorReading({ heartRate: 96, temperature: 36.8 })
+// Demo controls: type a heart rate and temperature for the current crew member
 function applySensorReading({ heartRate, temperature }) {
   mutate(() => {
     const c = MOCK.crew[currentCrew];
     if (!isNaN(heartRate)) c.vitals.hr = Math.round(heartRate);
     if (!isNaN(temperature)) c.vitals.temp = temperature;
-    c.vitals.source = "live";
+    c.vitals.source = "typed";
   });
   showAll();
 }

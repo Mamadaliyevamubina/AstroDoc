@@ -462,7 +462,7 @@ function readingText(id, key) {
   const c = MOCK.crew[id], S = check(id), ns = Who(id) + "'s";
   const verdict = s => ({ normal: pick(["That's healthy.", "That's in the healthy range."]), watch: "That's a little outside the healthy range, so it's one to watch.", act: "That needs care now." })[s];
   switch (key) {
-    case "hr":       return [`${ns} heart rate is ${c.vitals.hr} beats per minute${c.vitals.source === "live" ? ", live from the sensor" : ""}. ${verdict(S.hr)}`, S.hr];
+    case "hr":       return [`${ns} heart rate is ${c.vitals.hr} beats per minute. ${verdict(S.hr)}`, S.hr];
     case "temp":     return [`${ns} temperature is ${c.vitals.temp} degrees. ${verdict(S.temp)}`, S.temp];
     case "bp":       return [`${ns} blood pressure is ${c.vitals.bpSys} over ${c.vitals.bpDia}. ${verdict(S.bp)}`, S.bp];
     case "sleep":    return [`${Who(id)} slept ${S.lastNight} hours last night, and is about ${Math.round(S.debt)} hours short this week. ${verdict(S.sleep)}`, S.sleep];

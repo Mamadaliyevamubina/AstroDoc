@@ -10,7 +10,6 @@ Built by the Dombit Education team (Tashkent) for the NASA Space Apps Challenge 
 - **Check how I feel.** A guided self-check: tap the 3D astronaut where you feel something, then answer the emergency signs first, then one question at a time. The result shows the most likely cause, what to do and why.
 - **Talk to Astrodoc.** A friendly companion with sections for chat, briefing, check-in, crew and breathing. It can tell 22 real astronaut medical cases from NASA reports.
 - **Radiation over the whole mission.** Each person's dose, day by day, using the dose rates NASA's Curiosity rover measured: 1.8 mSv a day in deep space and 0.67 mSv a day on Mars. It shows the day they pass NASA's 600 mSv career limit.
-- **Live pulse sensor.** An Arduino with a MAX30102 sensor sends a real heart rate to the dashboard over USB (Web Serial, in Chrome or Edge). See `arduino/astrodoc_pulse/`.
 - **The science page** (`science.html`) lists where every number comes from, and what is simulated.
 
 ## Run it
