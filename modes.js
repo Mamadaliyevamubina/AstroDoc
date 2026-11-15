@@ -59,14 +59,29 @@
     };
   }
 
-  // Tabs: open the section and let Astrodoc start it
+  // Tabs: open the section. Astrodoc starts it the first time; coming back later doesn't repeat the
+  // same script (a "Run it again" link does). Breathing always starts: it's something you do.
+  const STARTED = "astrodoc-mode-started", AGAIN_MS = 10 * 60 * 1000;
+  const started = () => { try { return JSON.parse(sessionStorage.getItem(STARTED)) || {}; } catch { return {}; } };
+  const run = m => {
+    const s = started(); s[m] = Date.now(); try { sessionStorage.setItem(STARTED, JSON.stringify(s)); } catch { }
+    if (MODES[m].say && typeof window.respond === "function") window.respond(MODES[m].say);
+  };
   bar.addEventListener("click", e => {
+    if (e.target.closest("[data-again]")) { run(document.body.dataset.mode); return; }
     const b = e.target.closest("[data-mode]"); if (!b) return;
     const m = b.dataset.mode;
-    if (document.body.dataset.mode === m && m !== "chat") return;
+    if (document.body.dataset.mode === m && m !== "breathe") return;
     setMode(m);
-    if (MODES[m].say && typeof window.respond === "function") window.respond(MODES[m].say);
+    if (!MODES[m].say) return;
+    if (m === "breathe" || !started()[m] || Date.now() - started()[m] > AGAIN_MS) run(m);
+    else $("modeAbout").innerHTML += ` <button type="button" class="c-again" data-again>Run it again</button>`;
   });
+
+  // One way to choose who we're talking about: the crew list in the menu (and the Crew section).
+  // The name at the top only shows who it is.
+  const about = $("aboutBtn");
+  if (about) { about.removeAttribute("popovertarget"); about.removeAttribute("aria-haspopup"); about.classList.add("is-label"); about.tabIndex = -1; }
 
   // Start: chat.html#mode=briefing opens a section; otherwise keep the last one this visit
   const fromHash = (location.hash.match(/#mode=(\w+)/) || [])[1];

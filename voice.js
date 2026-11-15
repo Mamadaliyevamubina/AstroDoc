@@ -74,7 +74,8 @@ function chooseVoice() {
     let s = 0;
     if (/natural|neural/i.test(n)) s += 100;                 // e.g. Microsoft "Aria Online (Natural)"
     if (/premium|enhanced/i.test(n)) s += 80;                // e.g. macOS "Ava (Premium)"
-    if (/^Google/i.test(n)) s += 60;                         // Chrome's online voices
+    if (/^Google/i.test(n)) s += navigator.onLine ? 60 : -500;   // Chrome's online voices: silent without internet
+    if (!navigator.onLine && v.localService) s += 200;        // offline: a voice that lives on this device
     if (/Samantha|Ava|Daniel|Alex|Aria|Jenny|Guy|Andrew/i.test(n)) s += 30;
     if (want === "female" && /\bZoe\b|\bAva\b|Jenny|Aria|Sonia|Libby/i.test(n)) s += 25;   // the gentlest-sounding female voices
     if (/en[-_]US/i.test(v.lang)) s += 10; else if (/en[-_]GB/i.test(v.lang)) s += 6;
@@ -103,6 +104,7 @@ function setVoicePrefs(change) {
 if ("speechSynthesis" in window) {
   chooseVoice();
   speechSynthesis.onvoiceschanged = chooseVoice;
+  addEventListener("online", chooseVoice); addEventListener("offline", chooseVoice);
 }
 
 // Numbers and units as words that sound right
@@ -558,7 +560,7 @@ function trendReply(id, key) {
     const L = c.labs, a = L[0], b = L[L.length - 1];
     const ch = (k, name, unit) => `${name} went from ${a[k]} to ${b[k]}${unit}`;
     const say = `Across ${num(L.length)} tests from day ${a.day} to day ${b.day}: ${ch("ddimer", "D-dimer", "")}, ${ch("platelets", "platelets", "")}, and ${ch("fibrinogen", "fibrinogen", "")}. ` +
-      (check(id).clotPattern ? "D-dimer is rising while platelets and fibrinogen fall. That pattern is why it needs care now." : check(id).labTrend.length ? "Some values are drifting, so a repeat test is a good idea." : "Those are steady. Nothing to worry about.");
+      (check(id).clotPattern ? "D-dimer is rising while platelets and fibrinogen fall. That pattern is why it needs care now." : check(id).labTrend.length ? "Some values are drifting, so a repeat test is a good idea." : "Those are steady, inside the normal range.");
     return { say, chips: ["Why?", "What should I do?"] };
   }
   if (key === "dose") {
@@ -621,7 +623,7 @@ function assess(id, { intro = "" } = {}) {
     ctx.topic = null; ctx.more = [];
     return { say: intro + pick([
       `Good news: ${who(id)} is doing well. Every reading is in the healthy range.`,
-      `${Who(id)} is all good right now. Nothing to worry about.`,
+      `${Who(id)} is all good right now: every reading is in the healthy range.`,
       `I've checked ${who(id)}. Everything looks healthy. Keep up the routine.`]),
       face: "joy", chips: ["How is everyone?", "Log my sleep", "Talk to me"] };
   }
@@ -630,20 +632,17 @@ function assess(id, { intro = "" } = {}) {
   ctx.topic = a.w.key; ctx.more = rest;
   const acts = S.warnings.filter(w => w.status === "act").length;
   let say = intro;
-  if (S.overall === "act") {
-    say += pick(["Okay, let's take this calmly. ", "Alright. I'll guide you. ", "Okay. Take a breath, we'll go one step at a time. "]);
-    say += `${Who(id)} needs care now${acts > 1 ? `, with ${num(acts)} urgent things` : ""}. `;
-  } else {
-    say += pick(["Let me see. ", "Okay. ", "Sure. "]);
-    say += `${Who(id)} is mostly okay, with ${plural(S.warnings.length, "thing", "things")} to watch. `;
-  }
+  // Kept to three short sentences: the level, the main problem and its step, how many more
+  ctx.more = [b, ...rest].filter(Boolean);
+  const more = ctx.more.length;
+  say += S.overall === "act" ? `${Who(id)} needs care now${acts > 1 ? `, with ${num(acts)} urgent things` : ""}. `
+                             : `${Who(id)} is mostly okay, with ${plural(S.warnings.length, "thing", "things")} to watch. `;
   say += `The main one: ${a.what}. ${a.todo}`;
-  if (b) say += ` Also, ${b.what}.`;
-  if (rest.length) say += ` There ${rest.length === 1 ? "is one more small thing" : `are ${num(rest.length)} more small things`}, if you want to hear ${rest.length === 1 ? "it" : "them"}.`;
+  if (more) say += ` ${more === 1 ? "One more thing" : `${Cap(num(more))} more things`} to check when you're ready.`;
   return {
     say, face: S.overall === "act" ? "caring" : null,
     actions: a.w.extra === "clot" ? [act("Read me the clot checklist", "read the clot checklist")] : [],
-    chips: ["What should I do?", "Why?", S.overall === "act" ? "What does “needs care” mean?" : "What does “watch” mean?", ...(rest.length ? ["Tell me more"] : [])]
+    chips: ["What should I do?", ...(more ? ["Tell me more"] : []), "Why?", S.overall === "act" ? "What does “needs care” mean?" : "What does “watch” mean?"]
   };
 }
 
@@ -910,7 +909,7 @@ function compareCrew(t, key) {
     return { say: best ? `${Who(id)} is doing best right now${S.warnings.length ? `, with just ${gist} to watch` : ", every reading is healthy"}.`
                        : S.overall === "normal" ? "Nobody needs help right now. The whole crew is healthy." : `${Who(id)} needs the most attention right now: ${gist}.`,
       face: best ? "joy" : S.overall === "act" ? "caring" : null,
-      chips: best ? ["Who needs the most help?", "How is everyone?"] : ["Why?", "What should I do?", "How is everyone?"] };
+      chips: best ? ["Who needs the most help?", "How is everyone?"] : ["What should I do?", ...Object.keys(MOCK.crew).filter(k => k !== id).map(crewChip)] };   // one tap to look at anyone else
   }
   const M = METRICS[key];
   const rows = ids.map(id => ({ id, v: M.get(id), s: readingText(id, key)[1] })).sort((a, b) => b.v - a.v);   // highest first
@@ -1075,17 +1074,18 @@ function logMany(items, id) {
 function briefing() {
   const m = MOCK.mission, ids = bySeverityIds(Object.keys(MOCK.crew));
   const storm = check(ids[0]).storm;
-  const crewLine = id => { const S = check(id); return S.overall === "normal" ? `${Who(id)}: all good.` : `${Who(id)}: ${S.warnings.slice(0, 2).map(w => GIST[w.key] || w.title.toLowerCase()).join(" and ")}.`; };
   const last = MOCK.earthLog[MOCK.earthLog.length - 1];
   const name = userName();
+  // Three lines: who needs help most, the mission and radiation, the link to Earth
+  const wS = check(ids[0]), p = phaseAt(m.day), left = p.start + p.days - m.day, mine = check(me && MOCK.crew[me] ? me : ids[0]);
   const lines = [
-    `It's day ${m.day} of ${m.lengthDays}, ${m.phase.toLowerCase().replace("mars", "Mars")}.`,
-    storm ? "There's a solar storm right now. Everyone should be in the shielded area." : "No solar storm.",
-    ...ids.map(crewLine),
-    MOCK.mission.earthLink === false ? "The Earth link is down for the solar conjunction. Reports wait on board and go out by themselves when it returns."
-      : last ? `The last report to Earth went at ${time(last.sent)}, reply expected around ${time(last.reply)}.` : "Nothing has been sent to Earth today.",
-    reminders.length ? `You have ${plural(reminders.length, "reminder", "reminders")} set.` : ""
-  ].filter(Boolean);
+    storm ? "Solar storm right now: everyone to the shielded area by the water storage."
+      : wS.overall === "normal" ? "The whole crew is in the healthy range."
+      : `${Who(ids[0])} needs ${wS.overall === "act" ? "care first" : "watching"}: ${GIST[wS.warnings[0].key] || wS.warnings[0].title.toLowerCase()}.`,
+    `Day ${m.day} of ${m.lengthDays}, ${left} days to ${p.name === "To Mars" ? "Mars" : p.name === "On Mars" ? "launch home" : "Earth"}. ${me && MOCK.crew[me] ? "Your" : "Crew"} radiation: ${Math.round(mine.dose)} of ${MOCK.radiation.careerLimit} millisieverts.`,
+    m.earthLink === false ? "Earth link down for the solar conjunction: reports wait on board."
+      : last ? `Earth link up, ${m.signalDelayMin} minutes away. Last report ${time(last.sent)}, reply around ${time(last.reply)}.` : `Earth link up, ${m.signalDelayMin} minutes away. No report sent yet today.`
+  ];
   const worstId = ids[0];
   if (check(worstId).overall !== "normal") { ctx.crew = worstId; ctx.topic = check(worstId).warnings[0].key; ctx.more = []; updateAbout(); }
   return { say: `Here's your briefing${name ? ", " + name : ""}. ${lines.join(" ")}`,
@@ -1176,9 +1176,38 @@ function tellCase(list, i = 0) {
     chips: [...(list.length > 1 ? ["Another real case"] : []), "What should I do?", "How is everyone?"] };
 }
 
-const EMERGENCY = /\b(emergency|help me|cannot breathe|can not breathe|not breathing|chest pain|passed out|fainted|unconscious|not responding|seizure|bleeding badly|stroke|heart attack)\b/;
+const EMERGENCY = /\b(emergency|help me|cannot breathe|can not breathe|not breathing|hard to breathe|struggling to breathe|choking|chest pain|chest (hurts|is hurting|pressure|feels tight|is tight)|my chest hurts|pain in my chest|passed out|fainted|fainting|blacked out|unconscious|not responding|seizure|bleeding (badly|a lot|heavily|will not stop|wont stop)|heavy bleeding|stroke|heart attack|(weak|numb|weakness|numbness) (on|in) one side|face (is )?drooping|cannot (move|feel) my (arm|leg|face))\b/;
+// Words of despair: a calm, human answer that brings in the crew and the flight surgeon
+const DISTRESS = /\b(give up|giving up|hopeless|no point|want to die|wanna die|kill myself|end it all|hurt myself|harm myself|can not go on|cannot go on|can not do this anymore|cannot do this anymore|nobody cares|better off without me)\b/;
+// --- Small answers used by understand() ---
+function otherLanguage() {
+  return { say: "I understand English best for now. Try asking me: how am I?",
+    html: "I understand English best for now. Try asking me: <b>how am I?</b><br><span lang=\"uz\">Hozircha ingliz tilida yozing.</span> <span lang=\"ru\">Пока, пожалуйста, пишите по-английски.</span>",
+    chips: ["How am I?", "How is everyone?", "What can you do?"] };
+}
+function earthLinkReply() {
+  const m = MOCK.mission;
+  if (m.earthLink === false) {
+    const n = queuedCount();
+    return { say: `The Earth link is down right now: the Sun is between us and Earth, which happens about every 26 months for around two weeks. ${n ? `${Cap(num(n))} report${n > 1 ? "s are" : " is"} waiting on board` : "Reports will wait on board"} and go out by themselves when the link returns. Until then, the crew is the help.`,
+      chips: ["What should I do?", "How is everyone?"] };
+  }
+  return { say: `The Earth link is up. Earth is ${m.signalDelayMin} light-minutes away right now, so a message takes ${m.signalDelayMin} minutes each way and a reply at least ${m.signalDelayMin * 2}. That's why I tell you what to do now and never make you wait.`,
+    chips: ["Send a report", "How is everyone?"] };
+}
+function distressReply(id) {
+  ctx.confirm = {
+    yes: () => { mutate(() => sendToEarth(`${id}: support requested (private, wellbeing)`)); return { say: "Sent, privately, to the flight surgeon. While we wait, please find a crewmate and stay with them. Would you like to breathe with me for a minute?", face: "caring", chips: ["Breathe with me", "Talk to me"] }; },
+    no: () => ({ say: "Okay. I'm still here, and so is your crew. Please talk to one of them today. Would you like to breathe with me?", face: "caring", chips: ["Breathe with me", "Talk to me"] })
+  };
+  return { say: "I'm really glad you told me, and I'm here with you. Please don't carry this alone: tell a crewmate now, and I can send a private message to the flight surgeon. Shall I send it?",
+    face: "caring", chips: ["Yes, send it", "Not now", "Talk to me"] };
+}
+
 function understand(raw) {
   const t = normalize(raw);
+  // Russian or Uzbek: say kindly that English works best for now (a translation is on our list)
+  if (/[\u0400-\u04FF]/.test(raw) || /\b(salom|assalomu|qalaysan|qalesan|yaxshimisiz|rahmat|privet|spasibo|kak dela)\b/.test(t)) return otherLanguage();
   if (!t) return null;
   const q = isQuestion(t, raw);
   const named = findCrew(t);
@@ -1190,6 +1219,11 @@ function understand(raw) {
 
   // --- 1. Emergency words always win ---
   if (EMERGENCY.test(t)) return emergencyFlow(subj);
+  if (DISTRESS.test(t)) return distressReply(mine);
+  if (/\b(stupid|idiot|dumb|useless|shut up|hate you|you suck|rubbish|worst)\b/.test(t))
+    return { say: "I'm sorry I wasn't more helpful. I'm still learning. You could ask me: how is everyone?", chips: ["How is everyone?", "What can you do?"] };
+  if (!/\bsend\b/.test(t) && /\b(earth link|link (is )?(down|up|working|ok|okay|broken)|radio|signal|delay|how far|distance (to|from) earth|contact (with )?earth|reach earth|talk to earth|conjunction|blackout)\b/.test(t))
+    return earthLinkReply();
 
   // --- 2. Waiting for yes / no ---
   if (ctx.confirm) {
@@ -1361,7 +1395,7 @@ function understand(raw) {
     if (reason) return { say: reason, chips: ["What should I do?", ...(ctx.more.length ? ["Tell me more"] : []), "How is everyone?"] };
     if (ctx.level && /mean/.test(t)) return explainLevel(ctx.level);
     if (one) return assess(subj);
-    return { say: "Ask me about someone first, and I'll explain the reason. For example: how is the pilot?", chips: Object.keys(MOCK.crew).map(crewChip) };
+    return assess(ctx.crew);
   }
   if (/\b(tell me more|what else|anything else|more details?|the rest|other things?)\b/.test(t)) {
     if (!ctx.more.length) return { say: `That's everything for ${who(ctx.crew)}.`, chips: ["What should I do?", "How is everyone?"] };
@@ -1533,6 +1567,9 @@ const AI_SCHEMA = {
   required: ["reply", "command", "focus"],
   additionalProperties: false
 };
+// Claude Haiku is the fastest model (Anthropic models overview); spoken replies are short.
+const AI_MODEL_FALLBACK = "claude-opus-5-5";
+let aiModel = "claude-haiku-5-5";
 async function askClaude(text) {
   const past = aiHistory.slice(-6);
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -1542,13 +1579,14 @@ async function askClaude(text) {
       "anthropic-beta": "server-side-fallback-2026-07-01", "anthropic-dangerous-direct-browser-access": "true"
     },
     body: JSON.stringify({
-      model: "claude-opus-5-5", max_tokens: 2000, system: AI_SYSTEM,
+      model: aiModel, max_tokens: 400, system: AI_SYSTEM,
       messages: [...past, { role: "user", content: `Crew data now:\n${JSON.stringify(crewSnapshot(text))}\n\nThey said: ${text}` }],
       fallbacks: "default",                            // if a safety check declines, retry on the recommended model
-      output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } }   // low effort: short chat replies, less thinking, faster
+      output_config: { format: { type: "json_schema", schema: AI_SCHEMA } }
     }),
-    signal: AbortSignal.timeout(12000)                 // too slow: the built-in reply answers instead
+    signal: AbortSignal.timeout(6000)                  // too slow: the built-in reply answers instead
   });
+  if (res.status === 400 && aiModel !== AI_MODEL_FALLBACK && /model|output_config|format/i.test(await res.clone().text())) aiModel = AI_MODEL_FALLBACK;   // try the other model next time
   if (res.status === 401 || res.status === 403) {          // a wrong key: forget it and ask again
     try { localStorage.removeItem(AI_KEY); } catch { }
     aiProblem = "That key wasn't accepted. Check it and connect again."; updateAiMenu();
@@ -1563,7 +1601,7 @@ async function askClaude(text) {
 async function askServer(text) {
   const res = await fetch(ASTRODOC_SERVER + "/chat", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, history: aiHistory.slice(-6), data: crewSnapshot(text) }), signal: AbortSignal.timeout(12000)
+    body: JSON.stringify({ message: text, history: aiHistory.slice(-6), data: crewSnapshot(text) }), signal: AbortSignal.timeout(6000)
   });
   if (!res.ok) throw new Error("chat " + res.status);
   return res.json();
@@ -1594,23 +1632,23 @@ async function respond(raw, { voice = false } = {}) {
   stopSpeaking();
   lastWasVoice = voice;
   const my = ++busy;
-  // With Claude connected, Claude writes the chat replies. App actions (logging, timers,
-  // check-in, voice settings, steps, yes/no) and emergencies stay on the built-in rules: instant.
-  // Without Claude, or when it is slow or unreachable, the built-in replies answer.
-  let r = null;
-  if (useAI(text) && !APP_ACTION.test(normalize(text))) {
+  // Fast first: the built-in rules answer at once whenever they understand (and always for
+  // emergencies, steps and yes/no). Claude is asked only when they don't: open questions,
+  // unusual wording, small talk. If Claude is slow or unreachable, the built-in reply stands.
+  let r = understand(text);
+  if (r && r.missed && useAIAfterMiss(text)) {
     setThinking(true);
-    r = await askAI(text);
+    const ai = await askAI(text);
     if (my !== busy) return;
+    if (ai) { r = ai; ctx.misses = Math.max(0, ctx.misses - 1); ctx.confirm = null; }
   }
-  if (!r) r = understand(text);
   if (r && !r.missed) ctx.misses = 0;
   if (!r || (!r.say && !r.then)) { setThinking(false); setChips(r?.chips || defaultChips()); return; }
   if (!r.say) { setThinking(false); r.then(); return; }
   aiHistory.push({ role: "user", content: text }, { role: "assistant", content: r.say });
   if (!r.fromAI) {
     setThinking(true);
-    await wait(r.urgent ? 0 : Math.min(400, 140 + r.say.length));   // a short, natural beat; none in an emergency
+    await wait(r.urgent ? 0 : 120);   // a short "thinking" beat so it feels natural; none in an emergency
     if (my !== busy) return;
   }
   setThinking(false);
@@ -1643,8 +1681,9 @@ function startListening({ followUp = false, hold = false } = {}) {
   recognizer.lang = "en-US";
   recognizer.interimResults = true;
   recognizer.continuous = hold;                       // hold Space: keep listening until released
-  recognizer.maxAlternatives = 1;
+  recognizer.maxAlternatives = 3;
   let finalText = "";
+  if (!navigator.onLine) { setState("Voice input needs internet on this browser. You can type instead."); $("voiceInput").focus(); return; }
   recognizer.onstart = () => {
     listening = true;
     faceMode("listening", true);
@@ -1656,7 +1695,7 @@ function startListening({ followUp = false, hold = false } = {}) {
     let interim = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const res = e.results[i];
-      if (res.isFinal) finalText += res[0].transcript + " ";
+      if (res.isFinal) finalText += bestHeard(res) + " ";
       else interim += res[0].transcript;
     }
     showGhost((finalText + interim).trim());
@@ -1682,6 +1721,16 @@ function startListening({ followUp = false, hold = false } = {}) {
   };
   recognizer.start();
 }
+// Of what the browser thinks it heard, keep the one that sounds most like something Astrodoc knows
+const HEARD_WORDS = /\b(emergency|breathe|breathing|chest|pain|pilot|commander|specialist|everyone|crew|sleep|slept|water|drank|mood|report|earth|briefing|check ?-?in|clot|radiation|dose|dizzy|headache|tired|lonely|what|how|why|should|help)\b/gi;
+function bestHeard(res) {
+  let best = res[0].transcript, top = -1;
+  for (let i = 0; i < res.length; i++) {
+    const t = res[i].transcript, hits = (t.match(HEARD_WORDS) || []).length * 2 + (EMERGENCY.test(normalize(t)) ? 10 : 0) + (res[i].confidence || 0);
+    if (hits > top) { top = hits; best = t; }
+  }
+  return best;
+}
 // Your words appear while you speak
 function showGhost(text) {
   if (!text) return;
@@ -1690,6 +1739,9 @@ function showGhost(text) {
   scrollDown();
 }
 function clearGhost() { if (ghost) { ghost.remove(); ghost = null; } }
+
+// Starting to type stops Astrodoc talking, so it never talks over you
+$("voiceInput").addEventListener("input", () => { if ($("voiceInput").value.length === 1) stopSpeaking(); });
 
 // Hold Space to talk (when not typing). Esc stops everything.
 let spaceHeld = false;
@@ -1797,6 +1849,7 @@ function addMessage(kind, html, actions = []) {
     a.href ? `<a class="m-act link" href="${a.href}">${escapeHtml(a.label)}</a>`
            : `<button type="button" class="m-act ${a.kind || ""}" data-say="${escapeHtml(a.say)}">${escapeHtml(a.label)}</button>`).join("")}</div>` : "");
   $("voiceLog").appendChild(el);
+  if (kind === "bot" && $("srLive")) $("srLive").textContent = el.querySelector(".m-text").textContent;   // screen readers hear only the new reply
   document.body.classList.toggle("talking-started", !!document.querySelector(".m.you"));
   scrollDown();
   saveHistory();

@@ -1,7 +1,7 @@
 // Astrodoc service worker: the whole app works with no internet, as it must on a spacecraft.
 // Every page, script, style, font, the 3D model and the data are kept on the device.
 // Pages are served from the device first and refreshed in the background when online.
-const CACHE = "astrodoc-r12";
+const CACHE = "astrodoc-r13";
 const FILES = [
   "./", "index.html", "check.html", "chat.html", "science.html", "report.html", "dashboard.html",
   "style.css", "check.css", "type.css", "bodymap.css", "modes.css", "polish.css", "patch.css",

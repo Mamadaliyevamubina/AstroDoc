@@ -13,7 +13,7 @@
 // =========================================================================
 
 const DEFAULT_ORIGINS = ["https://mamadaliyevamubina.github.io", "http://localhost:8000", "http://127.0.0.1:8000"];
-const CLAUDE_MODEL = "claude-opus-5-5";
+const CLAUDE_MODEL = "claude-haiku-5-5";             // the fastest model: spoken replies are short
 const ELEVEN_MODEL = "eleven_multilingual_v2";       // the most natural ElevenLabs voice model
 const VOICES = {
   male: "JBFqnCBsd6RMkjVDRZzb",                      // "George": warm, gentle British man
@@ -120,11 +120,11 @@ async function chat({ message, history, data }, env) {
     },
     body: JSON.stringify({
       model: CLAUDE_MODEL,
-      max_tokens: 2000,
+      max_tokens: 400,
       system: SYSTEM,
       messages,
       fallbacks: "default",                          // if a safety check declines, retry on the recommended model
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } }   // low effort: short chat replies, faster
+      output_config: { format: { type: "json_schema", schema: SCHEMA } }
     })
   });
   if (!res.ok) throw new Error(`Claude ${res.status}: ${(await res.text()).slice(0, 300)}`);
