@@ -179,3 +179,43 @@ body.landing {
   body::before { display: none !important; }
   .card, .vital, .sci-doc { background: #fff !important; backdrop-filter: none !important; box-shadow: 0 0 0 1px #ccc; }
 }
+
+/* =========================================================
+   HEADER: one frosted bar, aligned with the page column.
+   Left: who you are and the ship clock (glass.js). Right: the two actions.
+   ========================================================= */
+body:not(.choosing) .top {
+  position: sticky; top: var(--s3); z-index: 15;
+  width: calc(100% - 2 * var(--s5)); max-width: calc(960px - 2 * var(--s5));
+  margin: var(--s3) auto var(--s3); padding: 10px 10px 10px var(--s5);
+  border-radius: 20px; gap: var(--s3);
+  background: rgba(255, 255, 255, .58);
+  -webkit-backdrop-filter: var(--frost); backdrop-filter: var(--frost);
+  box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px var(--pane-line), var(--lift);
+}
+.top-hello { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.25; }
+.top-hello b {
+  font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 17px; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.top-hello span { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-hello .link-dot { display: inline-block; width: 7px; height: 7px; margin: 0 5px 1px 0; border-radius: 50%; background: var(--thread); vertical-align: middle; }
+.top-hello .link-dot.down { background: var(--muted); }
+.top:has(.top-hello) .check-link, .has-mission-view .top:has(.top-hello) .check-link { margin-left: 0; }
+.top .check-link, .top .emergency-btn { min-height: 44px; padding: 0 20px; display: inline-flex; align-items: center; }
+@media (max-width: 760px) {
+  body:not(.choosing) .top { width: calc(100% - 2 * var(--s3)); top: var(--s2); padding: 8px 8px 8px var(--s4); flex-wrap: nowrap; }
+  .top-hello b { font-size: 15px; }
+  .top-hello span { font-size: 12.5px; }
+  .top-hello { display: none; }           /* phones: menu, logo, Emergency */
+  .top .check-link { display: none; }       /* the big "Check how I feel" button sits in the page on phones */
+  .top .emergency-btn { margin-left: auto !important; padding: 0 14px; }
+}
+
+/* Science and report: the page name sits in the bar, aligned with the reading column */
+body.science-page .top { max-width: calc(900px - 2 * var(--s5)); }
+body.report-page .top { max-width: calc(920px - 2 * var(--s5)); }
+.top .mission span:only-child {
+  font-family: var(--font-display); font-stretch: 112%; font-weight: 750; font-size: 17px; color: var(--ink);
+}
+body:not(.choosing) .top:not(:has(.check-link)) { min-height: 64px; }
