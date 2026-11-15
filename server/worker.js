@@ -124,7 +124,7 @@ async function chat({ message, history, data }, env) {
       system: SYSTEM,
       messages,
       fallbacks: "default",                          // if a safety check declines, retry on the recommended model
-      output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } }   // medium effort: thoughtful but still quick
+      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } }   // low effort: short chat replies, faster
     })
   });
   if (!res.ok) throw new Error(`Claude ${res.status}: ${(await res.text()).slice(0, 300)}`);
