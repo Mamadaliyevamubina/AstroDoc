@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="check.css">
   <link rel="stylesheet" href="type.css">
   <link rel="stylesheet" href="bodymap.css">
-  <link rel="stylesheet" href="polish.css?v=r7">
+  <link rel="stylesheet" href="polish.css?v=r8">
 </head>
 <body class="choosing">
 
@@ -75,6 +75,9 @@
       <section class="vitals" id="vitals" aria-label="Readings"></section>
       <div class="sensor-row" id="sensorRow" aria-live="polite"></div>
 
+      <!-- ===================== THE LAST 6 MONTHS: trends + analysis (history.js, real NASA rates) ===================== -->
+      <section class="card history-card" id="historyCard" aria-labelledby="historyTitle"></section>
+
       <!-- ===================== BODY MAP (3D) — built in bodymap.js ===================== -->
       <section class="card bodymap" id="bodyMap" aria-labelledby="bmTitle"></section>
 
@@ -114,6 +117,7 @@
         <div class="demo-grid">
           <label>Solar activity (70+ = storm)<input type="range" id="solarSlider" min="0" max="100"></label>
           <label>Location<select id="locationSelect"></select></label>
+          <label class="demo-check"><input type="checkbox" id="linkDown"> Earth link down (solar conjunction)</label>
           <label>Heart rate (bpm)<input type="number" id="simHr" value="96"></label>
           <label>Temperature (°C)<input type="number" id="simTemp" value="36.8" step="0.1"></label>
           <button class="soft-btn" id="simApply">Send reading</button>
@@ -130,13 +134,14 @@
     <button class="text-btn small" id="changeUser">Change user</button>
   </footer>
 
-  <script src="core.js?v=r7"></script>
-  <script src="sidebar.js?v=r7"></script>
-  <script src="mood.js?v=r7"></script>
-  <script src="dose.js?v=r7"></script>
-  <script src="app.js?v=r7"></script>
-  <script src="sensor.js?v=r7"></script>
+  <script src="core.js?v=r8"></script>
+  <script src="sidebar.js?v=r8"></script>
+  <script src="mood.js?v=r8"></script>
+  <script src="dose.js?v=r8"></script>
+  <script src="history.js?v=r9"></script>
+  <script src="app.js?v=r8"></script>
+  <script src="sensor.js?v=r8"></script>
   <script src="assets/js/body3d.js" defer></script>
-  <script src="bodymap.js?v=r7" defer></script>
+  <script src="bodymap.js?v=r8" defer></script>
 </body>
 </html>

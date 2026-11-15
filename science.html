@@ -9,7 +9,7 @@
   <link rel="icon" href="assets/astrodoc-favicon.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="type.css">
-  <link rel="stylesheet" href="polish.css?v=r7">
+  <link rel="stylesheet" href="polish.css?v=r8">
 </head>
 <body class="science-page">
 
@@ -29,7 +29,7 @@
       <p class="sci-lead">Astrodoc uses two kinds of data. The <b>mission's radiation, the limits and the medical rules</b> come from NASA measurements, NASA standards and published astronaut studies. The <b>three crew members' readings</b> (heart rate, sleep, blood tests) are simulated, because real astronaut health records are private. Every rule below says which is which.</p>
 
       <nav class="sci-toc" aria-label="On this page">
-        <a href="#radiation">Radiation</a><a href="#clots">Blood clots</a><a href="#sleep">Sleep</a><a href="#eyes">Eyes</a><a href="#delay">Earth delay</a><a href="#readings">Everyday readings</a><a href="#cases">Real cases</a><a href="#simulated">What is simulated</a>
+        <a href="#radiation">Radiation</a><a href="#clots">Blood clots</a><a href="#sleep">Sleep</a><a href="#eyes">Eyes</a><a href="#delay">Earth delay</a><a href="#history">Last 6 months</a><a href="#readings">Everyday readings</a><a href="#cases">Real cases</a><a href="#simulated">What is simulated</a>
       </nav>
 
       <section id="radiation">
@@ -72,6 +72,18 @@
       <section id="delay">
         <h2>Earth is minutes away</h2>
         <p>Depending on where the planets are, a message to Mars takes about 3 to 22 minutes one way. The demo uses 18 minutes, so a reply takes at least 36. That is why Astrodoc never waits for Earth: it says what to do now, sends the report by itself and shows when the earliest reply can arrive.</p>
+        <p>About every 26 months Mars passes behind the Sun as seen from Earth (solar conjunction), and NASA stops sending commands to Mars missions for about two weeks. Astrodoc keeps working with no link at all: the health rules run on board, and reports wait and go out by themselves when the link returns. Turn on “Earth link down” in the demo controls to see it.</p>
+      </section>
+
+      <section id="history">
+        <h2>The last 6 months</h2>
+        <p>Real astronauts' day-by-day health records are private, so NASA does not publish them. NASA does publish what it measured across many astronauts, and the dashboard's 6-month history follows those results week by week for each simulated crew member:</p>
+        <dl class="sci-facts">
+          <div><dt>Sleep on the ISS</dt><dd><b>6.09 h a night</b><span>Average of ISS crews, against 8.5 h scheduled. Barger et al., <i>The Lancet Neurology</i>, 2014.</span></dd></div>
+          <div><dt>Bone density</dt><dd><b>1–1.5% lost a month</b><span>On 4–6 month missions. <a href="https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/">NASA Human Research Program</a>.</span></dd></div>
+          <div><dt>Body mass</dt><dd><b>7% lost in a year</b><span>Scott Kelly, who also ate about 30% fewer calories than expected. <a href="https://www.nasa.gov/feature/nasa-s-twins-study-results-published-in-science">NASA Twins Study</a>, 2019.</span></dd></div>
+        </dl>
+        <p><b>What Astrodoc does with it.</b> For each person it compares the last 4 weeks with the first 4, and their numbers with NASA's: sleep under 6 hours is red and under 7 amber; bone loss faster than 1.5% a month is amber; body mass down more than 5% is amber; a falling mood is amber. The analysis says which of these need attention and which are on track.</p>
       </section>
 
       <section id="readings">
@@ -97,7 +109,7 @@
 
       <section id="cases">
         <h2>Real astronaut cases</h2>
-        <p>Ask the companion “has this happened before?” and it tells one of 17 real cases: what happened to an astronaut and what their doctors did. Ten come from the Apollo medical report. All come from NASA documents:</p>
+        <p>Ask the companion “has this happened before?” and it tells one of 22 real cases: what happened to an astronaut and what their doctors did. Ten come from the Apollo medical report. All come from NASA documents:</p>
         <ul class="sci-refs">
           <li><a href="https://www.nasa.gov/wp-content/uploads/static/history/SP-368/s2ch1.htm">Biomedical Results of Apollo (NASA SP-368), Clinical Aspects of Crew Health</a></li>
           <li><a href="https://www.nasa.gov/wp-content/uploads/static/history/SP-4208/ch16.htm">Living and Working in Space (NASA SP-4208), chapters 16 and 17</a></li>
@@ -137,8 +149,8 @@
     <span>Prototype, not a medical device.</span>
   </footer>
 
-  <script src="core.js?v=r7"></script>
-  <script src="sidebar.js?v=r7"></script>
+  <script src="core.js?v=r8"></script>
+  <script src="sidebar.js?v=r8"></script>
   <script>renderSide();</script>
 </body>
 </html>

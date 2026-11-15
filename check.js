@@ -253,7 +253,9 @@ function drawEmergency() {
       return MOCK.earthLog[MOCK.earthLog.length - 1];
     });
     $("declareBtn").disabled = true;
-    $("emNote").innerHTML = `Declared. Report sent ${time(last.sent)}, reply ~${time(last.reply)}. Keep following the steps. <a href="index.html">Open the dashboard</a>`;
+    $("emNote").innerHTML = last.queued
+      ? `Declared. The Earth link is down, so the report goes out the moment it returns. Your crew is your help now: keep following the steps. <a href="index.html">Open the dashboard</a>`
+      : `Declared. Report sent ${time(last.sent)}, reply ~${time(last.reply)}. Keep following the steps. <a href="index.html">Open the dashboard</a>`;
   };
 }
 
@@ -407,7 +409,9 @@ function drawResult() {
     const summary = (list.length ? list.map(c => c.name).join("; ") : "nothing worrying") + (mood.picked ? `; mood ${mood.picked} of 5` : "");
     const last = mutate(() => { sendToEarth(`${me}: self-check: ${summary} (places: ${[...st.places].map(p => PLACES[p]).join(", ")})`); return MOCK.earthLog[MOCK.earthLog.length - 1]; });
     $("reportBtn").disabled = true;
-    $("reportNote").textContent = `Sent ${time(last.sent)}. Earliest reply ~${time(last.reply)}. Don't wait for it: follow the steps above.`;
+    $("reportNote").textContent = last.queued
+      ? "Saved. The Earth link is down, so it goes out by itself when the link returns. Follow the steps above."
+      : `Sent ${time(last.sent)}. Earliest reply ~${time(last.reply)}. Don't wait for it: follow the steps above.`;
   };
   $("againBtn").onclick = () => { if (body3d) st.places.forEach(p => body3d.set(p, false)); st.places.clear(); st.flags.clear(); st.answers = {}; st.qs = []; st.qi = 0; mood.picked = null; go("where"); };
 }

@@ -785,12 +785,14 @@ function logValue(kind, value, id) {
 function sendReport(id) {
   const note = ctx.note; ctx.note = null;
   const last = mutate(() => { sendToEarth(`${id}: health report (companion)${note ? `, symptom: ${note}` : ""}`); return MOCK.earthLog[MOCK.earthLog.length - 1]; });
-  return { say: `Done. ${Who(id)}'s report${note ? `, including ${note},` : ""} is on its way to Earth. It arrives around ${time(last.arrive)}, so the earliest reply is about ${time(last.reply)}. Keep going with the steps in the meantime.`,
+  return { say: last.queued
+      ? `Done. ${Who(id)}'s report${note ? `, including ${note},` : ""} is saved. The Earth link is down right now, so it goes out by itself when the link returns. Keep going with the steps in the meantime.`
+      : `Done. ${Who(id)}'s report${note ? `, including ${note},` : ""} is on its way to Earth. It arrives around ${time(last.arrive)}, so the earliest reply is about ${time(last.reply)}. Keep going with the steps in the meantime.`,
     chips: ["What should I do?", "How is everyone?"] };
 }
 function sendHome(message, id) {
   const last = mutate(() => { sendToEarth(`${id}: message home: ${message.slice(0, 280)}`); return MOCK.earthLog[MOCK.earthLog.length - 1]; });
-  return { say: `Sent. Your message reaches Earth around ${time(last.arrive)}. ${pick(["I'm sure it'll make someone's day.", "They'll be so happy to hear from you."])}`, face: "joy",
+  return { say: `${last.queued ? "Saved. The Earth link is down, so it goes out as soon as it's back." : `Sent. Your message reaches Earth around ${time(last.arrive)}.`} ${pick(["I'm sure it'll make someone's day.", "They'll be so happy to hear from you."])}`, face: "joy",
     chips: ["Talk to me", "How is everyone?"] };
 }
 
@@ -811,7 +813,7 @@ function declareEmergency(id) {
     sendToEarth(`${id}: MEDICAL EMERGENCY (top priority)`);
     return MOCK.earthLog[MOCK.earthLog.length - 1];
   });
-  return { say: `Done. Emergency declared for ${who(id)}, and Earth has the top-priority report, sent at ${time(last.sent)}. Keep the oxygen mask on and stay still. Watch for trouble breathing, chest pain, weakness on one side, or trouble speaking. I'm right here.`,
+  return { say: `Done. Emergency declared for ${who(id)}. ${last.queued ? "The Earth link is down, so the report goes out the moment it returns. Your crew is your help now." : `Earth has the top-priority report, sent at ${time(last.sent)}.`} Keep the oxygen mask on and stay still. Watch for trouble breathing, chest pain, weakness on one side, or trouble speaking. I'm right here.`,
     face: "caring", urgent: true, actions: [link("Open dashboard", "index.html")], chips: ["Calm me down", "What should I do?"] };
 }
 
@@ -1076,7 +1078,8 @@ function briefing() {
     `It's day ${m.day} of ${m.lengthDays}, ${m.phase.toLowerCase().replace("mars", "Mars")}.`,
     storm ? "There's a solar storm right now. Everyone should be in the shielded area." : "No solar storm.",
     ...ids.map(crewLine),
-    last ? `The last report to Earth went at ${time(last.sent)}, reply expected around ${time(last.reply)}.` : "Nothing has been sent to Earth today.",
+    MOCK.mission.earthLink === false ? "The Earth link is down for the solar conjunction. Reports wait on board and go out by themselves when it returns."
+      : last ? `The last report to Earth went at ${time(last.sent)}, reply expected around ${time(last.reply)}.` : "Nothing has been sent to Earth today.",
     reminders.length ? `You have ${plural(reminders.length, "reminder", "reminders")} set.` : ""
   ].filter(Boolean);
   const worstId = ids[0];
@@ -1372,7 +1375,8 @@ function understand(raw) {
     return { say: `About ${m.lengthDays - m.day} days to go in the mission. One day at a time.` };
   if (/\b(reply|answer|heard back|response)\b.*\bearth\b|\bwhen will earth\b/.test(t)) {
     const last = MOCK.earthLog[MOCK.earthLog.length - 1];
-    return { say: last ? `The last report went at ${time(last.sent)}. The earliest reply is around ${time(last.reply)}.` : "Nothing has been sent to Earth yet. Say: send a report, and I'll do it." };
+    return { say: last && last.queued ? `The Earth link is down for the solar conjunction. ${queuedCount()} report${queuedCount() > 1 ? "s are" : " is"} waiting on board and will go out by themselves when it returns.`
+      : last ? `The last report went at ${time(last.sent)}. The earliest reply is around ${time(last.reply)}.` : "Nothing has been sent to Earth yet. Say: send a report, and I'll do it." };
   }
   if (/\b(delay|lag)\b|\bsignal\b|\bhow long\b.*\b(earth|message)\b/.test(t))
     return { say: `A message takes ${m.signalDelayMin} minutes to reach Earth, so a reply takes at least ${m.signalDelayMin * 2}. That's why I tell you what to do right away, instead of waiting.` };
@@ -1459,6 +1463,8 @@ function defaultChips() {
 // Emergencies and yes/no or step-by-step flows stay on the built-in rules: instant and predictable.
 const aiHistory = [];
 const useAI = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.confirm && !ctx.expect && !ctx.steps;
+// After the built-in rules missed: the yes/no and step flows were already handled by them
+const useAIAfterMiss = text => (!!ASTRODOC_SERVER || !!claudeKey()) && !EMERGENCY.test(normalize(text)) && !ctx.expect && !ctx.steps;
 function crewSnapshot(text) {
   const crew = {};
   Object.keys(MOCK.crew).forEach(id => {
@@ -1521,7 +1527,7 @@ const AI_SCHEMA = {
   additionalProperties: false
 };
 async function askClaude(text) {
-  const past = aiHistory.slice(-12);
+  const past = aiHistory.slice(-6);
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -1532,9 +1538,9 @@ async function askClaude(text) {
       model: "claude-opus-5-5", max_tokens: 2000, system: AI_SYSTEM,
       messages: [...past, { role: "user", content: `Crew data now:\n${JSON.stringify(crewSnapshot(text))}\n\nThey said: ${text}` }],
       fallbacks: "default",                            // if a safety check declines, retry on the recommended model
-      output_config: { effort: "medium", format: { type: "json_schema", schema: AI_SCHEMA } }   // medium effort: thoughtful but still quick
+      output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } }   // low effort: short chat replies, less thinking, faster
     }),
-    signal: AbortSignal.timeout(20000)
+    signal: AbortSignal.timeout(8000)                  // too slow: the built-in reply answers instead
   });
   if (res.status === 401 || res.status === 403) {          // a wrong key: forget it and ask again
     try { localStorage.removeItem(AI_KEY); } catch { }
@@ -1550,7 +1556,7 @@ async function askClaude(text) {
 async function askServer(text) {
   const res = await fetch(ASTRODOC_SERVER + "/chat", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, history: aiHistory.slice(-12), data: crewSnapshot(text) }), signal: AbortSignal.timeout(20000)
+    body: JSON.stringify({ message: text, history: aiHistory.slice(-6), data: crewSnapshot(text) }), signal: AbortSignal.timeout(8000)
   });
   if (!res.ok) throw new Error("chat " + res.status);
   return res.json();
@@ -1581,20 +1587,23 @@ async function respond(raw, { voice = false } = {}) {
   stopSpeaking();
   lastWasVoice = voice;
   const my = ++busy;
-  let r = null;
-  if (useAI(text)) {
+  // Fast first: the built-in rules answer at once whenever they clearly understand.
+  // Claude is asked only when they don't (open questions, chat, unusual wording).
+  let r = understand(text);
+  if (r && r.missed && useAIAfterMiss(text)) {
+    ctx.misses = Math.max(0, ctx.misses - 1); ctx.confirm = null;      // forget the built-in "did you mean…?"
     setThinking(true);
-    r = await askAI(text);
+    const ai = await askAI(text);
     if (my !== busy) return;
+    if (ai) r = ai; else ctx.misses++;
   }
-  if (!r) r = understand(text);
   if (r && !r.missed) ctx.misses = 0;
   if (!r || (!r.say && !r.then)) { setThinking(false); setChips(r?.chips || defaultChips()); return; }
   if (!r.say) { setThinking(false); r.then(); return; }
   aiHistory.push({ role: "user", content: text }, { role: "assistant", content: r.say });
   if (!r.fromAI) {
     setThinking(true);
-    await wait(r.urgent ? 150 : Math.min(950, 320 + r.say.length * 3));   // a natural beat, never slow in an emergency
+    await wait(r.urgent ? 0 : Math.min(400, 140 + r.say.length));   // a short, natural beat; none in an emergency
     if (my !== busy) return;
   }
   setThinking(false);

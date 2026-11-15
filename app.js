@@ -70,7 +70,9 @@ function view(id) {
 function showMission() {
   const m = MOCK.mission;
   const p = phaseAt(m.day), left = p.start + p.days - m.day;
-  $("missionStrip").innerHTML = `<span>Day ${m.day} · ${m.phase}</span><span>${left} days to ${p.name === "To Mars" ? "Mars" : p.name === "On Mars" ? "launch home" : "Earth"}</span><span>Earth delay ${m.signalDelayMin} min</span>`;
+  $("missionStrip").innerHTML = `<span>Day ${m.day} · ${m.phase}</span><span>${left} days to ${p.name === "To Mars" ? "Mars" : p.name === "On Mars" ? "launch home" : "Earth"}</span>${m.earthLink === false
+    ? `<span class="link-down">Earth link down · solar conjunction${queuedCount() ? ` · ${queuedCount()} report${queuedCount() > 1 ? "s" : ""} waiting` : ""}</span>`
+    : `<span>Earth delay ${m.signalDelayMin} min</span>`}`;
 }
 
 // Status: the most urgent thing and what to do now; the rest as short lines.
@@ -93,7 +95,9 @@ function showStatus(S) {
     ${first ? `
       <h1 class="st-title">${first.title}</h1>
       <p class="st-do"><span class="do-label">Do now</span>${first.todo}</p>
-      ${auto ? `<p class="st-sent">${SENT_ICON}Sent to the flight surgeon automatically at ${time(auto.sent)} · earliest reply ~${time(auto.reply)}. Don't wait for it.</p>` : ""}
+      ${auto ? `<p class="st-sent">${SENT_ICON}${auto.queued
+        ? "Report ready for the flight surgeon. The Earth link is down, so it waits on board and goes out by itself when the link returns. Don't wait for it."
+        : `Sent to the flight surgeon automatically at ${time(auto.sent)} · earliest reply ~${time(auto.reply)}. Don't wait for it.`}</p>` : ""}
       ${showDimer || showClot ? `<div class="evidence">${showDimer ? dimerChart(c, S) : ""}${showClot ? clotSteps() : ""}</div>` : ""}
       ${rest.length ? `<ul class="st-more" aria-label="Also">${rest.map(w => `
         <li class="${w.status}">${ICON[w.status]}<span class="sr-only">${LABEL[w.status]}:</span>
@@ -177,6 +181,7 @@ function showAll() {
   showStatus(S);
   showVitals(S);
   if (typeof showDose === "function") showDose(S);
+  if (typeof showHistory === "function") showHistory();
   showEmergency();
   fillToday(MOCK.crew[currentCrew]);
   showMoodCard();
@@ -227,12 +232,15 @@ function showReportFoot(S) {
   const btn = $("reportBtn"), last = lastReport(currentCrew);
   btn.className = S.overall === "act" ? "primary-btn" : "soft-btn";
   btn.textContent = isMe(currentCrew) ? "Send my report to Earth" : `Send report on the ${MOCK.crew[currentCrew].role.toLowerCase()}`;
-  $("reportNote").textContent = last ? `Last report ${time(last.sent)} · earliest reply ~${time(last.reply)}` : "No report sent yet today.";
+  $("reportNote").textContent = !last ? "No report sent yet today."
+    : last.queued ? (queuedCount() > 1 ? `${queuedCount()} reports waiting on board · they go out by themselves when the Earth link returns`
+                                       : "1 report waiting on board · it goes out by itself when the Earth link returns")
+    : `Last report ${time(last.sent)} · earliest reply ~${time(last.reply)}`;
 }
 $("reportBtn").onclick = () => {
   mutate(() => { sendToEarth(`${currentCrew}: health report`); });
   showReportFoot(check(currentCrew));
-  $("reportNote").textContent = "Sent. " + $("reportNote").textContent + ". Keep going meanwhile.";
+  $("reportNote").textContent = (MOCK.mission.earthLink === false ? "Saved. " : "Sent. ") + $("reportNote").textContent + ". Keep going meanwhile.";
 };
 
 // --- Emergency: ask once, then show what to do ---
@@ -243,7 +251,7 @@ function showEmergency() {
     const last = [...MOCK.earthLog].reverse().find(e => /EMERGENCY/.test(e.title));
     box.className = "emergency-box active";
     box.innerHTML = `<div><strong>Medical emergency · ${nameOf(currentCrew)}</strong>
-      <p><b>Do now:</b> oxygen mask, keep the person still.${last ? ` Reported to Earth at ${time(last.sent)}.` : ""}</p></div>
+      <p><b>Do now:</b> oxygen mask, keep the person still.${last ? last.queued ? " The Earth link is down: the report goes out the moment it returns. The crew is your help now." : ` Reported to Earth at ${time(last.sent)}.` : ""}</p></div>
       <button class="soft-btn" id="emergencyClear">Clear</button>`;
     $("emergencyClear").onclick = () => { mutate(() => { emergency.active = false; emergency.signs = {}; }); showAll(); };
   } else if (emergencyAsk) {
@@ -276,6 +284,8 @@ $("solarSlider").oninput = () => setSolarActivity(Number($("solarSlider").value)
 $("locationSelect").innerHTML = Object.entries(MOCK.locations).map(([k, L]) =>
   `<option value="${k}" ${k === MOCK.mission.location ? "selected" : ""}>${L.label} (${L.ratePerDay} mSv/day, measured)</option>`).join("");
 $("locationSelect").onchange = () => { mutate(() => { MOCK.mission.location = $("locationSelect").value; }); showAll(); };
+$("linkDown").checked = MOCK.mission.earthLink === false;
+$("linkDown").onchange = () => { mutate(() => setEarthLink(!$("linkDown").checked)); showAll(); };
 $("simApply").onclick = () => applySensorReading({ heartRate: parseFloat($("simHr").value), temperature: parseFloat($("simTemp").value) });
 $("resetDemo").onclick = resetDemo;
 

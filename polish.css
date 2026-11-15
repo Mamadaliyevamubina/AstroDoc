@@ -208,3 +208,37 @@ details.k-mood > :not(summary) { margin-left: var(--s5); margin-right: var(--s5)
   details.k-cause > summary .k-rank { flex-basis: 100%; }
   .k-more-name { font-size: 17px; }
 }
+
+/* Earth link down (solar conjunction): a plain fact, not a health status */
+.link-down { display: inline-flex; align-items: center; gap: 6px; padding: 1px 10px; border-radius: var(--r-pill); background: var(--navy); color: #fff; font-weight: 600; }
+.link-down::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #fff; }
+.demo-check { display: flex; flex-direction: row !important; align-items: center; gap: var(--s2); }
+.demo-check input { width: 18px; height: 18px; accent-color: var(--navy); }
+
+/* ---------- The last 6 months (history.js) ---------- */
+.history-card { padding: var(--s5); }
+.h-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s4) var(--s5); flex-wrap: wrap; }
+.h-head > div { flex: 1 1 420px; }
+.history-card h2 { font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
+.h-summary { margin-top: var(--s2); font-size: 16.5px; line-height: 1.5; color: var(--ink-soft); max-width: 62ch; text-wrap: pretty; }
+.h-grid-4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5) var(--s6); margin-top: var(--s5); }
+.h-cell { margin: 0; min-width: 0; }
+.h-cell figcaption { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.h-name { font-size: 16px; font-weight: 700; color: var(--ink); }
+.h-now { margin-top: 2px; font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.h-cell > svg { display: block; width: 100%; height: auto; margin-top: var(--s2); overflow: visible; font-family: var(--font); }
+.h-line { fill: none; stroke: var(--navy); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.h-dot { fill: var(--navy); stroke: #fff; stroke-width: 2; }
+.h-grid { stroke: rgba(38, 44, 79, .08); }
+.h-tick, .h-axis { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.h-ref { stroke: var(--ink-soft); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: .7; }
+.h-ref-label { font-size: 11px; font-weight: 600; fill: var(--ink-soft); paint-order: stroke; stroke: rgba(255, 255, 255, .9); stroke-width: 3px; }
+.h-band { fill: rgba(38, 44, 79, .08); }
+.h-hit { fill: transparent; }
+.h-hit:hover { fill: rgba(38, 44, 79, .05); }
+.h-text { margin-top: var(--s2); font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+.h-foot { margin-top: var(--s5); font-size: 14px; color: var(--muted); }
+@media (max-width: 760px) {
+  .history-card { padding: var(--s4); }
+  .h-grid-4 { grid-template-columns: 1fr; gap: var(--s5); }
+}

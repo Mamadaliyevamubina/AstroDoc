@@ -23,6 +23,7 @@ const MOCK = {
     signalDelayMin: 18,        // one way (Mars is 3 to 22 light-minutes away). Round trip = 2x
     location: "spacecraft",    // key of MOCK.locations
     lengthDays: 1006,          // 253 + 500 + 253 days (the phases below)
+    earthLink: true,           // false = solar conjunction: the Sun blocks Mars–Earth radio for about two weeks
     // The mission's shape: Curiosity's own cruise took 253 days; NASA's reference plan stays about 500 days on Mars
     phases: [
       { name: "To Mars",       days: 253, where: "spacecraft" },
@@ -337,11 +338,22 @@ const time = (d = new Date()) => d.toTimeString().slice(0, 5);
 const addMin = (d, m) => new Date(d.getTime() + m * 60000);
 const escapeHtml = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
-// Report to Earth (the crew never waits for the reply)
+// Report to Earth (the crew never waits for the reply).
+// With the Earth link down (solar conjunction) reports wait on board and go out by themselves when it returns.
 function sendToEarth(title) {
   const sent = new Date(), d = MOCK.mission.signalDelayMin;
+  if (MOCK.mission.earthLink === false) { MOCK.earthLog.push({ title, sent, queued: true }); return; }
   MOCK.earthLog.push({ title, sent, arrive: addMin(sent, d), reply: addMin(sent, d * 2) });
 }
+function setEarthLink(on) {
+  MOCK.mission.earthLink = on;
+  if (!on) return;
+  const now = new Date(), d = MOCK.mission.signalDelayMin;
+  MOCK.earthLog.forEach(e => { if (e.queued) { e.queued = false; e.sent = now; e.arrive = addMin(now, d); e.reply = addMin(now, d * 2); } });
+}
+const queuedCount = () => MOCK.earthLog.filter(e => e.queued).length;
+// "earliest reply ~09:12", or what happens while the link is down
+const replyNote = e => e.queued ? "it waits on board and goes out by itself when the Earth link returns" : `earliest reply ~${time(e.reply)}`;
 // Automatic reports for the dangerous patterns, once each
 function autoReport(id = currentCrew) {
   const S = check(id);
@@ -377,7 +389,7 @@ function saveState() {
   try {
     localStorage.setItem(STORE, JSON.stringify({
       crew: MOCK.crew, location: MOCK.mission.location, solar: MOCK.radiation.solarActivity,
-      earthLog: MOCK.earthLog, currentCrew, me, emergency, autoReported, checklistDone
+      earthLog: MOCK.earthLog, earthLink: MOCK.mission.earthLink, currentCrew, me, emergency, autoReported, checklistDone
     }));
   } catch { /* storage full or blocked: the page still works, just not shared */ }
 }
@@ -389,7 +401,8 @@ function loadState() {
   if (s.location && MOCK.locations[s.location]) MOCK.mission.location = s.location;
   if (typeof s.solar === "number") MOCK.radiation.solarActivity = s.solar;
   if (Array.isArray(s.earthLog)) MOCK.earthLog.splice(0, MOCK.earthLog.length,
-    ...s.earthLog.map(e => ({ ...e, sent: new Date(e.sent), arrive: new Date(e.arrive), reply: new Date(e.reply) })));
+    ...s.earthLog.map(e => ({ ...e, sent: new Date(e.sent), arrive: e.arrive ? new Date(e.arrive) : undefined, reply: e.reply ? new Date(e.reply) : undefined })));
+  if (typeof s.earthLink === "boolean") MOCK.mission.earthLink = s.earthLink;
   if (s.currentCrew && MOCK.crew[s.currentCrew]) currentCrew = s.currentCrew;
   if (s.me && MOCK.crew[s.me]) me = s.me;
   if (s.emergency) Object.assign(emergency, s.emergency);
