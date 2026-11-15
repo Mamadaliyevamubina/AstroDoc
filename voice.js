@@ -1143,7 +1143,8 @@ const CASE_WORDS = [            // word starts, so "sleeping", "headaches" and "
   [/\b(headache|head hurt|head ache|migraine)/, "headache"], [/\b(nause|sick|vomit|throw(ing)? up|threw up|space sickness)/, "nausea"],
   [/\b(fever|temperature|hot\b|chill)/, "temp"], [/\b(cold\b|colds\b|flu\b|cough|sneez)/, "cold"], [/\b(stuffy|blocked nose|congest|nose)/, "congestion"],
   [/\b(back\b|backache|spine|spinal)/, "back"], [/\b(eye|vision|blur|see\b|sight)/, "vision"], [/\b(pain|hurt|sore|ache)/, "pain"],
-  [/\b(skin|rash|itch)/, "skin"], [/\b(stomach|diarrh|bowel|gas\b)/, "stomach"], [/\b(infect|urin)/, "infection"]
+  [/\b(skin|rash|itch)/, "skin"], [/\b(stomach|diarrh|bowel|gas\b)/, "stomach"], [/\b(infect|urin)/, "infection"],
+  [/\b(breath|chest|cough|lung|fume)/, "breathing"], [/\b(hid|hide|hiding|honest|tell (the )?doctor)/, "report"]
 ];
 // Cases about what was said, or else about the current topic and the person's problems
 function casesFor(text, id = ctx.crew) {
@@ -1160,8 +1161,8 @@ function tellCase(list, i = 0) {
   const c = list[i % list.length];
   ctx.cases = { list, i: i + 1 };
   const lower = w => /^[A-Z][a-z]/.test(w) ? w[0].toLowerCase() + w.slice(1) : w;       // "Long-duration" → "long-duration", keeps "ISS", "U.S."
-  const whom = /^((an?|all|long|shuttle|iss)\b|\d|u\.s\.)/i.test(c.who) ? lower(c.who.replace(/\s*\(not named\)/, "")) : "the " + c.who.toLowerCase();
-  const where = /^Apollo/.test(c.mission) ? c.mission : /^International|^Space/.test(c.mission) ? "the " + c.mission : lower(c.mission);
+  const whom = /^((an?|all|the|long|shuttle|iss)\b|\d|u\.s\.)/i.test(c.who) ? lower(c.who.replace(/\s*\(not named\)/, "")) : "the " + c.who.toLowerCase();
+  const where = /^(Apollo|Skylab|Gemini)/.test(c.mission) ? c.mission : /^International|^Space/.test(c.mission) ? "the " + c.mission : lower(c.mission);
   const say = `Here's a real case from ${where}, ${c.year}, about ${whom}. ${c.felt} ${c.response} ${c.outcome}`;
   return { say, face: "caring",
     html: `${escapeHtml(say)}<br><small>Source: <a href="${escapeHtml(c.source.url)}" target="_blank" rel="noopener">${escapeHtml(c.source.title)}</a></small>`,
@@ -1466,7 +1467,7 @@ function crewSnapshot(text) {
       problems: S.warnings.map(w => ({ level: LABEL[w.status], what: w.title, whatToDo: w.todo })) };
   });
   const pastCases = casesFor(normalize(text || "")).slice(0, 3)       // real NASA cases Claude can mention, with sources
-    .map(c => ({ mission: c.mission, year: c.year, felt: c.felt, doctorsDid: c.response, outcome: c.outcome, source: c.source.title }));
+    .map(c => ({ mission: c.mission, year: c.year, felt: c.felt, doctorsDid: c.response, outcome: c.outcome, lesson: c.lesson, source: c.source.title }));
   return { mission: MOCK.mission, talkingAbout: ROLE[ctx.crew], userIs: me ? ROLE[me] : null, userName: userName() || null, crew, pastCases };
 }
 const AI_KEY = "astrodoc-claude-key";
@@ -1475,7 +1476,7 @@ let aiProblem = "";              // shown in the voice menu when the key doesn't
 // Same instructions and reply shape as server/worker.js: keep the two in step
 const AI_SYSTEM = `You are AstroDoc, the voice health companion for a small astronaut crew on a long space mission.
 Your words are read aloud, so:
-- Answer in one to three short, natural spoken sentences. No markdown, lists, emojis or headings.
+- Answer in two to four short, natural spoken sentences. No markdown, lists, emojis or headings.
 - Sound soft, gentle and polite, like a kind nurse who is also a trusted crewmate: say "please", thank people,
   acknowledge how they feel, and never sound abrupt or alarming, even when something needs care now.
 - Be courteous every time: start by acknowledging what they said ("Thank you for telling me", "I'm sorry you're
@@ -1487,8 +1488,10 @@ Your words are read aloud, so:
 You are given the crew's current health data as JSON in each message. Use only that data for facts about the crew;
 if something isn't in the data, say you don't have that reading.
 "pastCases" are real, documented NASA cases of what astronauts felt and what their doctors did. When one fits,
-you may briefly mention it ("On Apollo 13 in 1970, ...") to reassure or guide. Never invent cases, and never tell
-anyone to take a medicine just because an astronaut once did. Explain what a reading means in plain words and
+mention it, the way a caring doctor would ("You're not alone in this. On Apollo 13 in 1970, an astronaut felt the
+same, and NASA's doctors..."), and say what the doctors did and how it turned out. When someone describes how they
+feel, always check pastCases first. Use only these NASA cases, never invent cases or details, and never tell anyone
+to take a medicine just because an astronaut once did. Explain what a reading means in plain words and
 say what to do now. You support the crew but do not replace the flight surgeon: for anything serious, say a report
 should go to Earth. Medical emergencies are handled by the app before they reach you.
 
@@ -1529,7 +1532,7 @@ async function askClaude(text) {
       model: "claude-opus-5-5", max_tokens: 2000, system: AI_SYSTEM,
       messages: [...past, { role: "user", content: `Crew data now:\n${JSON.stringify(crewSnapshot(text))}\n\nThey said: ${text}` }],
       fallbacks: "default",                            // if a safety check declines, retry on the recommended model
-      output_config: { effort: "low", format: { type: "json_schema", schema: AI_SCHEMA } }   // low effort: quick spoken replies
+      output_config: { effort: "medium", format: { type: "json_schema", schema: AI_SCHEMA } }   // medium effort: thoughtful but still quick
     }),
     signal: AbortSignal.timeout(20000)
   });
