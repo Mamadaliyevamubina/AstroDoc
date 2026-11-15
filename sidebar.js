@@ -20,6 +20,23 @@ const SIDE_ICON = {
   menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>`
 };
 
+// Each crew member is an embroidered mission patch: twill fill in their own
+// colour, a navy overlock edge, a running stitch inside, their code in satin.
+// (Not a health colour: status always rides beside it as icon + word.)
+const PATCH = { CDR: "#2f4fa8", PLT: "#5b4bb5", MS1: "#1d7fb3" };
+function patchBadge(id, cls = "") {
+  const fill = PATCH[id] || "#2f4fa8";
+  return `<svg class="patch ${cls}" viewBox="0 0 64 64" aria-hidden="true">
+    <circle cx="32" cy="32" r="31" fill="#1b2550"/>
+    <circle cx="32" cy="32" r="28.6" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="2.6" stroke-dasharray=".9 1.5"/>
+    <circle cx="32" cy="32" r="25.5" fill="${fill}"/>
+    <path d="M9 37 Q32 25 55 32" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="44" cy="17.5" r="2.2" fill="#fff" fill-opacity=".85"/>
+    <circle cx="32" cy="32" r="22" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.1" stroke-dasharray="2.2 2.3"/>
+    <text x="32" y="${id === "MS1" ? 37 : 37}" text-anchor="middle" class="patch-code">${id}</text>
+  </svg>`;
+}
+
 function renderSide() {
   const el = $("side");
   if (!el) return;
@@ -32,7 +49,7 @@ function renderSide() {
     const lvl = check(id).overall;
     return `
     <button type="button" class="side-crew" data-side-crew="${id}" aria-current="${id === cur ? "true" : "false"}">
-      <span class="side-crew-icon ${lvl}">${ICON[lvl]}</span>
+      <span class="side-crew-patch">${patchBadge(id)}<span class="side-crew-icon ${lvl}">${ICON[lvl]}</span></span>
       <span class="side-crew-text">
         <span class="side-crew-name">${id === me ? `You <small>${MOCK.crew[id].role}</small>` : MOCK.crew[id].role}</span>
         <span class="side-crew-why"><span class="sr-only">${LABEL[lvl]}: </span>${reasonFor(id)}</span>
@@ -53,7 +70,7 @@ function renderSide() {
       <a class="side-link" href="science.html" ${ON_SCIENCE ? 'aria-current="page"' : ""}>${SIDE_ICON.science}<span>The science</span></a>
     </nav>
 
-    <section class="side-group" aria-labelledby="sideCrewTitle">
+    <section class="side-group side-crew-group" aria-labelledby="sideCrewTitle">
       <h2 class="side-title" id="sideCrewTitle">${ON_CHAT ? "Talk about" : "Crew"}</h2>
       ${crew}
     </section>`;

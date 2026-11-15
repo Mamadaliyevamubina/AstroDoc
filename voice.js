@@ -133,7 +133,10 @@ function loadNeuralVoice() {
     .then(tts => { neural = tts; if (typeof updateVoiceMenu === "function") updateVoiceMenu(); })
     .catch(e => console.warn("Natural voice unavailable, using the device voice.", e));
 }
-if (!cloudVoice()) setTimeout(loadNeuralVoice, 1500);  // after the page has settled (with the natural voice, only if it fails)
+// Loaded only when Astrodoc first speaks, and only online: the app itself works with no internet,
+// and nobody downloads 90 MB just by opening the page.
+let neuralAsked = false;
+function wantNeuralVoice() { if (neuralAsked || cloudVoice() || !navigator.onLine) return; neuralAsked = true; setTimeout(loadNeuralVoice, 300); }
 
 // The server's voice (ElevenLabs): one mp3 per sentence
 async function cloudClip(text, token, speed) {
@@ -213,6 +216,7 @@ async function speakClips(parts, token, rate, pitch, onDone, makeClip) {
 
 let speakToken = 0;
 function speak(text, { rate = 0.92, pitch = voicePitch(), onDone } = {}) {   // unhurried, gentle pace
+  wantNeuralVoice();
   rate *= prefs.rate;
   const token = ++speakToken;
   if (!text) { if (onDone) onDone(); return; }

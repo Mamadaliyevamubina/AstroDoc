@@ -437,3 +437,11 @@ function startDosimeter(onTick) {
     onTick(after !== before);
   }, 1000);
 }
+
+
+// =========================================================================
+// 7. OFFLINE — keep the whole app on the device (sw.js). Not when opened as a file.
+// =========================================================================
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}

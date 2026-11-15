@@ -18,6 +18,7 @@ const nameOf = id => isMe(id) ? "You" : MOCK.crew[id].role;
 function showWelcome() {
   $("crewSelector").innerHTML = Object.keys(MOCK.crew).map(id => `
     <button class="choice" data-crew="${id}">
+      ${typeof patchBadge === "function" ? patchBadge(id, "choice-patch") : ""}
       <span class="choice-name">${MOCK.crew[id].role}</span>
       <span class="choice-note">${ROLE_NOTE[id] || id}</span>
     </button>`).join("");
@@ -46,10 +47,11 @@ function showCrewStrip() {
   $("crewStrip").innerHTML = ids.map(id => {
     const S = check(id);
     return `<button class="crew-tab ${S.overall}" data-view="${id}" aria-pressed="${id === currentCrew}">
-      <span class="crew-icon">${ICON[S.overall]}</span>
+      ${typeof patchBadge === "function" ? patchBadge(id, "crew-patch") : ""}
       <span class="crew-text">
         <span class="crew-name">${nameOf(id)}${isMe(id) ? `<small>${MOCK.crew[id].role}</small>` : ""}</span>
-        <span class="crew-why"><span class="sr-only">${LABEL[S.overall]}: </span>${reasonFor(id)}</span>
+        <span class="crew-state">${badge(S.overall)}</span>
+        <span class="crew-why">${reasonFor(id)}</span>
       </span></button>`;
   }).join("");
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => view(b.dataset.view));
@@ -228,8 +230,41 @@ $("exPlus").onclick  = () => { update(c => { if (c.exercise < 6) c.exercise++; }
 $("exMinus").onclick = () => { update(c => { if (c.exercise > 0) c.exercise--; }); $("exMinus").focus(); };
 
 // Report: the main button when someone needs care now, a quiet one otherwise
+// The signal stitch: ship → Earth, the report's position from its real send/arrive/reply times
+function showStitch(drawIn = false) {
+  let el = $("stitch");
+  if (!el) {
+    const foot = document.querySelector(".status-foot");
+    if (!foot) return;
+    el = document.createElement("div"); el.id = "stitch"; el.className = "stitch";
+    foot.after(el);
+  }
+  const last = lastReport(currentCrew);
+  if (!last) { el.hidden = true; return; }
+  el.hidden = false;
+  const now = Date.now(), sent = +last.sent, arrive = +last.arrive, reply = +last.reply;
+  const queued = !!last.queued;
+  const f = queued ? 0 : Math.max(0, Math.min(1, (now - sent) / (reply - sent)));
+  const phase = queued ? "Waiting on board: the Earth link is down" : now < arrive ? "On its way to Earth" : now < reply ? "With the flight surgeon: reply on its way" : "The reply can be here now";
+  el.classList.toggle("drawing", drawIn);
+  el.innerHTML = `
+    <div class="stitch-line" style="--f:${f.toFixed(3)}">
+      <span class="stitch-node ship">Ship</span>
+      <span class="stitch-track"><span class="stitch-done"></span><span class="stitch-mark arrive"></span><span class="stitch-dot"></span></span>
+      <span class="stitch-node earth">Earth</span>
+    </div>
+    <div class="stitch-times">
+      <span><b>${time(last.sent)}</b> sent</span>
+      <span class="mid"><b>${queued ? "—" : time(last.arrive)}</b> arrives</span>
+      <span class="end"><b>${queued ? "—" : time(last.reply)}</b> earliest reply</span>
+    </div>
+    <p class="stitch-phase">${phase}</p>`;
+}
+setInterval(() => { if (me && $("stitch") && !$("stitch").hidden) showStitch(); }, 10000);
+
 function showReportFoot(S) {
   const btn = $("reportBtn"), last = lastReport(currentCrew);
+  showStitch();
   btn.className = S.overall === "act" ? "primary-btn" : "soft-btn";
   btn.textContent = isMe(currentCrew) ? "Send my report to Earth" : `Send report on the ${MOCK.crew[currentCrew].role.toLowerCase()}`;
   $("reportNote").textContent = !last ? "No report sent yet today."
@@ -240,6 +275,7 @@ function showReportFoot(S) {
 $("reportBtn").onclick = () => {
   mutate(() => { sendToEarth(`${currentCrew}: health report`); });
   showReportFoot(check(currentCrew));
+  showStitch(true);                                   // the stitch draws itself from ship to Earth
   $("reportNote").textContent = (MOCK.mission.earthLink === false ? "Saved. " : "Sent. ") + $("reportNote").textContent + ". Keep going meanwhile.";
 };
 

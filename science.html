@@ -7,9 +7,12 @@
   <meta name="theme-color" content="#f3f6fa">
   <meta name="description" content="Where Astrodoc's numbers come from: NASA measurements, NASA standards and published astronaut studies.">
   <link rel="icon" href="assets/astrodoc-favicon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/astrodoc-icon-192.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="type.css">
-  <link rel="stylesheet" href="polish.css?v=r8">
+  <link rel="stylesheet" href="polish.css?v=r12">
+  <link rel="stylesheet" href="patch.css?v=1">
 </head>
 <body class="science-page">
 
@@ -29,7 +32,7 @@
       <p class="sci-lead">Astrodoc uses two kinds of data. The <b>mission's radiation, the limits and the medical rules</b> come from NASA measurements, NASA standards and published astronaut studies. The <b>three crew members' readings</b> (heart rate, sleep, blood tests) are simulated, because real astronaut health records are private. Every rule below says which is which.</p>
 
       <nav class="sci-toc" aria-label="On this page">
-        <a href="#radiation">Radiation</a><a href="#clots">Blood clots</a><a href="#sleep">Sleep</a><a href="#eyes">Eyes</a><a href="#delay">Earth delay</a><a href="#history">Last 6 months</a><a href="#readings">Everyday readings</a><a href="#cases">Real cases</a><a href="#simulated">What is simulated</a>
+        <a href="#radiation">Radiation</a><a href="#clots">Blood clots</a><a href="#sleep">Sleep</a><a href="#eyes">Eyes</a><a href="#delay">Earth delay</a><a href="#history">Last 6 months</a><a href="#readings">Everyday readings</a><a href="#cases">Real cases</a><a href="#earth">On Earth</a><a href="#simulated">What is simulated</a>
       </nav>
 
       <section id="radiation">
@@ -125,6 +128,17 @@
         </ul>
       </section>
 
+      <section id="earth">
+        <h2>Astrodoc on Earth</h2>
+        <p>The problem Astrodoc solves, help that is too far away to ask, is not only a space problem. In 2021 about 4.5 billion people, more than half the world, were not fully covered by essential health services (<a href="https://www.worldbank.org/en/news/press-release/2023/09/18/billions-left-behind-on-the-path-to-universal-health-coverage">WHO and World Bank, 2023</a>).</p>
+        <dl class="sci-facts">
+          <div><dt>Concordia station, Antarctica</dt><dd><b>8 months, nothing in or out</b><span>Crews stay at least eight months, four of them without sunlight; in winter nothing can reach or leave the base, and one doctor looks after everyone. ESA uses it to study life on a spaceship. <a href="https://www.esa.int/Our_Activities/Human_Spaceflight/Ready_for_winter">ESA</a></span></dd></div>
+          <div><dt>People without full essential health services</dt><dd><b>about 4.5 billion</b><span>2021 figure. <a href="https://www.worldbank.org/en/news/press-release/2023/09/18/billions-left-behind-on-the-path-to-universal-health-coverage">WHO and World Bank</a></span></dd></div>
+        </dl>
+        <p><b>What carries over unchanged.</b> The rules run on the device, so a polar station, a ship or a village clinic gets the same help as the spacecraft. It installs and works with no internet. Emergency signs come first. Reports wait and go out by themselves when a connection returns. The words are plain and the text is large for tired eyes.</p>
+        <p><b>What would change, honestly.</b> Before anyone relied on it, doctors would have to check every rule for that place, and it would need the local language. For Uzbekistan that means Uzbek and Russian, checked by our medical students and a doctor. That is our next step, not something the prototype does today.</p>
+      </section>
+
       <section id="simulated">
         <h2>What is simulated</h2>
         <p>The commander, pilot and mission specialist are invented. Their heart rate, temperature, blood pressure, sleep, mood, reaction times and blood tests are made up to show three stories: a very tired commander, a pilot with a possible clot, and a healthy specialist. Their radiation uses the real rates above, plus a made-up dose from earlier missions. With the Arduino pulse sensor connected, the heart rate on the dashboard is a real measurement.</p>
@@ -138,6 +152,7 @@
           <li>NASA Office of the Chief Health and Medical Officer. Radiation Protection technical brief (NASA-STD-3001 Vol. 1 Rev. B). <a href="https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf">nasa.gov</a></li>
           <li>Marshall-Fazio K. et al. Assessment of jugular venous blood flow stasis and thrombosis during spaceflight. <i>JAMA Network Open</i> 2(11), 2019. <a href="https://doi.org/10.1001/jamanetworkopen.2019.15011">doi:10.1001/jamanetworkopen.2019.15011</a></li>
           <li>Barger L. K. et al. Prevalence of sleep deficiency and use of hypnotic drugs in astronauts before, during, and after spaceflight. <i>The Lancet Neurology</i>, 2014. <a href="https://www.eurekalert.org/news-releases/595450">Summary</a></li>
+          <li>Planet pictures in the mission view: Earth from Apollo 17 ("The Blue Marble", NASA, AS17-148-22727) and Mars from the Viking orbiters (NASA/USGS). Both public domain.</li>
           <li>UNSCEAR. Sources and effects of ionizing radiation: world average natural background dose, about 2.4 mSv per year.</li>
         </ol>
       </section>
@@ -149,8 +164,8 @@
     <span>Prototype, not a medical device.</span>
   </footer>
 
-  <script src="core.js?v=r8"></script>
-  <script src="sidebar.js?v=r8"></script>
+  <script src="core.js?v=r11"></script>
+  <script src="sidebar.js?v=patch1"></script>
   <script>renderSide();</script>
 </body>
 </html>

@@ -7,11 +7,14 @@
   <meta name="theme-color" content="#f3f6fa">
   <meta name="description" content="Astrodoc: simple health monitoring for astronauts far from Earth.">
   <link rel="icon" href="assets/astrodoc-favicon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/astrodoc-icon-192.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="check.css">
   <link rel="stylesheet" href="type.css">
   <link rel="stylesheet" href="bodymap.css">
-  <link rel="stylesheet" href="polish.css?v=r8">
+  <link rel="stylesheet" href="polish.css?v=r12">
+  <link rel="stylesheet" href="patch.css?v=1">
 </head>
 <body class="choosing">
 
@@ -24,10 +27,12 @@
       <span class="brand-mark"><img src="assets/astrodoc-logo-mark.png" alt=""></span>
       <span class="brand-name">Astrodoc</span>
     </span>
+    <p class="welcome-what">Astrodoc keeps a Mars crew healthy when Earth is 20 minutes away: it spots problems early, says what to do now, and reports to Earth by itself.</p>
     <h1 id="welcomeTitle">Who are you?</h1>
     <p class="muted">Choose once. Astrodoc then opens on your own health, with your crewmates one tap away.</p>
     <!-- Choices are built in app.js -->
     <div class="choices" id="crewSelector"></div>
+    <button type="button" class="welcome-story" data-story>New here? Watch the 60-second story</button>
   </section>
 
   <!-- ===================== HEADER ===================== -->
@@ -56,6 +61,12 @@
 
   <main class="page">
     <div class="main-col">
+      <!-- Mission view: drawn from the mission data (mission.js) -->
+      <section class="mission-view" id="missionHero" aria-label="Mission"></section>
+
+      <!-- First-visit guide: three things to know (mission.js) -->
+      <section class="card guide-card" id="guideCard" aria-labelledby="guideTitle" hidden></section>
+
       <!-- You and your crewmates: one tap to switch. Built in app.js -->
       <nav class="crew-strip" id="crewStrip" aria-label="You and your crewmates"></nav>
 
@@ -68,6 +79,7 @@
         <div class="status-foot">
           <button class="soft-btn" id="reportBtn">Send report to Earth</button>
           <span class="muted small" id="reportNote"></span>
+          <a class="text-btn see-report" href="report.html">See the report Earth receives</a>
         </div>
       </section>
 
@@ -131,17 +143,19 @@
   <footer class="foot">
     <span>Astrodoc · Dombit Education · NASA Space Apps Challenge 2026</span>
     <span>Prototype, not a medical device. Crew readings are simulated; radiation rates and astronaut cases are real NASA data. <a href="science.html">Where the numbers come from</a></span>
-    <button class="text-btn small" id="changeUser">Change user</button>
+    <span class="foot-links"><a href="#guideCard" data-show-guide>How to use Astrodoc</a> · <button class="text-btn small" id="changeUser">Change user</button></span>
   </footer>
 
-  <script src="core.js?v=r8"></script>
-  <script src="sidebar.js?v=r8"></script>
+  <script src="core.js?v=r11"></script>
+  <script src="sidebar.js?v=patch1"></script>
   <script src="mood.js?v=r8"></script>
   <script src="dose.js?v=r8"></script>
-  <script src="history.js?v=r9"></script>
+  <script src="history.js?v=r11"></script>
   <script src="app.js?v=r8"></script>
   <script src="sensor.js?v=r8"></script>
   <script src="assets/js/body3d.js" defer></script>
   <script src="bodymap.js?v=r8" defer></script>
+  <script src="mission.js?v=r11" defer></script>
+  <script src="story.js?v=r11" defer></script>
 </body>
 </html>

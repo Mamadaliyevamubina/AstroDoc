@@ -1,0 +1,265 @@
+/* =========================================================
+   ASTRODOC — MISSION PATCH (loaded last on every page)
+
+   The world: embroidered NASA crew mission patches.
+   - Ground: flight-suit white. No gradients, no photos.
+   - Shell: navy twill rail with a running stitch along its edge.
+   - Each crew member is a round patch in their own colour (sidebar.js).
+   - Thread blue is reserved for two jobs: "Do now" and the signal
+     stitch that carries a report to Earth (app.js showStitch).
+   - Lettering: Archivo, set wide like patch embroidery. Reading text
+     stays Atkinson Hyperlegible Next.
+   - Green / amber / red live only inside status badges.
+   ========================================================= */
+@font-face {
+  font-family: "Archivo";
+  src: url("assets/fonts/archivo.woff2") format("woff2");
+  font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
+}
+:root {
+  color-scheme: light;
+  --twill:   #1b2550;          /* navy twill: the shell */
+  --twill-2: #243066;
+  --suit:    #f4f5f7;          /* flight-suit white: the ground */
+  --thread:  #2f6fd0;          /* thread blue: Do now + the signal stitch only */
+  --thread-wash: rgba(47, 111, 208, .1);
+  --navy:    #1b2550;
+  --ink:     #1b2550;
+  --ink-soft:#3d4870;
+  --muted:   #5a6386;          /* 5.3:1 on white */
+  --mint:    #1b2550;          /* the old accent becomes navy: buttons, links, focus */
+  --mint-soft: #2f6fd0;
+  --mint-wash: rgba(27, 37, 80, .07);
+  --mint-glow: 0 0 0 3px rgba(27, 37, 80, .14);
+  --edge:    rgba(27, 37, 80, .12);
+  --sunk:    rgba(27, 37, 80, .045);
+  --glass:   #fff; --glass-2: #fff; --glass-3: #fff;
+  --shadow:  0 1px 2px rgba(27, 37, 80, .06), 0 10px 28px rgba(27, 37, 80, .07);
+  --font-display: "Archivo", "Atkinson Hyperlegible Next", -apple-system, "Segoe UI", sans-serif;
+  --r-xl: 18px;
+}
+
+/* ---------- Ground: plain flight-suit white ---------- */
+html { background: var(--suit); }
+body, body.choosing, body.chat-page, body.check-page { background: var(--suit); }
+body::before, body::after, body.chat-page::after, body.choosing::after { background: none !important; content: none; }
+::selection { background: rgba(47, 111, 208, .2); color: var(--ink); }
+input, textarea { caret-color: var(--thread); }
+html { scrollbar-color: rgba(27, 37, 80, .3) transparent; }
+:focus-visible { outline: 2px solid var(--thread); outline-offset: 2px; }
+
+/* ---------- Lettering ---------- */
+h1, h2, .st-title, .brand-name, .choice-name, .mv-day, .welcome h1 {
+  font-family: var(--font-display); font-stretch: 112%; letter-spacing: -.005em;
+}
+.st-title { font-weight: 750; }
+.brand-name { font-weight: 800; font-stretch: 125%; letter-spacing: .16em; }
+.side-title, .label, .v-name, .field > span:first-child, .today h2, .c-about-label {
+  font-family: var(--font-display); font-stretch: 125%; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em; font-size: 12.5px; color: var(--muted);
+}
+.v-value, .counter b, .mv-facts dd { font-family: var(--font-display); font-stretch: 100%; font-variant-numeric: tabular-nums; }
+.patch-code { font-family: var(--font-display); font-stretch: 100%; font-weight: 800; font-size: 10px; letter-spacing: .02em; fill: #fff; }
+
+/* ---------- Cards: white, hairline, soft depth ---------- */
+.card, .vital, .crew-tab, .choice, .k-cause, .k-mood, details.k-mood, .sci-doc {
+  background: #fff !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  box-shadow: var(--shadow), 0 0 0 1px var(--edge);
+}
+.card { border-radius: var(--r-xl); }
+
+/* ---------- Buttons ---------- */
+.primary-btn, .check-link, .c-send { background: var(--twill); color: #fff; }
+.primary-btn:hover, .check-link:hover { background: var(--twill-2); filter: none; }
+.soft-btn { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px var(--edge), 0 1px 2px rgba(27, 37, 80, .06); }
+.soft-btn:hover { background: var(--suit); }
+.text-btn, .help-btn, a { color: var(--ink); }
+.emergency-btn { background: #fff; border: 1.5px solid var(--act); color: var(--act); }
+.emergency-btn:hover { background: var(--act-bg); }
+
+/* =========================================================
+   THE RAIL: navy twill with a running stitch inside its edge
+   ========================================================= */
+.side { background: var(--twill) !important; color: #e8ecf8; box-shadow: none; backdrop-filter: none; }
+.side::before {
+  content: ""; position: absolute; inset: 8px; height: auto; border-radius: 12px; pointer-events: none;
+  background: none; border: 1.5px dashed rgba(255, 255, 255, .22);
+}
+.side .brand-name { color: #fff; }
+.side .brand-mark { box-shadow: 0 0 0 2px rgba(255, 255, 255, .85); }
+.side-title { color: rgba(232, 236, 248, .62); }
+.side-link { color: rgba(232, 236, 248, .82); }
+.side-link svg { color: rgba(232, 236, 248, .6); }
+.side-link:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+.side-link:hover svg { color: #fff; }
+.side-link[aria-current="page"] { background: #fff; color: var(--twill); box-shadow: none; }
+.side-link[aria-current="page"] svg { color: var(--twill); }
+.side-crew { padding-left: var(--s2) !important; align-items: center; gap: var(--s3); color: #fff; }
+.side-crew:hover { background: rgba(255, 255, 255, .08); }
+.side-crew[aria-current="true"] { background: rgba(255, 255, 255, .12); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+.side-crew-patch { position: relative; flex: none; width: 40px; height: 40px; }
+.side-crew-patch .patch { width: 40px; height: 40px; display: block; }
+.side-crew-icon { position: absolute; right: -4px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.side-crew-icon svg { width: 14px; height: 14px; margin: 0; }
+.side-crew-icon.normal { color: var(--normal); }
+.side-crew-icon.watch { color: var(--watch); }
+.side-crew-icon.act { color: var(--act); }
+.side-crew-name { color: #fff; }
+.side-crew-name small { color: rgba(232, 236, 248, .65); }
+.side-crew-why { color: rgba(232, 236, 248, .78); }
+.side-crew.act .side-crew-why, .side-crew-why { font-weight: 500; }
+.side-scrim { background: rgba(27, 37, 80, .4); }
+.side-toggle { color: var(--ink); }
+
+/* On the dashboard the crew is the patch row in the page; the rail keeps the pages */
+@media (min-width: 901px) {
+  body.has-side:not(.chat-page) .side-crew-group { display: none; }
+  body.has-side .crew-strip { display: grid !important; }
+}
+
+/* =========================================================
+   THE PATCH ROW: the crew, one patch each
+   ========================================================= */
+.crew-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); }
+.crew-tab { min-height: 0; padding: var(--s4) var(--s5) var(--s4) var(--s4); gap: var(--s4); border-radius: var(--r-xl); align-items: center; }
+.crew-tab:hover { box-shadow: var(--shadow), 0 0 0 1px rgba(27, 37, 80, .28); }
+.crew-tab[aria-pressed="true"] { box-shadow: var(--shadow), 0 0 0 2px var(--twill); }
+.crew-patch { width: 96px; height: 96px; flex: none; transition: transform .35s cubic-bezier(.16, 1, .3, 1); }
+.crew-tab:hover .crew-patch { transform: rotate(-6deg); }
+.crew-text { gap: 3px; }
+.crew-name { font-family: var(--font-display); font-stretch: 118%; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; }
+.crew-name small { text-transform: none; letter-spacing: 0; }
+.crew-name small { font-family: var(--font); font-weight: 500; }
+.crew-state .status { font-size: 13.5px; }
+.crew-why { color: var(--ink-soft) !important; font-weight: 500 !important; font-size: 14.5px; white-space: normal; }
+
+/* =========================================================
+   STATUS: "Do now" is the thread-blue band; nothing else is that blue
+   ========================================================= */
+.st-do {
+  margin-top: var(--s4); padding: var(--s4) var(--s5); border-radius: 14px;
+  background: var(--thread); color: #fff; font-size: 18px; font-weight: 600; line-height: 1.45; max-width: none;
+}
+.do-label {
+  display: block; margin: 0 0 4px; padding: 0; background: none; box-shadow: none;
+  font-family: var(--font-display); font-stretch: 125%; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .8);
+}
+.status-card .st-top .label, .status-card .who { color: var(--muted); }
+.level-help, .clot, .chart { background: var(--suit); box-shadow: inset 0 0 0 1px var(--edge); }
+.vital.act { box-shadow: var(--shadow), 0 0 0 1.5px rgba(192, 68, 61, .5); }
+.v-value { font-weight: 400; }
+.scale button.on, .mood-card[aria-checked="true"] .mood-key { background: var(--twill); color: #fff; }
+
+/* =========================================================
+   THE SIGNAL STITCH: a report's trip from ship to Earth
+   ========================================================= */
+.stitch { margin-top: var(--s4); padding: var(--s4) 0 0; border-top: 1px solid var(--edge); }
+.stitch[hidden] { display: none; }
+.stitch-line { display: flex; align-items: center; gap: var(--s3); }
+.stitch-node {
+  flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-display); font-stretch: 100%; font-weight: 800; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #fff;
+  box-shadow: inset 0 0 0 3px var(--twill), inset 0 0 0 5px rgba(255, 255, 255, .5);
+}
+.stitch-node.ship { background: var(--twill-2); }
+.stitch-node.earth { background: var(--thread); }
+.stitch-track { position: relative; flex: 1; height: 20px; }
+.stitch-track::before {                                  /* the whole route, a faint running stitch */
+  content: ""; position: absolute; left: 0; right: 0; top: 8.5px; border-top: 3px dashed rgba(27, 37, 80, .55);
+}
+.stitch-done {                                            /* the part already travelled, stitched in thread blue */
+  position: absolute; left: 0; top: 8.5px; width: calc(var(--f) * 100%); border-top: 3px dashed var(--thread);
+}
+.stitch-mark.arrive { position: absolute; left: 50%; top: 3px; width: 2px; height: 14px; background: rgba(27, 37, 80, .35); }
+.stitch-dot {
+  position: absolute; top: 3px; left: calc(var(--f) * 100% - 7px); width: 14px; height: 14px; border-radius: 50%;
+  background: var(--thread); box-shadow: 0 0 0 5px var(--thread-wash);
+}
+.stitch.drawing .stitch-done { animation: stitch-draw 1.4s cubic-bezier(.16, 1, .3, 1) both; }
+.stitch.drawing .stitch-dot { animation: stitch-dot 1.4s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes stitch-draw { from { width: 0; } }
+@keyframes stitch-dot { from { left: -7px; } }
+.stitch-times { display: grid; grid-template-columns: 1fr 1fr 1fr; margin: var(--s2) 66px 0; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stitch-times b { font-family: var(--font-display); font-weight: 700; color: var(--ink); font-size: 15.5px; margin-right: 4px; }
+.stitch-times .mid { text-align: center; }
+.stitch-times .end { text-align: right; }
+.stitch-phase { margin-top: var(--s2); font-size: 15px; font-weight: 600; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .stitch.drawing .stitch-done, .stitch.drawing .stitch-dot { animation: none; } .crew-patch { transition: none; } }
+
+/* =========================================================
+   MISSION VIEW: the journey band in navy twill, the route a stitch
+   ========================================================= */
+.mission-view {
+  background: var(--twill);
+  box-shadow: var(--shadow);
+}
+.mission-view::after { content: ""; position: absolute; inset: 7px; border-radius: 12px; border: 1.5px dashed rgba(255, 255, 255, .22); pointer-events: none; }
+.mv-path { stroke: rgba(255, 255, 255, .55); stroke-dasharray: 5 5; stroke-width: 2; }
+.mv-signal { stroke: #8fb8ff; }
+.mv-day span, .mv-sub, .mv-facts dt, .mv-facts small { color: rgba(232, 236, 248, .8); }
+
+/* ---------- Header ---------- */
+.top .mission { color: var(--muted); }
+.talk-link { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px var(--edge), 0 1px 2px rgba(27, 37, 80, .06); }
+.check-link { border-radius: var(--r-pill); }
+.top .emergency-btn { margin-left: auto; }
+.has-mission-view .top .check-link { margin-left: auto; }
+.has-mission-view .top .emergency-btn { margin-left: 0; }
+
+/* =========================================================
+   WELCOME: three patches to choose from
+   ========================================================= */
+body.choosing .welcome { background: var(--suit); }
+.choice { align-items: center; gap: var(--s2); padding: var(--s5) var(--s4) var(--s4); border-radius: var(--r-xl); }
+.choice:hover { transform: translateY(-3px); box-shadow: var(--shadow), 0 0 0 2px var(--twill); }
+.choice-patch { width: 96px; height: 96px; margin-bottom: var(--s2); transition: transform .4s cubic-bezier(.16, 1, .3, 1); }
+.choice:hover .choice-patch { transform: rotate(-8deg) scale(1.04); }
+.choice-note { text-transform: none; letter-spacing: 0; font-family: var(--font); font-weight: 500; font-size: 14.5px; color: var(--muted); }
+.welcome .brand-name { color: var(--ink); }
+@media (max-width: 640px) { .choice-patch { width: 56px; height: 56px; margin: 0; } .choice { align-items: center; } }
+@media (prefers-reduced-motion: reduce) { .choice-patch { transition: none; } }
+
+/* =========================================================
+   COMPANION: same face, on the flight-suit ground
+   ========================================================= */
+body.chat-page, body.chat-page[data-mode] { --mode-wash: transparent; --mode-wash-2: transparent; --mode-ink: #1b2550; --mode-soft: rgba(27, 37, 80, .07); }
+body.chat-page .c-send { background: var(--twill) !important; color: #fff; }
+body.chat-page .c-composer { border-color: transparent; }
+.c-mode[aria-pressed="true"] { background: var(--twill) !important; color: #fff !important; }
+.c-modes .c-mode-tabs { background: #fff; box-shadow: var(--shadow), 0 0 0 1px var(--edge); }
+body.chat-page .m.you { background: var(--twill); color: #fff; box-shadow: none; }
+.c-composer { background: #fff; box-shadow: var(--shadow), inset 0 0 0 1px var(--edge); }
+.c-composer:focus-within { box-shadow: var(--shadow), inset 0 0 0 2px var(--twill); }
+.c-chips button { background: #fff; box-shadow: inset 0 0 0 1px var(--edge); color: var(--ink-soft); }
+.c-chips button:hover { box-shadow: inset 0 0 0 1.5px var(--twill); color: var(--ink); }
+.c-mic.listening { background: var(--thread); }
+.c-state { color: var(--thread); }
+.c-menu { background: #fff; }
+
+/* =========================================================
+   CHECK HOW I FEEL
+   ========================================================= */
+.k-progress span { background: var(--twill); }
+.k-step { color: var(--muted); }
+.k-chip.on, .k-answer.on { background: var(--thread-wash); box-shadow: inset 0 0 0 1.5px var(--thread); }
+.k-stage h1 { font-family: var(--font-display); font-stretch: 112%; font-weight: 750; }
+.mood-card { background: #fff; }
+.mood-card[aria-checked="true"] { box-shadow: var(--shadow), inset 0 0 0 2px var(--twill); }
+
+/* ---------- Science ---------- */
+.sci-toc a { background: #fff; }
+
+/* Phones: the stitch keeps its three times readable */
+@media (max-width: 640px) {
+  .stitch { padding: var(--s3) var(--s4); }
+  .stitch-node { width: 46px; height: 46px; font-size: 8.5px; }
+  .stitch-times { margin: var(--s2) 0 0; font-size: 12.5px; }
+  .stitch-times b { display: block; margin: 0; font-size: 15px; }
+  .crew-patch { width: 60px; height: 60px; }
+}
+
+/* Body map readings on phones: the name above, value and badge below */
+@media (max-width: 480px) {
+  .bm-items li { grid-template-columns: auto auto; justify-content: start; row-gap: 4px; }
+  .bm-items li > span:first-child { grid-column: 1 / -1; }
+}
