@@ -59,6 +59,9 @@
 .k-emergency h1 { color: var(--act); }
 .k-do { margin: var(--s3) 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; color: var(--ink); }
 .k-do li::marker { color: var(--mint); font-weight: 700; }
+.k-is-emergency .k-step { color: var(--act); }
+.k-is-emergency #progressBar { background: var(--act); }
+.k-emergency .k-do li::marker { color: var(--act); }
 .k-emergency .k-do { font-size: 18px; gap: var(--s2); margin-top: var(--s5); }
 .k-emergency .k-note a { color: var(--mint); }
 

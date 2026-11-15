@@ -104,10 +104,11 @@ function go(step) {
   window.scrollTo(0, 0);
 }
 function progress() {
-  const i = Math.max(0, STEPS.indexOf(st.step));
+  const i = Math.max(0, STEPS.indexOf(st.step === "emergency" ? "safety" : st.step));   // emergency keeps the bar where it was
   let frac = i / (STEPS.length - 1);
   if (st.step === "questions" && st.qs.length) frac = (2 + st.qi / st.qs.length) / (STEPS.length - 1);
   $("progressBar").style.width = `${Math.round(frac * 100)}%`;
+  document.body.classList.toggle("k-is-emergency", st.step === "emergency");
   $("stepLabel").textContent = st.step === "emergency" ? "Possible emergency"
     : st.step === "questions" ? `Step 3 of ${STEPS.length} · Question ${st.qi + 1} of ${st.qs.length}`
     : `Step ${i + 1} of ${STEPS.length}`;

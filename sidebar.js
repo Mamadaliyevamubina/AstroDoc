@@ -2,7 +2,7 @@
 // Astrodoc — SIDEBAR (shared by the dashboard and the companion)
 // Left side on wide screens, a slide-out drawer on phones. Kept short:
 //   - Pages: Dashboard, Companion, Check how I feel
-//   - Crew: you first, then your crewmates (health status is on the pages)
+//   - Crew: you first, then your crewmates, each with a status icon and the reason
 // Each page can plug in:
 //   sideCurrent()   → who is shown now
 //   sideView(id)    → show someone else
@@ -25,10 +25,18 @@ function renderSide() {
   const others = Object.keys(MOCK.crew).filter(id => id !== me).sort(bySeverity);
   const ids = me && MOCK.crew[me] ? [me, ...others] : others;
 
-  const crew = ids.map(id => `
+  // Each row: status icon (shape + color), name, and the reason in a few words
+  const crew = ids.map(id => {
+    const lvl = check(id).overall;
+    return `
     <button type="button" class="side-crew" data-side-crew="${id}" aria-current="${id === cur ? "true" : "false"}">
-      ${id === me ? `You <small>${MOCK.crew[id].role}</small>` : MOCK.crew[id].role}
-    </button>`).join("");
+      <span class="side-crew-icon ${lvl}">${ICON[lvl]}</span>
+      <span class="side-crew-text">
+        <span class="side-crew-name">${id === me ? `You <small>${MOCK.crew[id].role}</small>` : MOCK.crew[id].role}</span>
+        <span class="side-crew-why"><span class="sr-only">${LABEL[lvl]}: </span>${reasonFor(id)}</span>
+      </span>
+    </button>`;
+  }).join("");
 
   el.innerHTML = `
     <a class="brand side-brand" href="index.html">
