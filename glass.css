@@ -1,0 +1,181 @@
+/* =========================================================
+   ASTRODOC — PORTHOLE GLASS (loaded after patch.css on every page)
+
+   Frosted panels over a soft field of light. The light is your own
+   crew patch colour (commander cobalt, pilot violet, specialist sky),
+   so the glass always carries who you are; glass.js sets body[data-crew].
+   - Glass: translucent white, blur + saturation, a bright top edge.
+   - Light follows the pointer across a panel (one authored motion).
+   - Thread blue stays reserved for "Do now" and the signal stitch.
+   - Green / amber / red stay solid, only inside status badges.
+   ========================================================= */
+:root {
+  --field:    #eef1f8;                    /* the pale ground behind the glass */
+  --glow-a:   rgba(47, 79, 168, .30);     /* commander cobalt by default */
+  --glow-b:   rgba(29, 127, 179, .22);
+  --glow-c:   rgba(91, 75, 181, .18);
+  --pane:     rgba(255, 255, 255, .62);
+  --pane-2:   rgba(255, 255, 255, .78);
+  --pane-edge: rgba(255, 255, 255, .85);
+  --pane-line: rgba(27, 37, 80, .09);
+  --frost:    blur(22px) saturate(165%);
+  --lift:     0 1px 1px rgba(27, 37, 80, .04), 0 14px 36px -10px rgba(27, 37, 80, .2);
+  --lift-hi:  0 2px 2px rgba(27, 37, 80, .05), 0 22px 48px -12px rgba(27, 37, 80, .26);
+}
+body[data-crew="PLT"] { --glow-a: rgba(91, 75, 181, .30); --glow-b: rgba(47, 79, 168, .2); --glow-c: rgba(29, 127, 179, .16); }
+body[data-crew="MS1"] { --glow-a: rgba(29, 127, 179, .30); --glow-b: rgba(91, 75, 181, .16); --glow-c: rgba(47, 79, 168, .2); }
+
+/* ---------- The field: soft light behind every pane ---------- */
+html { background: var(--field); }
+body:not(.landing), body.choosing, body.chat-page, body.check-page { background: transparent !important; }
+body:not(.landing)::before {
+  content: "" !important; position: fixed; inset: -10vmax; z-index: -1; pointer-events: none; display: block !important;
+  background:
+    radial-gradient(38vmax 34vmax at 18% 12%, var(--glow-a), transparent 70%),
+    radial-gradient(42vmax 36vmax at 88% 30%, var(--glow-b), transparent 70%),
+    radial-gradient(40vmax 38vmax at 55% 98%, var(--glow-c), transparent 70%),
+    var(--field) !important;
+  filter: none !important;
+  animation: field-drift 38s ease-in-out infinite alternate;
+  transition: background .8s ease;
+}
+@keyframes field-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-2.5vmax, 1.5vmax, 0) scale(1.06); }
+}
+
+/* ---------- Panes ---------- */
+.card, .vital, .crew-tab, .choice, .k-cause, .k-mood, details.k-mood, .sci-doc,
+.region, .k-answer, .k-chip, .k-rad, .c-composer, .seg, .guide, #guideCard {
+  position: relative;
+  background: var(--pane) !important;
+  -webkit-backdrop-filter: var(--frost) !important; backdrop-filter: var(--frost) !important;
+  box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px var(--pane-line), var(--lift);
+}
+.card, .sci-doc { border-radius: 22px; }
+.vital, .crew-tab, .choice { border-radius: 20px; }
+
+/* Panes inside panes stay quiet: a hairline, no second frost */
+.card .card, .card .vital, .sci-doc .card, .card .k-rad {
+  background: rgba(255, 255, 255, .5) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  box-shadow: inset 0 0 0 1px var(--pane-line);
+}
+.level-help, .clot, .chart { background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 1px var(--pane-line); }
+
+/* Light that follows the pointer (glass.js sets --mx / --my) */
+.card::after, .vital::after, .crew-tab::after, .choice::after, .sci-doc::after, .k-cause::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, -40%), rgba(255, 255, 255, .55), transparent 55%);
+  opacity: 0; transition: opacity .45s cubic-bezier(.16, 1, .3, 1);
+  mix-blend-mode: soft-light;
+}
+.card:hover::after, .vital:hover::after, .crew-tab:hover::after, .choice:hover::after, .sci-doc:hover::after, .k-cause:hover::after { opacity: 1; }
+.mission-view::after { mix-blend-mode: normal; }   /* the journey band keeps its stitch */
+
+/* Lift on hover for the things you press */
+.vital, .crew-tab, .choice, .region, .k-answer { transition: transform .35s cubic-bezier(.16, 1, .3, 1), box-shadow .35s cubic-bezier(.16, 1, .3, 1); }
+.vital:hover, .region:hover, .k-answer:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px rgba(27, 37, 80, .16), var(--lift-hi); }
+.crew-tab:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px rgba(27, 37, 80, .22), var(--lift-hi); }
+.crew-tab[aria-pressed="true"] { background: var(--pane-2) !important; box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 2px var(--twill), var(--lift-hi); }
+.vital.act { box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1.5px rgba(192, 68, 61, .5), var(--lift); }
+
+/* ---------- Buttons: glass for quiet ones, solid navy for the main one ---------- */
+.soft-btn, .talk-link, .c-chips button, .k-chip {
+  background: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px var(--pane-line), 0 4px 14px -6px rgba(27, 37, 80, .18);
+}
+.soft-btn:hover, .talk-link:hover, .c-chips button:hover { background: rgba(255, 255, 255, .85); }
+.primary-btn, .check-link { box-shadow: 0 8px 20px -8px rgba(27, 37, 80, .55), inset 0 1px 0 rgba(255, 255, 255, .14); }
+.emergency-btn { background: rgba(255, 255, 255, .7); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+
+/* ---------- The rail: frosted navy, the field glows through ---------- */
+.side {
+  background: rgba(24, 33, 74, .9) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(150%) !important; backdrop-filter: blur(26px) saturate(150%) !important;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, .08), 12px 0 40px -18px rgba(27, 37, 80, .35);
+}
+.side-link[aria-current="page"] { background: rgba(255, 255, 255, .94); box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .4); }
+.side-crew[aria-current="true"] { background: rgba(255, 255, 255, .1); }
+
+/* ---------- Welcome ---------- */
+body.choosing .welcome { background: transparent; }
+.choice:hover { transform: translateY(-4px); box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 2px var(--twill), var(--lift-hi); }
+
+/* ---------- Chat ---------- */
+body.chat-page .m.you { box-shadow: 0 8px 20px -10px rgba(27, 37, 80, .6); }
+body.chat-page .c-composer { border-color: transparent; border-radius: 999px; }
+body.chat-page .c-composer:focus-within { box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 2px var(--twill), var(--lift-hi); }
+.seg { border-radius: 999px; }
+
+/* ---------- Check ---------- */
+.k-answer[aria-pressed="true"], .k-answer.on, .region[aria-pressed="true"], .region.on {
+  background: var(--twill) !important; color: #fff; box-shadow: 0 10px 22px -10px rgba(27, 37, 80, .6);
+}
+.k-progress { background: rgba(27, 37, 80, .1); }
+
+/* ---------- Science ---------- */
+.sci-chips a, .sci-nav a {
+  background: rgba(255, 255, 255, .55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+
+/* ---------- Browser surfaces ---------- */
+::selection { background: rgba(47, 79, 168, .22); color: var(--ink); }
+html { scrollbar-color: rgba(27, 37, 80, .28) transparent; }
+
+/* =========================================================
+   LANDING: the navy tour keeps its depth; glass for the bar and the cards
+   ========================================================= */
+.ld-top {
+  background-color: rgba(17, 24, 56, .55) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .1);
+}
+.ld-tour {
+  background-image:
+    radial-gradient(ellipse 55% 45% at 78% 38%, rgba(47, 111, 208, .34), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 12% 85%, rgba(91, 75, 181, .3), transparent 70%) !important;
+}
+.ld-use, .ld-stage-label {
+  background: rgba(255, 255, 255, .09); -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .12);
+}
+.ld-story { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); background: rgba(255, 255, 255, .06); }
+.ld-how, .ld-proof { position: relative; }
+body.landing {
+  background:
+    radial-gradient(40vmax 30vmax at 15% 10%, rgba(47, 79, 168, .2), transparent 70%),
+    radial-gradient(40vmax 30vmax at 90% 60%, rgba(91, 75, 181, .16), transparent 70%),
+    radial-gradient(36vmax 30vmax at 40% 100%, rgba(29, 127, 179, .16), transparent 70%),
+    var(--field);
+}
+.ld-steps li {
+  padding: var(--s5); border-top: 0; border-radius: 22px;
+  background: var(--pane); -webkit-backdrop-filter: var(--frost); backdrop-filter: var(--frost);
+  box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px var(--pane-line), var(--lift);
+}
+.ld-facts li {
+  padding: var(--s4) var(--s5); border-bottom: 0; border-radius: 18px;
+  background: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 var(--pane-edge), 0 0 0 1px var(--pane-line);
+}
+.ld-close {
+  background-image: radial-gradient(ellipse 60% 70% at 50% 0%, rgba(47, 111, 208, .3), transparent 70%);
+}
+
+/* ---------- Fallbacks ---------- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --pane: rgba(255, 255, 255, .92); }
+  .side { background: rgba(22, 30, 68, .97) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body:not(.landing)::before { animation: none; }
+  .vital, .crew-tab, .choice, .region, .k-answer { transition: none; }
+  .vital:hover, .crew-tab:hover, .choice:hover, .region:hover, .k-answer:hover { transform: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --pane: rgba(255, 255, 255, .96); --frost: none; }
+  .side { background: var(--twill) !important; }
+}
+@media print {
+  body::before { display: none !important; }
+  .card, .vital, .sci-doc { background: #fff !important; backdrop-filter: none !important; box-shadow: 0 0 0 1px #ccc; }
+}
